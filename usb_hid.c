@@ -327,7 +327,9 @@ void usb_hid_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_desc
      
     HID_Report_Descriptor.Descriptor = report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
-    
+    usbHIDDescriptor_Config.HID_Descriptor.descLenL = (uint8_t)report_descriptor_length;
+    usbHIDDescriptor_Config.HID_Descriptor.descLenH = (uint8_t)(report_descriptor_length>>8);
+        
     if (idVendor != 0)
         usbHIDDescriptor_Device.idVendor = idVendor;
     else
@@ -351,9 +353,6 @@ void usb_hid_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_desc
            
     usbHIDString_Descriptor[2].Descriptor = iProduct;
     usbHIDString_Descriptor[2].Descriptor_Size = iProduct[0];
-    
-    usbHIDDescriptor_Config.HID_Descriptor.descLenL = (uint8_t)report_descriptor_length;
-    usbHIDDescriptor_Config.HID_Descriptor.descLenH = (uint8_t)(report_descriptor_length>>8);
     
     if (disc_dev != NULL) {
         gpio_set_mode(disc_dev, disc_bit, GPIO_OUTPUT_PP);
