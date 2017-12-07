@@ -59,7 +59,7 @@ static const struct {
 } usbHIDDeviceReports[] = {
     { reportDescriptors+mouseOffset, mouseSize },
     { reportDescriptors+keyboardOffset, keyboardSize },
-    { reportDescriptors+joystickOffset, joystickOffset },
+    { reportDescriptors+joystickOffset, joystickSize },
     { reportDescriptors+mouseOffset, mouseSize+keyboardSize },
     { reportDescriptors+keyboardOffset, keyboardSize+joystickSize },
     { reportDescriptors+mouseOffset, mouseSize+keyboardSize+joystickSize },
