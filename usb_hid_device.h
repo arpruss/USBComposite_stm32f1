@@ -153,16 +153,11 @@
 	0x09, 0x02,				/*  usage */ \
 	0x91, 0x02,				/*  Output (array) */ \
 	0xC0					/*  end collection */ 
-
-// needs to match usbHIDdDevices in usb_hid_device.cpp
-enum USBHIDDevice {
-    USB_HID_MOUSE = 0,
-    USB_HID_KEYBOARD,
-    USB_HID_JOYSTICK,
-    USB_HID_KEYBOARD_MOUSE,
-    USB_HID_KEYBOARD_JOYSTICK,
-    USB_HID_KEYBOARD_MOUSE_JOYSTICK,
-};
+    
+typedef struct {
+    uint8_t* descriptor;
+    uint16_t length;    
+} HIDReportDescriptor;
 
 class HIDDevice{
 private:
@@ -173,11 +168,37 @@ public:
 	HIDDevice(void);
     void begin(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
-    void begin(USBHIDDevice device, uint16_t idVendor=0, uint16_t idProduct=0,
+    void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
     void end(void);
 };
 
+
+class HIDReporter {
+    private:
+        uint8_t* buffer;
+        unsigned bufferSize;
+        
+    protected:
+        bool sendReport() {
+            while (usb_hid_is_transmitting() != 0) {
+            }
+
+            usb_hid_tx(buffer, bufferSize);
+            
+            while (usb_hid_is_transmitting() != 0) {
+            }
+            /* flush out to avoid having the pc wait for more data */
+            usb_hid_tx(NULL, 0);
+        }
+        
+    public:
+        HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t reportID) {
+            buffer = _buffer;
+            bufferSize = _size;
+            buffer[0] = reportID;
+        }
+};
 
 //================================================================================
 //================================================================================
@@ -433,5 +454,19 @@ extern HIDDevice HID;
 extern HIDMouse Mouse;
 extern HIDKeyboard Keyboard;
 extern HIDJoystick Joystick;
+
+extern const HIDReportDescriptor* hidReportMouse;
+extern const HIDReportDescriptor* hidReportKeyboard;
+extern const HIDReportDescriptor* hidReportJoystick;
+extern const HIDReportDescriptor* hidReportKeyboardMouse;
+extern const HIDReportDescriptor* hidReportKeyboardJoystick;
+extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
+
+#define USB_HID_MOUSE                   hidReportMouse
+#define USB_HID_KEYBOARD                hidReportKeyboard
+#define USB_HID_JOYSTICK                hidReportJoystick
+#define USB_HID_KEYBOARD_MOUSE          hidReportKeyboardMouse
+#define USB_HID_KEYBOARD_JOYSTICK       hidReportKeyboardJoystick
+#define USB_HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
 
 #endif
