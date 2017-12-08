@@ -14,11 +14,11 @@
 */
 
 /**
- * @brief Wirish USB HID port (HID USB).
+ * @brief USB HID port (HID USB).
  */
 
-#ifndef _WIRISH_USB_HID_H_
-#define _WIRISH_USB_HID_H_
+#ifndef _USB_HID_DEVICE_H_
+#define _USB_HID_DEVICE_H_
 
 #include <Print.h>
 #include <boards.h>
