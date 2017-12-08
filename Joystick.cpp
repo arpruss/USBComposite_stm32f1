@@ -4,19 +4,6 @@
 //================================================================================
 //	Joystick
 
-void HIDJoystick::sendReport(void){
-	usb_hid_tx(joystick_Report, sizeof(joystick_Report));
-	
-	while (usb_hid_is_transmitting() != 0) {
-    }
-	/* flush out to avoid having the pc wait for more data */
-	usb_hid_tx(NULL, 0);
-}
-
-HIDJoystick::HIDJoystick(uint8_t reportID) {
-	joystick_Report[0] = reportID;
-}
-
 void HIDJoystick::begin(void){
 }
 
@@ -29,15 +16,11 @@ void HIDJoystick::setManualReportMode(bool mode) {
 
 void HIDJoystick::safeSendReport() {	
     if (!manualReport) {
-        while (usb_hid_is_transmitting() != 0) {
-        }
         sendReport();
     }
 }
 
 void HIDJoystick::sendManualReport() {
-    while (usb_hid_is_transmitting() != 0) {
-    }
     sendReport();
 }
     

@@ -209,13 +209,13 @@ class HIDReporter {
 #define MOUSE_MIDDLE 4
 #define MOUSE_ALL (MOUSE_LEFT | MOUSE_RIGHT | MOUSE_MIDDLE)
 
-class HIDMouse{
+class HIDMouse : public HIDReporter {
 private:
 	uint8_t _buttons;
-    uint8_t reportID;
 	void buttons(uint8_t b);
+    uint8_t reportBuffer[5];
 public:
-	HIDMouse(uint8_t _reportID=USB_HID_MOUSE_REPORT_ID);
+	HIDMouse(uint8_t reportID=USB_HID_MOUSE_REPORT_ID) : HIDReporter(reportBuffer, sizeof(reportBuffer), reportID), _buttons(0) {}
 	void begin(void);
 	void end(void);
 	void click(uint8_t b = MOUSE_LEFT);
@@ -406,13 +406,13 @@ typedef struct{
 	uint8_t keys[6];
 } KeyReport;
 
-class HIDKeyboard : public Print{
+class HIDKeyboard : public Print, public HIDReporter {
 private:
 	KeyReport _keyReport;
-    uint8_t reportID;
-	void sendReport(KeyReport* keys);
+	void sendKeyReport(KeyReport* keys);
+    uint8_t reportBuffer[9];
 public:
-	HIDKeyboard(uint8_t _reportID=USB_HID_KEYBOARD_REPORT_ID);
+	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter(reportBuffer, sizeof(reportBuffer), reportID) {}
 	void begin(void);
 	void end(void);
 	virtual size_t write(uint8_t k);
@@ -426,16 +426,15 @@ public:
 //================================================================================
 //	Joystick
 
-class HIDJoystick{
+class HIDJoystick : public HIDReporter {
 private:
 	uint8_t joystick_Report[13] = {3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
     bool manualReport = false;
 	void safeSendReport(void);
-	void sendReport(void);
 public:
 	void sendManualReport(void);
     void setManualReportMode(bool manualReport);
-	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID);
+	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDReporter(joystick_Report, sizeof(joystick_Report), reportID) {}
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);

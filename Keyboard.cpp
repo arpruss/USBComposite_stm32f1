@@ -4,28 +4,17 @@
 //================================================================================
 //	Keyboard
 
-HIDKeyboard::HIDKeyboard(uint8_t _reportID) {
-    reportID = _reportID;
-}
-
-void HIDKeyboard::sendReport(KeyReport* keys)
+void HIDKeyboard::sendKeyReport(KeyReport* keys)
 {
-	//HID_SendReport(2,keys,sizeof(KeyReport));
-	uint8_t buf[9];//sizeof(_keyReport)+1;
-	buf[0] = reportID; 
-	buf[1] = _keyReport.modifiers;
-	buf[2] = _keyReport.reserved;
+	reportBuffer[1] = _keyReport.modifiers;
+	reportBuffer[2] = _keyReport.reserved;
 	
 	uint8_t i;
 	for(i=0;i<sizeof(_keyReport.keys);i++){
-		buf[i+3] = _keyReport.keys[i];
+		reportBuffer[i+3] = _keyReport.keys[i];
 	}
-	usb_hid_tx(buf, sizeof(buf));
-	
-	while (usb_hid_is_transmitting() != 0) {
-    }
-	/* flush out to avoid having the pc wait for more data */
-	usb_hid_tx(NULL, 0);
+    
+    sendReport();
 }
 
 void HIDKeyboard::begin(void){
@@ -72,10 +61,7 @@ size_t HIDKeyboard::press(uint8_t k)
 		}
 	}
 	
-	while (usb_hid_is_transmitting() != 0) {
-    }
-	
-	sendReport(&_keyReport);
+	sendKeyReport(&_keyReport);
 	return 1;
 }
 
@@ -109,10 +95,7 @@ size_t HIDKeyboard::release(uint8_t k)
 		}
 	}
 	
-	while (usb_hid_is_transmitting() != 0) {
-    }
-
-	sendReport(&_keyReport);
+	sendKeyReport(&_keyReport);
 	return 1;
 }
 
@@ -126,10 +109,7 @@ void HIDKeyboard::releaseAll(void)
 	_keyReport.keys[5] = 0;
 	_keyReport.modifiers = 0;
 	
-	while (usb_hid_is_transmitting() != 0) {
-    }
-	
-	sendReport(&_keyReport);
+	sendKeyReport(&_keyReport);
 }
 
 size_t HIDKeyboard::write(uint8_t c)
