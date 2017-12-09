@@ -195,6 +195,7 @@ class HIDReporter {
             }
             /* flush out to avoid having the pc wait for more data */
             usb_hid_tx(NULL, 0);
+            return true;
         }
         
     public:

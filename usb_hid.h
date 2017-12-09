@@ -147,11 +147,6 @@ uint8 usb_hid_is_transmitting(void);
 
 void	HID_SendReport(uint8_t id, const void* data, uint32_t len);
 
-//static RESULT HID_SetProtocol(void);
-static uint8 *HID_GetProtocolValue(uint16 Length);
-static uint8 *HID_GetReportDescriptor(uint16 Length);
-static uint8 *HID_GetHIDDescriptor(uint16 Length);
-
 #ifdef __cplusplus
 }
 #endif

@@ -121,6 +121,7 @@ void HIDJoystick::hat(int16_t dir){
 	else if (dir < 245) val = 5;
 	else if (dir < 293) val = 6;
 	else if (dir < 338) val = 7;
+    else val = 15;
 	joystick_Report[5] = (joystick_Report[5] & 0xF0) | val;
 	
     safeSendReport();

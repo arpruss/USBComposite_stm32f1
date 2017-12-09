@@ -82,6 +82,9 @@ static uint8* usbGetConfigDescriptor(uint16 length);
 static uint8* usbGetStringDescriptor(uint16 length);
 static void usbSetConfiguration(void);
 static void usbSetDeviceAddress(void);
+static uint8* HID_GetReportDescriptor(uint16 Length);
+static uint8* HID_GetHIDDescriptor(uint16 Length);
+static uint8* HID_GetProtocolValue(uint16 Length);
 
 /*
  * Descriptors
@@ -161,7 +164,7 @@ static usb_descriptor_config usbHIDDescriptor_Config =
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_HID_RX_ENDP),
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = USB_HID_RX_EPSIZE,
-        .bInterval        = 0,
+        .bInterval        = 0x02,
     },
 };
 
