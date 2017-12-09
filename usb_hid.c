@@ -43,6 +43,8 @@
 #include "usb_lib_globals.h"
 #include "usb_reg_map.h"
 
+uint16 GetEPTxAddr(uint8 /*bEpNum*/);
+
 /* usb_lib headers */
 #include "usb_type.h"
 #include "usb_core.h"
@@ -188,7 +190,6 @@ static const usb_descriptor_string usbHIDDescriptor_iProduct = {
     .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
 };
 
-/* FIXME move to Wirish */
 static const usb_descriptor_string usbHIDDescriptor_iInterface = {
     .bLength = USB_DESCRIPTOR_STRING_LEN(3),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
@@ -210,7 +211,7 @@ static ONE_DESCRIPTOR HID_Report_Descriptor = {
     sizeof(hid_report_descriptor)
 };
 
-#define N_STRING_DESCRIPTORS 3
+#define N_STRING_DESCRIPTORS 4
 static ONE_DESCRIPTOR usbHIDString_Descriptor[N_STRING_DESCRIPTORS] = {
     {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
     {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
