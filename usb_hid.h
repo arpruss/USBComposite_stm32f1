@@ -135,6 +135,7 @@ void usb_hid_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_desc
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
 void usb_hid_disable(gpio_dev*, uint8);
 
+uint32 usb_hid_peek(uint8* buffer, uint32 n);
 void   usb_hid_putc(char ch);
 uint32 usb_hid_tx(const uint8* buf, uint32 len);
 uint32 usb_hid_tx_mod(const uint8* buf, uint32 len);

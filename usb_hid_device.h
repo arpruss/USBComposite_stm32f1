@@ -461,10 +461,13 @@ public:
 	HIDRaw() : HIDReporter(outBuffer, sizeof(outBuffer), 0) {}
 	void begin(void);
 	void end(void);
-	void send(uint8_t* data, unsigned n) {
+	void send(const uint8_t* data, unsigned n) {
         memset(outBuffer, 0, sizeof(outBuffer));
         memcpy(outBuffer, data, n>sizeof(outBuffer)?sizeof(outBuffer):n);
         sendReport();
+    }
+    uint32 receive(uint8_t* data, unsigned n) { /* does not seem to work! */
+        return usb_hid_rx(data, n);
     }
 };
 

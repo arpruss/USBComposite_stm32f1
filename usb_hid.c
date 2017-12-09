@@ -161,7 +161,7 @@ static usb_descriptor_config usbHIDDescriptor_Config =
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_HID_RX_ENDP),
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = USB_HID_RX_EPSIZE,
-        .bInterval        = 0x00,
+        .bInterval        = 0,
     },
 };
 
@@ -414,6 +414,19 @@ uint32 usb_hid_tx(const uint8* buf, uint32 len) {
 
     return len;
 }
+
+uint32 usb_hid_peek(uint8* buffer, uint32 n) {
+    uint32 offset = rx_offset;
+    uint32 toRead = n_unread_bytes;
+    if (toRead == 0)
+        return 0;
+    if (n < toRead)
+        toRead = n;
+    for (unsigned i=0; i<toRead; i++)
+        buffer[i] = hidBufferRx[(offset+i) % HID_BUFFER_SIZE];
+    return toRead; 
+}
+
 
 uint32 usb_hid_data_available(void) {
     return n_unread_bytes;
