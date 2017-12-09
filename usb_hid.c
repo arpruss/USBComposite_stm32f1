@@ -48,24 +48,6 @@
 #include "usb_core.h"
 #include "usb_def.h"
 
-/******************************************************************************
- ******************************************************************************
- ***
- ***   HACK ALERT! FIXME FIXME FIXME FIXME!
- ***
- ***   A bunch of LeafLabs-specific configuration lives in here for
- ***   now.  This mess REALLY needs to get teased apart, with
- ***   appropriate pieces moved into Wirish.
- ***
- ******************************************************************************
- *****************************************************************************/
-
-#if !(defined(BOARD_maple) || defined(BOARD_maple_RET6) ||      \
-      defined(BOARD_maple_mini) || defined(BOARD_maple_native))
-#warning USB HID relies on LeafLabs board-specific configuration.\
-    You may have problems on non-LeafLabs boards.
-#endif
-
 
 uint32 ProtocolValue;
 
@@ -412,6 +394,40 @@ void usb_hid_putc(char ch) {
     while (!usb_hid_tx((uint8*)&ch, 1))
         ;
 }
+
+
+ /* TODO these could use some improvement; they're fairly
+ * straightforward ports of the analogous ST code.  The PMA blit
+ * routines in particular are obvious targets for performance
+ * measurement and tuning. */
+
+static void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
+    uint16 *dst = (uint16*)usb_pma_ptr(pma_offset);
+    uint16 n = len >> 1;
+    uint16 i;
+    for (i = 0; i < n; i++) {
+        *dst = (uint16)(*buf) | *(buf + 1) << 8;
+        buf += 2;
+        dst += 2;
+    }
+    if (len & 1) {
+        *dst = *buf;
+    }
+}
+
+static void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
+    uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
+    uint16 *dst = (uint16*)buf;
+    uint16 n = len >> 1;
+    uint16 i;
+    for (i = 0; i < n; i++) {
+        *dst++ = *src++;
+    }
+    if (len & 1) {
+        *dst = *src & 0xFF;
+    }
+}
+
 
 /* This function is non-blocking.
  *
