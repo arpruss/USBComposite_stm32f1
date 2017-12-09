@@ -30,7 +30,7 @@
 #define USB_HID_MOUSE_REPORT_ID 1
 #define USB_HID_KEYBOARD_REPORT_ID 2
 #define USB_HID_JOYSTICK_REPORT_ID 3
-#define USB_HID_RAWHID_REPORT_ID 10
+#define USB_HID_RAW_REPORT_ID 10
 
 #define USB_HID_MOUSE_REPORT_DESCRIPTOR(reportId) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
@@ -136,20 +136,25 @@
 	0x81, 0x02,						/*  Input (variable,absolute) */ \
     0xC0                           /*  End Collection */ 
 
-#define USB_HID_RAW_REPORT_DESCRIPTOR(reportId) \
+#define RAWHID_USAGE_PAGE	0xFFC0 // recommended: 0xFF00 to 0xFFFF
+#define RAWHID_USAGE		0x0C00 // recommended: 0x0100 to 0xFFFF
+    
+#define LSB(x) ((x) & 0xFF)    
+#define MSB(x) (((x) & 0xFF00) >> 8)    
+#define USB_HID_RAW_REPORT_DESCRIPTOR(txSize, rxSize) \
 	0x06, LSB(RAWHID_USAGE_PAGE), MSB(RAWHID_USAGE_PAGE),	/*  30 */ \
 	0x0A, LSB(RAWHID_USAGE), MSB(RAWHID_USAGE), \
 	0xA1, 0x01,				/*  Collection 0x01 */ \
-    0x85, reportId,         /*  REPORT_ID (3) */ \
+/*    0x85, 10,				*/		/*    REPORT_ID (1) */ \
 	0x75, 0x08,				/*  report size = 8 bits */ \
 	0x15, 0x00,				/*  logical minimum = 0 */ \
 	0x26, 0xFF, 0x00,		/*  logical maximum = 255 */ \
 \
-	0x95, 64,				/*  report count TX */ \
+	0x95, txSize,				/*  report count TX */ \
 	0x09, 0x01,				/*  usage */ \
 	0x81, 0x02,				/*  Input (array) */ \
 \
-	0x95, 64,				/*  report count RX */ \
+	0x95, rxSize,				/*  report count RX */ \
 	0x09, 0x02,				/*  usage */ \
 	0x91, 0x02,				/*  Output (array) */ \
 	0xC0					/*  end collection */ 
@@ -447,6 +452,20 @@ public:
 	void sliderRight(uint16_t val);
 	void slider(uint16_t val);
 	void hat(int16_t dir);
+};
+
+template<unsigned rxSize, unsigned rySize>class HIDRaw : public HIDReporter {
+private:
+    uint8_t outBuffer[rxSize];
+public:
+	HIDRaw() : HIDReporter(outBuffer, sizeof(outBuffer), 0) {}
+	void begin(void);
+	void end(void);
+	void send(uint8_t* data, unsigned n) {
+        memset(outBuffer, 0, sizeof(outBuffer));
+        memcpy(outBuffer, data, n>sizeof(outBuffer)?sizeof(outBuffer):n);
+        sendReport();
+    }
 };
 
 extern HIDDevice HID;
