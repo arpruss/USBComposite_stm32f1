@@ -41,14 +41,11 @@
 
 #include <boards.h>
 #include <usb_serial.h>
-#include "dummyserial.h"
 
 namespace wirish {
     namespace priv {
 
-        static USBSerialNOP dummy;
         void board_setup_usb(void) {
-            Serial = dummy;
 #ifdef USB_MIDI
 #ifdef GENERIC_BOOTLOADER			
 			//Reset the USB interface on generic boards - developed by Victor PV
