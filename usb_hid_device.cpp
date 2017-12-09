@@ -92,16 +92,8 @@ void HIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
             
     uint8_t* manufacturerDescriptor;
     uint8_t* productDescriptor;
+    
 	if(!enabled) {        
-#ifdef GENERIC_BOOTLOADER			
-        //Reset the USB interface on generic boards - developed by Victor PV
-        gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_OUTPUT_PP);
-        gpio_write_bit(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit,0);
-        
-        for(volatile unsigned int i=0;i<512;i++);// Only small delay seems to be needed
-        gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_INPUT_FLOATING);
-#endif			
-
         if (manufacturer != NULL) {
             generateUSBDescriptor(iManufacturer, USB_HID_MAX_MANUFACTURER_LENGTH, manufacturer);
             manufacturerDescriptor = iManufacturer;
