@@ -46,7 +46,6 @@ namespace wirish {
     namespace priv {
 
         void board_setup_usb(void) {
-#ifdef USB_MIDI
 #ifdef GENERIC_BOOTLOADER			
 			//Reset the USB interface on generic boards - developed by Victor PV
 			gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_OUTPUT_PP);
@@ -55,8 +54,6 @@ namespace wirish {
 			for(volatile unsigned int i=0;i<512;i++);// Only small delay seems to be needed, and USB pins will get configured in Serial.begin
 			gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_INPUT_FLOATING);
 #endif			
-			MidiUSB.begin();
-#endif
 		}
 
     }

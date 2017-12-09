@@ -281,13 +281,13 @@ static void (*ep_int_out[7])(void) =
  */
 
 #define NUM_ENDPTS                0x02
-DEVICE Device_Table = {
+static DEVICE my_Device_Table = {
     .Total_Endpoint      = NUM_ENDPTS,
     .Total_Configuration = 1
 };
 
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
-DEVICE_PROP Device_Property = {
+static DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
     .Process_Status_IN           = NOP_Process,
@@ -302,7 +302,7 @@ DEVICE_PROP Device_Property = {
     .MaxPacketSize               = MAX_PACKET_SIZE
 };
 
-USER_STANDARD_REQUESTS User_Standard_Requests = {
+static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
     .User_GetConfiguration   = NOP_Process,
     .User_SetConfiguration   = usbSetConfiguration,
     .User_GetInterface       = NOP_Process,
@@ -313,6 +313,10 @@ USER_STANDARD_REQUESTS User_Standard_Requests = {
     .User_SetDeviceFeature   = NOP_Process,
     .User_SetDeviceAddress   = usbSetDeviceAddress
 };
+
+DEVICE saved_Device_Table;
+DEVICE_PROP saved_Device_Property;
+USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 
 /*
  * HID interface
@@ -325,6 +329,14 @@ void usb_hid_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_desc
      * pull USB_DP pin up while leaving USB_DM pulled down by the
      * transceiver. See USB 2.0 spec, section 7.1.7.3. */
      
+    saved_Device_Table = Device_Table;
+    saved_Device_Property = Device_Property;
+    saved_User_Standard_Requests = User_Standard_Requests;
+
+    Device_Table = my_Device_Table;
+    Device_Property = my_Device_Property;
+    User_Standard_Requests = my_User_Standard_Requests;
+
     HID_Report_Descriptor.Descriptor = report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
     usbHIDDescriptor_Config.HID_Descriptor.descLenL = (uint8_t)report_descriptor_length;
@@ -377,6 +389,10 @@ void usb_hid_disable(gpio_dev *disc_dev, uint8 disc_bit) {
         gpio_write_bit(disc_dev, disc_bit, 1);
     }
     
+    Device_Table = saved_Device_Table;
+    Device_Property = saved_Device_Property;
+    User_Standard_Requests = saved_User_Standard_Requests;
+
     usb_power_down();
 }
 

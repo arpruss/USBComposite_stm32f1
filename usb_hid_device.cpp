@@ -92,8 +92,7 @@ void HIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
             
     uint8_t* manufacturerDescriptor;
     uint8_t* productDescriptor;
-	if(!enabled) {
-        
+	if(!enabled) {        
 #ifdef GENERIC_BOOTLOADER			
         //Reset the USB interface on generic boards - developed by Victor PV
         gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_OUTPUT_PP);
