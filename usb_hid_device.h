@@ -41,15 +41,12 @@
     0xa1, 0x00,						/*    COLLECTION (Physical) */ \
     0x05, 0x09,						/*      USAGE_PAGE (Button) */ \
     0x19, 0x01,						/*      USAGE_MINIMUM (Button 1) */ \
-    0x29, 0x03,						/*      USAGE_MAXIMUM (Button 3) */ \
+    0x29, 0x08,						/*      USAGE_MAXIMUM (Button 8) */ \
     0x15, 0x00,						/*      LOGICAL_MINIMUM (0) */ \
     0x25, 0x01,						/*      LOGICAL_MAXIMUM (1) */ \
-    0x95, 0x03,						/*      REPORT_COUNT (3) */ \
+    0x95, 0x08,						/*      REPORT_COUNT (8) */ \
     0x75, 0x01,						/*      REPORT_SIZE (1) */ \
     0x81, 0x02,						/*      INPUT (Data,Var,Abs) */ \
-    0x95, 0x01,						/*      REPORT_COUNT (1) */ \
-    0x75, 0x05,						/*      REPORT_SIZE (5) */ \
-    0x81, 0x03,						/*      INPUT (Cnst,Var,Abs) */ \
     0x05, 0x01,						/*      USAGE_PAGE (Generic Desktop) */ \
     0x09, 0x30,						/*      USAGE (X) */ \
     0x09, 0x31,						/*      USAGE (Y) */ \
@@ -60,6 +57,38 @@
     0x95, 0x03,						/*      REPORT_COUNT (3) */ \
     0x81, 0x06,						/*      INPUT (Data,Var,Rel) */ \
     0xc0,      						/*    END_COLLECTION */ \
+    0xc0      						/*  END_COLLECTION */ 
+
+#define USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(reportId) \
+    0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
+    0x09, 0x02,						/*  USAGE (Mouse) */ \
+    0xa1, 0x01,						/*  COLLECTION (Application) */ \
+    0x85, reportId,						/*    REPORT_ID (1) */ \
+    0x09, 0x01,						/*    USAGE (Pointer) */ \
+    0xa1, 0x00,						/*    COLLECTION (Physical) */ \
+    0x05, 0x09,						/*      USAGE_PAGE (Button) */ \
+    0x19, 0x01,						/*      USAGE_MINIMUM (Button 1) */ \
+    0x29, 0x08,						/*      USAGE_MAXIMUM (Button 8) */ \
+    0x15, 0x00,						/*      LOGICAL_MINIMUM (0) */ \
+    0x25, 0x01,						/*      LOGICAL_MAXIMUM (1) */ \
+    0x95, 0x08,						/*      REPORT_COUNT (8) */ \
+    0x75, 0x01,						/*      REPORT_SIZE (1) */ \
+    0x81, 0x02,						/*      INPUT (Data,Var,Abs) */ \
+    0x05, 0x01,						/*      USAGE_PAGE (Generic Desktop) */ \
+    0x09, 0x30,						/*      USAGE (X) */ \
+    0x09, 0x31,						/*      USAGE (Y) */ \
+    0x16, 0x00, 0x80,						/*      LOGICAL_MINIMUM (-32768) */ \
+    0x26, 0xFF, 0x7f,						/*      LOGICAL_MAXIMUM (32767) */ \
+    0x75, 0x10,						/*      REPORT_SIZE (16) */ \
+    0x95, 0x02,						/*      REPORT_COUNT (2) */ \
+    0x81, 0x02,						/*      INPUT (Data,Var,Abs) */ \
+    0x09, 0x38,						/*      USAGE (Wheel) */ \
+    0x15, 0x81,						/*      LOGICAL_MINIMUM (-127) */ \
+    0x25, 0x7f,						/*      LOGICAL_MAXIMUM (127) */ \
+    0x75, 0x08,						/*      REPORT_SIZE (8) */ \
+    0x95, 0x01,						/*      REPORT_COUNT (1) */ \
+    0x81, 0x06,						/*      INPUT (Data,Var,Rel) */ \
+    0xc0,     						/*  END_COLLECTION */  \
     0xc0      						/*  END_COLLECTION */ 
 
 #define USB_HID_KEYBOARD_REPORT_DESCRIPTOR(reportId) \
@@ -226,6 +255,34 @@ public:
 	void end(void);
 	void click(uint8_t b = MOUSE_LEFT);
 	void move(signed char x, signed char y, signed char wheel = 0);
+	void press(uint8_t b = MOUSE_LEFT);		// press LEFT by default
+	void release(uint8_t b = MOUSE_LEFT);	// release LEFT by default
+	bool isPressed(uint8_t b = MOUSE_ALL);	// check all buttons by default
+};
+
+typedef struct {
+    uint8_t reportID;
+    uint8_t buttons;
+    int16_t x;
+    int16_t y;
+    uint8_t wheel;
+} __packed AbsMouseReport_t;
+
+class HIDAbsMouse : public HIDReporter {
+private:
+	void buttons(uint8_t b);
+    AbsMouseReport_t report;
+public:
+	HIDAbsMouse(uint8_t reportID=USB_HID_MOUSE_REPORT_ID) : HIDReporter((uint8_t*)&report, sizeof(report), reportID) {
+        report.buttons = 0;
+        report.x = 0;
+        report.y = 0;
+        report.wheel = 0;
+    }
+	void begin(void);
+	void end(void);
+	void click(uint8_t b = MOUSE_LEFT);
+	void move(int16_t x, int16_t y, int8_t wheel = 0);
 	void press(uint8_t b = MOUSE_LEFT);		// press LEFT by default
 	void release(uint8_t b = MOUSE_LEFT);	// release LEFT by default
 	bool isPressed(uint8_t b = MOUSE_ALL);	// check all buttons by default
@@ -411,13 +468,13 @@ typedef struct{
 	uint8_t modifiers;
 	uint8_t reserved;
 	uint8_t keys[6];
-} __packed KeyReport;
+} __packed KeyReport_t;
 
 class HIDKeyboard : public Print, public HIDReporter {
 private:
-	KeyReport _keyReport;
+	KeyReport_t keyReport;
 public:
-	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&_keyReport, sizeof(KeyReport), reportID) {}
+	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&keyReport, sizeof(KeyReport_t), reportID) {}
 	void begin(void);
 	void end(void);
 	virtual size_t write(uint8_t k);

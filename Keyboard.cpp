@@ -16,7 +16,7 @@ size_t HIDKeyboard::press(uint8_t k)
 	if (k >= 136) {			// it's a non-printing key (not a modifier)
 		k = k - 136;
 	} else if (k >= 128) {	// it's a modifier key
-		_keyReport.modifiers |= (1<<(k-128));
+		keyReport.modifiers |= (1<<(k-128));
 		k = 0;
 	} else {				// it's a printing key
 		k = _asciimap[k];
@@ -25,20 +25,20 @@ size_t HIDKeyboard::press(uint8_t k)
 			return 0;
 		}
 		if (k & SHIFT) {						// it's a capital letter or other character reached with shift
-			_keyReport.modifiers |= 0x02;	// the left shift modifier
+			keyReport.modifiers |= 0x02;	// the left shift modifier
 			k &= 0x7F;
 		}
 	}
 
 	// Add k to the key report only if it's not already present
 	// and if there is an empty slot.
-	if (_keyReport.keys[0] != k && _keyReport.keys[1] != k &&
-		_keyReport.keys[2] != k && _keyReport.keys[3] != k &&
-		_keyReport.keys[4] != k && _keyReport.keys[5] != k) {
+	if (keyReport.keys[0] != k && keyReport.keys[1] != k &&
+		keyReport.keys[2] != k && keyReport.keys[3] != k &&
+		keyReport.keys[4] != k && keyReport.keys[5] != k) {
 
 		for (i=0; i<6; i++) {
-			if (_keyReport.keys[i] == 0x00) {
-				_keyReport.keys[i] = k;
+			if (keyReport.keys[i] == 0x00) {
+				keyReport.keys[i] = k;
 				break;
 			}
 		}
@@ -61,7 +61,7 @@ size_t HIDKeyboard::release(uint8_t k)
 	if (k >= 136) {			// it's a non-printing key (not a modifier)
 		k = k - 136;
 	} else if (k >= 128) {	// it's a modifier key
-		_keyReport.modifiers &= ~(1<<(k-128));
+		keyReport.modifiers &= ~(1<<(k-128));
 		k = 0;
 	} else {				// it's a printing key
 		k = _asciimap[k];
@@ -69,7 +69,7 @@ size_t HIDKeyboard::release(uint8_t k)
 			return 0;
 		}
 		if (k & 0x80) {							// it's a capital letter or other character reached with shift
-			_keyReport.modifiers &= ~(0x02);	// the left shift modifier
+			keyReport.modifiers &= ~(0x02);	// the left shift modifier
 			k &= 0x7F;
 		}
 	}
@@ -77,8 +77,8 @@ size_t HIDKeyboard::release(uint8_t k)
 	// Test the key report to see if k is present.  Clear it if it exists.
 	// Check all positions in case the key is present more than once (which it shouldn't be)
 	for (i=0; i<6; i++) {
-		if (0 != k && _keyReport.keys[i] == k) {
-			_keyReport.keys[i] = 0x00;
+		if (0 != k && keyReport.keys[i] == k) {
+			keyReport.keys[i] = 0x00;
 		}
 	}
 	
@@ -88,13 +88,13 @@ size_t HIDKeyboard::release(uint8_t k)
 
 void HIDKeyboard::releaseAll(void)
 {
-	_keyReport.keys[0] = 0;
-	_keyReport.keys[1] = 0;
-	_keyReport.keys[2] = 0;
-	_keyReport.keys[3] = 0;
-	_keyReport.keys[4] = 0;
-	_keyReport.keys[5] = 0;
-	_keyReport.modifiers = 0;
+	keyReport.keys[0] = 0;
+	keyReport.keys[1] = 0;
+	keyReport.keys[2] = 0;
+	keyReport.keys[3] = 0;
+	keyReport.keys[4] = 0;
+	keyReport.keys[5] = 0;
+	keyReport.modifiers = 0;
 	
 	sendReport();
 }

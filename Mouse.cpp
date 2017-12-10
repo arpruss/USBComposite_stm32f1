@@ -32,6 +32,7 @@ void HIDMouse::buttons(uint8_t b)
 {
 	if (b != _buttons)
 	{
+        _buttons = b;
 		move(0,0,0);
 	}
 }
