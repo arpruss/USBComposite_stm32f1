@@ -1,5 +1,7 @@
 #include "usb_hid_device.h"
 
+// This code requires gcc on low-endian devices.
+
 //================================================================================
 //================================================================================
 //	Joystick
@@ -14,6 +16,10 @@ void HIDJoystick::setManualReportMode(bool mode) {
     manualReport = mode;
 }
 
+bool HIDJoystick::getManualReportMode() {
+    return manualReport;
+}
+
 void HIDJoystick::safeSendReport() {	
     if (!manualReport) {
         sendReport();
@@ -21,19 +27,12 @@ void HIDJoystick::safeSendReport() {
 }
 
 void HIDJoystick::button(uint8_t button, bool val){
-	button--;
-	uint8_t mask = (1 << (button & 7));
+	uint32_t mask = ((uint32_t)1 << (button-1));
+
 	if (val) {
-		if (button < 8) joystick_Report[1] |= mask;
-		else if (button < 16) joystick_Report[2] |= mask;
-		else if (button < 24) joystick_Report[3] |= mask;
-		else if (button < 32) joystick_Report[4] |= mask;
+        joyReport.buttons |= mask;
 	} else {
-		mask = ~mask;
-		if (button < 8) joystick_Report[1] &= mask;
-		else if (button < 16) joystick_Report[2] &= mask;
-		else if (button < 24) joystick_Report[3] &= mask;
-		else if (button < 32) joystick_Report[4] &= mask;
+        joyReport.buttons &= ~mask;
 	}
 	
     safeSendReport();
@@ -41,67 +40,59 @@ void HIDJoystick::button(uint8_t button, bool val){
 
 void HIDJoystick::X(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[5] = (joystick_Report[5] & 0x0F) | (val << 4);
-	joystick_Report[6] = (joystick_Report[6] & 0xC0) | (val >> 4);
+    joyReport.x = val;
 		
     safeSendReport();
 }
 
 void HIDJoystick::Y(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[6] = (joystick_Report[6] & 0x3F) | (val << 6);
-	joystick_Report[7] = (val >> 2);
-	
+    joyReport.y = val;
+			
     safeSendReport();
 }
 
 void HIDJoystick::position(uint16_t x, uint16_t y){
 	if (x > 1023) x = 1023;
 	if (y > 1023) y = 1023;
-	joystick_Report[5] = (joystick_Report[5] & 0x0F) | (x << 4);
-	joystick_Report[6] = (x >> 4) | (y << 6);
-	joystick_Report[7] = (y >> 2);
+    joyReport.x = x;
+    joyReport.y = y;
 	
     safeSendReport();
 }
 
 void HIDJoystick::Xrotate(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[8] = val;
-	joystick_Report[9] = (joystick_Report[9] & 0xFC) | (val >> 8);
+    joyReport.rx = val;
 	
     safeSendReport();
 }
 
 void HIDJoystick::Yrotate(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[9] = (joystick_Report[9] & 0x03) | (val << 2);
-	joystick_Report[10] = (joystick_Report[10] & 0xF0) | (val >> 6);
+    joyReport.ry = val;
 	
     safeSendReport();
 }
 
 void HIDJoystick::sliderLeft(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[10] = (joystick_Report[10] & 0x0F) | (val << 4);
-	joystick_Report[11] = (joystick_Report[11] & 0xC0) | (val >> 4);
+    joyReport.sliderLeft = val;	
 	
     safeSendReport();
 }
 
 void HIDJoystick::sliderRight(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[11] = (joystick_Report[11] & 0x3F) | (val << 6);
-	joystick_Report[12] = (val >> 2);
+    joyReport.sliderRight = val;	
 	
     safeSendReport();
 }
 
 void HIDJoystick::slider(uint16_t val){
 	if (val > 1023) val = 1023;
-	joystick_Report[10] = (joystick_Report[10] & 0x0F) | (val << 4);
-	joystick_Report[11] = (val >> 4) | (val << 6);
-	joystick_Report[12] = (val >> 2);
+    joyReport.sliderLeft = val;	
+    joyReport.sliderRight = val;	
 	
     safeSendReport();
 }
@@ -118,7 +109,8 @@ void HIDJoystick::hat(int16_t dir){
 	else if (dir < 293) val = 6;
 	else if (dir < 338) val = 7;
     else val = 15;
-	joystick_Report[5] = (joystick_Report[5] & 0xF0) | val;
+    
+    joyReport.hat = val;
 	
     safeSendReport();
 }

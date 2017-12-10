@@ -431,16 +431,33 @@ public:
 //================================================================================
 //	Joystick
 
+// only works for little-endian machines, but makes the code so much more
+// readable
+typedef struct {
+    uint8_t reportID;
+    uint32_t buttons;
+    unsigned hat:4;
+    unsigned x:10;
+    unsigned y:10;
+    unsigned rx:10;
+    unsigned ry:10;
+    unsigned sliderLeft:10;
+    unsigned sliderRight:10;
+} __packed JoystickReport_t;
+
+static_assert(sizeof(JoystickReport_t)==13, "Wrong endianness/packing!");
+
 class HIDJoystick : public HIDReporter {
 private:
-	uint8_t joystick_Report[13]; 
+	JoystickReport_t joyReport; 
     bool manualReport = false;
 	void safeSendReport(void);
 public:
 	inline void send(void) {
         sendReport();
     }
-    void setManualReportMode(bool manualReport);
+    void setManualReportMode(bool manualReport); // in manual report mode, reports only sent when send() is called
+    bool getManualReportMode();
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);
@@ -453,15 +470,15 @@ public:
 	void sliderRight(uint16_t val);
 	void slider(uint16_t val);
 	void hat(int16_t dir);
-	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDReporter(joystick_Report, sizeof(joystick_Report), reportID) {
-        setManualReportMode(true);
-        position(512,512);
-        Xrotate(512);
-        Yrotate(512);
-        sliderLeft(512);
-        sliderRight(512);
-        hat(-1);
-        setManualReportMode(false);
+	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDReporter((uint8_t*)&joyReport, sizeof(joyReport), reportID) {
+        joyReport.buttons = 0;
+        joyReport.hat = 15;
+        joyReport.x = 512;
+        joyReport.y = 512;
+        joyReport.rx = 512;
+        joyReport.ry = 512;
+        joyReport.sliderLeft = 0;
+        joyReport.sliderRight = 0;
     }
 };
 
@@ -502,3 +519,4 @@ extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
 #define USB_HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
 
 #endif
+        
