@@ -185,7 +185,7 @@ class HIDReporter {
         unsigned bufferSize;
         
     protected:
-        bool sendReport() {
+        void sendReport() {
             while (usb_hid_is_transmitting() != 0) {
             }
 
@@ -195,13 +195,13 @@ class HIDReporter {
             }
             /* flush out to avoid having the pc wait for more data */
             usb_hid_tx(NULL, 0);
-            return true;
         }
         
     public:
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t reportID) {
             buffer = _buffer;
             bufferSize = _size;
+            memset(buffer, 0, _size);
             buffer[0] = reportID;
         }
 };
@@ -407,18 +407,17 @@ const uint8_t _asciimap[128] =
 #define KEY_F12				0xCD
 
 typedef struct{
+    uint8_t reportID;
 	uint8_t modifiers;
 	uint8_t reserved;
 	uint8_t keys[6];
-} KeyReport;
+} __packed KeyReport;
 
 class HIDKeyboard : public Print, public HIDReporter {
 private:
 	KeyReport _keyReport;
-	void sendKeyReport(KeyReport* keys);
-    uint8_t reportBuffer[9];
 public:
-	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter(reportBuffer, sizeof(reportBuffer), reportID) {}
+	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&_keyReport, sizeof(KeyReport), reportID) {}
 	void begin(void);
 	void end(void);
 	virtual size_t write(uint8_t k);
@@ -434,13 +433,14 @@ public:
 
 class HIDJoystick : public HIDReporter {
 private:
-	uint8_t joystick_Report[13] = {3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
+	uint8_t joystick_Report[13]; 
     bool manualReport = false;
 	void safeSendReport(void);
 public:
-	void sendManualReport(void);
+	inline void send(void) {
+        sendReport();
+    }
     void setManualReportMode(bool manualReport);
-	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDReporter(joystick_Report, sizeof(joystick_Report), reportID) {}
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);
@@ -453,6 +453,16 @@ public:
 	void sliderRight(uint16_t val);
 	void slider(uint16_t val);
 	void hat(int16_t dir);
+	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDReporter(joystick_Report, sizeof(joystick_Report), reportID) {
+        setManualReportMode(true);
+        position(512,512);
+        Xrotate(512);
+        Yrotate(512);
+        sliderLeft(512);
+        sliderRight(512);
+        hat(-1);
+        setManualReportMode(false);
+    }
 };
 
 template<unsigned rxSize, unsigned rySize>class HIDRaw : public HIDReporter {

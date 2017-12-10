@@ -20,10 +20,6 @@ void HIDJoystick::safeSendReport() {
     }
 }
 
-void HIDJoystick::sendManualReport() {
-    sendReport();
-}
-    
 void HIDJoystick::button(uint8_t button, bool val){
 	button--;
 	uint8_t mask = (1 << (button & 7));

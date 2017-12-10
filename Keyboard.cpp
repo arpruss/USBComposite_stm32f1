@@ -4,19 +4,6 @@
 //================================================================================
 //	Keyboard
 
-void HIDKeyboard::sendKeyReport(KeyReport* keys)
-{
-	reportBuffer[1] = _keyReport.modifiers;
-	reportBuffer[2] = _keyReport.reserved;
-	
-	uint8_t i;
-	for(i=0;i<sizeof(_keyReport.keys);i++){
-		reportBuffer[i+3] = _keyReport.keys[i];
-	}
-    
-    sendReport();
-}
-
 void HIDKeyboard::begin(void){
 }
 
@@ -61,7 +48,7 @@ size_t HIDKeyboard::press(uint8_t k)
 		}
 	}
 	
-	sendKeyReport(&_keyReport);
+	sendReport();
 	return 1;
 }
 
@@ -95,7 +82,7 @@ size_t HIDKeyboard::release(uint8_t k)
 		}
 	}
 	
-	sendKeyReport(&_keyReport);
+	sendReport();
 	return 1;
 }
 
@@ -109,7 +96,7 @@ void HIDKeyboard::releaseAll(void)
 	_keyReport.keys[5] = 0;
 	_keyReport.modifiers = 0;
 	
-	sendKeyReport(&_keyReport);
+	sendReport();
 }
 
 size_t HIDKeyboard::write(uint8_t c)
