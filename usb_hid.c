@@ -54,7 +54,11 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 uint32 ProtocolValue;
 
 static void hidDataTxCb(void);
+#ifdef USB_HID_RX_SUPPORT
 static void hidDataRxCb(void);
+#else
+#define hidDataRxCb NOP_Process
+#endif
 static void hidStatusIn(void);
 
 static void usbInit(void);
@@ -71,9 +75,9 @@ static uint8* HID_GetReportDescriptor(uint16 Length);
 static uint8* HID_GetHIDDescriptor(uint16 Length);
 static uint8* HID_GetProtocolValue(uint16 Length);
 
-static HIDFeatureBuffer_t* featureBuffers = NULL;
+volatile HIDFeatureBuffer_t* featureBuffers = NULL;
 static int featureBufferCount = 0;
-static int currentFeature = -1;
+volatile int currentFeature = -1;
 
 /*
  * Descriptors
@@ -422,6 +426,16 @@ static void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
     }
 }
 
+/*
+ * Callbacks
+ */
+
+static void hidDataTxCb(void) {
+    n_unsent_bytes = 0;
+    transmitting = 0;
+}
+
+#ifdef USB_HID_RX_SUPPORT
 static void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
     uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
     uint16 *dst = (uint16*)buf;
@@ -434,6 +448,7 @@ static void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
         *dst = *src & 0xFF;
     }
 }
+#endif
 
 static void hidStatusIn() {
     if (pInformation->ControlState == WAIT_STATUS_IN && currentFeature >= 0 && 
@@ -446,6 +461,7 @@ static void hidStatusIn() {
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     for(int i=0;i<featureBufferCount;i++) {
         if (featureBuffers[i].reportID == reportID) {
+            featureBuffers[i].state = FEATURE_BUFFER_UNREAD; // hackish mark of busyness
             memcpy(featureBuffers[i].buffer, data, featureBuffers[i].bufferLength);
             featureBuffers[i].buffer[0] = reportID;
             featureBuffers[i].dataSize = featureBuffers[i].bufferLength;
@@ -455,24 +471,29 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     }
 }
 
-uint8_t* usb_hid_get_feature(uint8_t reportID, uint8_t poll) {
+uint8_t usb_hid_get_feature(uint8_t reportID, uint8_t* out, uint8_t poll) {
     for(int i=0;i<featureBufferCount;i++) {
         if (featureBuffers[i].reportID == reportID) {
-            if (featureBuffers[i].state == FEATURE_BUFFER_EMPTY)
-                return NULL;
-            if (poll && featureBuffers[i].state == FEATURE_BUFFER_READ)
-                return NULL;
-            if (featureBuffers[i].bufferLength != featureBuffers[i].dataSize)
-                return NULL;
+            uint8_t oldState = featureBuffers[i].state;
+            featureBuffers[i].state = FEATURE_BUFFER_UNREAD; // temporary
+
+            if (oldState == FEATURE_BUFFER_EMPTY || (poll && oldState == FEATURE_BUFFER_READ) ||
+                featureBuffers[i].bufferLength != featureBuffers[i].dataSize ) {
+                featureBuffers[i].state = oldState;
+                return 0;
+            }
+            memcpy(out, featureBuffers[i].buffer, featureBuffers[i].bufferLength);
             if (poll)
                 featureBuffers[i].state = FEATURE_BUFFER_READ;
-            return featureBuffers[i].buffer;
+            else
+                featureBuffers[i].state = oldState;
+            return featureBuffers[i].bufferLength;
         }
     }
-    return NULL;
+    return 0;
 }
 
-void usb_hid_set_feature_buffers(HIDFeatureBuffer_t* fb, int n) {
+void usb_hid_set_feature_buffers(volatile HIDFeatureBuffer_t* fb, int n) {
     featureBuffers = fb;
     featureBufferCount = n;
     for (int i=0; i< featureBufferCount; i++) {
@@ -512,6 +533,15 @@ uint32 usb_hid_tx(const uint8* buf, uint32 len) {
     return len;
 }
 
+uint8 usb_hid_is_transmitting(void) {
+    return transmitting;
+}
+
+uint16 usb_hid_get_pending(void) {
+    return n_unsent_bytes;
+}
+
+#ifdef USB_HID_RX_SUPPORT
 uint32 usb_hid_peek(uint8* buffer, uint32 n) {
     uint32 offset = rx_offset;
     uint32 toRead = n_unread_bytes;
@@ -524,17 +554,8 @@ uint32 usb_hid_peek(uint8* buffer, uint32 n) {
     return toRead; 
 }
 
-
 uint32 usb_hid_data_available(void) {
     return n_unread_bytes;
-}
-
-uint8 usb_hid_is_transmitting(void) {
-    return transmitting;
-}
-
-uint16 usb_hid_get_pending(void) {
-    return n_unsent_bytes;
 }
 
 /* Nonblocking byte receive.
@@ -558,15 +579,6 @@ uint32 usb_hid_rx(uint8* buf, uint32 len) {
     }
 
     return n_copied;
-}
-
-/*
- * Callbacks
- */
-
-static void hidDataTxCb(void) {
-    n_unsent_bytes = 0;
-    transmitting = 0;
 }
 
 static void hidDataRxCb(void) {
@@ -595,6 +607,7 @@ static void hidDataRxCb(void) {
         usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_VALID);
     }
 }
+#endif
 
 static void usbInit(void) {
     pInformation->Current_Configuration = 0;
@@ -703,7 +716,9 @@ static RESULT usbDataSetup(uint8 request) {
 			 && request == GET_PROTOCOL){
 		CopyRoutine = HID_GetProtocolValue;
 	}
-	
+
+// TODO: check Type_Recipient
+// TODO: add HID_GET_REPORT:HID_REPORT_TYPE_FEATURE	
     if (request == HID_SET_REPORT && pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
         for (currentFeature=0; currentFeature<featureBufferCount; currentFeature++) 
             if (pInformation->USBwValue0 == featureBuffers[currentFeature].reportID) 

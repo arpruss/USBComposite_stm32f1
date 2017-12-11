@@ -122,7 +122,7 @@ void HIDDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint
     begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product);
 }
 
-void HIDDevice::setFeatureBuffers(HIDFeatureBuffer_t* fb, int count) {
+void HIDDevice::setFeatureBuffers(volatile HIDFeatureBuffer_t* fb, int count) {
     usb_hid_set_feature_buffers(fb, count);
 }
 
@@ -154,12 +154,12 @@ HIDReporter::HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID) {
         buffer[0] = _reportID;
 }
 
-void HIDReporter::setFeature(void* in) {
-    return usb_hid_set_feature(reportID, (uint8*)in);
+void HIDReporter::setFeature(uint8_t* in) {
+    return usb_hid_set_feature(reportID, in);
 }
 
-void* HIDReporter::getFeature(uint8_t poll) {
-    return (void*)usb_hid_get_feature(reportID, poll);
+uint8_t HIDReporter::getFeature(uint8_t* out, uint8_t poll) {
+    return usb_hid_get_feature(reportID, out, poll);
 }
 
 HIDDevice HID;

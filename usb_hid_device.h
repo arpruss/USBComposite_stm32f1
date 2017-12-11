@@ -163,17 +163,60 @@
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x81, 0x02,						/*  Input (variable,absolute) */ \
+    0xC0                           /*  End Collection */
+
+#define USB_HID_JOYSTICK_WITH_FEATURE_REPORT_DESCRIPTOR(reportId, featureSize) \
+	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
+	0x09, 0x04,						/*  Usage (Joystick) */ \
+	0xA1, 0x01,						/*  Collection (Application) */ \
+    0x85, reportId,						/*    REPORT_ID (3) */ \
+	0x15, 0x00,						/* 	 Logical Minimum (0) */ \
+	0x25, 0x01,						/*    Logical Maximum (1) */ \
+	0x75, 0x01,						/*    Report Size (1) */ \
+	0x95, 0x20,						/*    Report Count (32) */ \
+	0x05, 0x09,						/*    Usage Page (Button) */ \
+	0x19, 0x01,						/*    Usage Minimum (Button #1) */ \
+	0x29, 0x20,						/*    Usage Maximum (Button #32) */ \
+	0x81, 0x02,						/*    Input (variable,absolute) */ \
+	0x15, 0x00,						/*    Logical Minimum (0) */ \
+	0x25, 0x07,						/*    Logical Maximum (7) */ \
+	0x35, 0x00,						/*    Physical Minimum (0) */ \
+	0x46, 0x3B, 0x01,				/*    Physical Maximum (315) */ \
+	0x75, 0x04,						/*    Report Size (4) */ \
+	0x95, 0x01,						/*    Report Count (1) */ \
+	0x65, 0x14,						/*    Unit (20) */ \
+    0x05, 0x01,                     /*    Usage Page (Generic Desktop) */ \
+	0x09, 0x39,						/*    Usage (Hat switch) */ \
+	0x81, 0x42,						/*    Input (variable,absolute,null_state) */ \
+    0x05, 0x01,                     /* Usage Page (Generic Desktop) */ \
+	0x09, 0x01,						/* Usage (Pointer) */ \
+    0xA1, 0x00,                     /* Collection () */ \
+	0x15, 0x00,						/*    Logical Minimum (0) */ \
+	0x26, 0xFF, 0x03,				/*    Logical Maximum (1023) */ \
+	0x75, 0x0A,						/*    Report Size (10) */ \
+	0x95, 0x04,						/*    Report Count (4) */ \
+	0x09, 0x30,						/*    Usage (X) */ \
+	0x09, 0x31,						/*    Usage (Y) */ \
+	0x09, 0x33,						/*    Usage (Rx) */ \
+	0x09, 0x34,						/*    Usage (Ry) */ \
+	0x81, 0x02,						/*    Input (variable,absolute) */ \
+    0xC0,                           /*  End Collection */ \
+	0x15, 0x00,						/*  Logical Minimum (0) */ \
+	0x26, 0xFF, 0x03,				/*  Logical Maximum (1023) */ \
+	0x75, 0x0A,						/*  Report Size (10) */ \
+	0x95, 0x02,						/*  Report Count (2) */ \
+	0x09, 0x36,						/*  Usage (Slider) */ \
+	0x09, 0x36,						/*  Usage (Slider) */ \
+	0x81, 0x02,						/*  Input (variable,absolute) */ \
     \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
             0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
             0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
             0x75, 0x08,       /* REPORT_SIZE (8) */ \
-            0x95, 32,       /* REPORT_COUNT (32) */ \
+            0x95, featureSize,       /* REPORT_COUNT (32) */ \
             0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
     0xC0                           /*  End Collection */
-
-//                0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ 
 
 #define RAWHID_USAGE_PAGE	0xFFC0 // recommended: 0xFF00 to 0xFFFF
 #define RAWHID_USAGE		0x0C00 // recommended: 0x0100 to 0xFFFF
@@ -214,7 +257,7 @@ public:
         const char* manufacturer=NULL, const char* product=NULL);
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
-    void setFeatureBuffers(HIDFeatureBuffer_t* fb=NULL, int count=0);
+    void setFeatureBuffers(volatile HIDFeatureBuffer_t* fb=NULL, int count=0);
     void end(void);
 };
 
@@ -230,8 +273,8 @@ class HIDReporter {
         
     public:
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
-        void* getFeature(uint8_t poll=1);
-        void setFeature(void* feature);
+        uint8_t getFeature(uint8_t* out, uint8_t poll=1);
+        void setFeature(uint8_t* feature);
 };
 
 //================================================================================
@@ -538,9 +581,9 @@ public:
     }
 };
 
-template<unsigned rxSize, unsigned rySize>class HIDRaw : public HIDReporter {
+template<unsigned size>class HIDRaw : public HIDReporter {
 private:
-    uint8_t outBuffer[rxSize];
+    uint8_t outBuffer[size];
 public:
 	HIDRaw() : HIDReporter(outBuffer, sizeof(outBuffer), 0) {}
 	void begin(void);
@@ -550,9 +593,9 @@ public:
         memcpy(outBuffer, data, n>sizeof(outBuffer)?sizeof(outBuffer):n);
         sendReport();
     }
-    uint32 receive(uint8_t* data, unsigned n) { /* does not seem to work! */
-        return usb_hid_rx(data, n);
-    }
+//    uint32 receive(uint8_t* data, unsigned n) { /* does not seem to work! */
+//        return usb_hid_rx(data, n);
+//    }
 };
 
 extern HIDDevice HID;
