@@ -122,6 +122,10 @@ void HIDDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint
     begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product);
 }
 
+void HIDDevice::setFeatureBuffers(HIDFeatureBuffer_t* fb, int count) {
+    usb_hid_set_feature_buffers(fb, count);
+}
+
 void HIDDevice::end(void){
 	if(enabled){
 	    usb_hid_disable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT);
@@ -129,5 +133,33 @@ void HIDDevice::end(void){
 	}
 }
 
+void HIDReporter::sendReport() {
+    while (usb_hid_is_transmitting() != 0) {
+    }
+
+    usb_hid_tx(buffer, bufferSize);
+    
+    while (usb_hid_is_transmitting() != 0) {
+    }
+    /* flush out to avoid having the pc wait for more data */
+    usb_hid_tx(NULL, 0);
+}
+        
+HIDReporter::HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID) {
+    buffer = _buffer;
+    bufferSize = _size;
+    memset(buffer, 0, _size);
+    reportID = _reportID;
+    if (_size > 0)
+        buffer[0] = _reportID;
+}
+
+void HIDReporter::setFeature(void* in) {
+    return usb_hid_set_feature(reportID, (uint8*)in);
+}
+
+void* HIDReporter::getFeature(uint8_t poll) {
+    return (void*)usb_hid_get_feature(reportID, poll);
+}
 
 HIDDevice HID;

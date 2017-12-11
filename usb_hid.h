@@ -75,6 +75,18 @@ typedef enum _HID_REQUESTS
 #define HID_REPORT_TYPE_OUTPUT        0x02
 #define HID_REPORT_TYPE_FEATURE       0x03
 
+#define FEATURE_BUFFER_EMPTY    0
+#define FEATURE_BUFFER_UNREAD   1
+#define FEATURE_BUFFER_READ     2
+
+typedef struct {
+    uint8_t* buffer;
+    uint8_t  bufferLength;
+    uint8_t  reportID;
+    uint8_t  dataSize;
+    uint8_t  state;
+} HIDFeatureBuffer_t;
+
 typedef struct
 {
 	uint8_t len;			// 9
@@ -137,7 +149,10 @@ typedef struct
 
 void usb_hid_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
+void usb_hid_set_feature_buffers(HIDFeatureBuffer_t* featureBuffers, int count);    
+uint8_t* usb_hid_get_feature(uint8_t reportID, uint8_t poll);
 void usb_hid_disable(gpio_dev*, uint8);
+void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
 uint32 usb_hid_peek(uint8* buffer, uint32 n);
 void   usb_hid_putc(char ch);

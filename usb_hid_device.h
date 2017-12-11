@@ -214,6 +214,7 @@ public:
         const char* manufacturer=NULL, const char* product=NULL);
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
+    void setFeatureBuffers(HIDFeatureBuffer_t* fb=NULL, int count=0);
     void end(void);
 };
 
@@ -222,27 +223,15 @@ class HIDReporter {
     private:
         uint8_t* buffer;
         unsigned bufferSize;
+        uint8_t reportID;
         
     protected:
-        void sendReport() {
-            while (usb_hid_is_transmitting() != 0) {
-            }
-
-            usb_hid_tx(buffer, bufferSize);
-            
-            while (usb_hid_is_transmitting() != 0) {
-            }
-            /* flush out to avoid having the pc wait for more data */
-            usb_hid_tx(NULL, 0);
-        }
+        void sendReport(); 
         
     public:
-        HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t reportID) {
-            buffer = _buffer;
-            bufferSize = _size;
-            memset(buffer, 0, _size);
-            buffer[0] = reportID;
-        }
+        HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
+        void* getFeature(uint8_t poll=1);
+        void setFeature(void* feature);
 };
 
 //================================================================================
