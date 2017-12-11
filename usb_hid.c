@@ -50,7 +50,7 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 #include "usb_core.h"
 #include "usb_def.h"
 
-
+extern uint8 flag;
 uint32 ProtocolValue;
 
 static void hidDataTxCb(void);
@@ -69,6 +69,10 @@ static void usbSetDeviceAddress(void);
 static uint8* HID_GetReportDescriptor(uint16 Length);
 static uint8* HID_GetHIDDescriptor(uint16 Length);
 static uint8* HID_GetProtocolValue(uint16 Length);
+
+static uint8 featureBuffer[65];
+static uint8 featureSize;
+static uint8 featureReady;
 
 /*
  * Descriptors
@@ -146,7 +150,7 @@ static usb_descriptor_config usbHIDDescriptor_Config =
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_HID_RX_ENDP),
-        .bmAttributes     = USB_EP_TYPE_BULK,
+        .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT, //USB_EP_TYPE_BULK,
         .wMaxPacketSize   = USB_HID_RX_EPSIZE,
         .bInterval        = 0x02,
     },
@@ -253,7 +257,7 @@ static void (*ep_int_in[7])(void) =
 
 static void (*ep_int_out[7])(void) =
     {NOP_Process,
-     hidDataRxCb,//NOP_Process,
+     hidDataRxCb,
      NOP_Process,
      NOP_Process,
      NOP_Process,
@@ -262,21 +266,20 @@ static void (*ep_int_out[7])(void) =
 
 /*
  * Globals required by usb_lib/
- *
- * Override weak definitions in the core.
  */
-
+ 
 #define NUM_ENDPTS                0x02
 static DEVICE my_Device_Table = {
     .Total_Endpoint      = NUM_ENDPTS,
     .Total_Configuration = 1
 };
 
+static uint8_t rxbuf[65];
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
 static DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
-    .Process_Status_IN           = NOP_Process,
+    .Process_Status_IN           = NOP_Process,//ARP
     .Process_Status_OUT          = NOP_Process,
     .Class_Data_Setup            = usbDataSetup,
     .Class_NoData_Setup          = usbNoDataSetup,
@@ -284,7 +287,7 @@ static DEVICE_PROP my_Device_Property = {
     .GetDeviceDescriptor         = usbGetDeviceDescriptor,
     .GetConfigDescriptor         = usbGetConfigDescriptor,
     .GetStringDescriptor         = usbGetStringDescriptor,
-    .RxEP_buffer                 = NULL,
+    .RxEP_buffer                 = rxbuf,
     .MaxPacketSize               = MAX_PACKET_SIZE
 };
 
@@ -561,6 +564,8 @@ static void usbInit(void) {
 
     nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
     USBLIB->state = USB_UNCONNECTED;
+    
+    featureSize = 0;
 }
 
 #define BTABLE_ADDRESS        0x00
@@ -586,13 +591,13 @@ static void usbReset(void) {
     /* TODO figure out differences in style between RX/TX EP setup */
 
     /* set up data endpoint OUT (RX) */
-    usb_set_ep_type(USB_HID_RX_ENDP, USB_EP_EP_TYPE_BULK);
+    usb_set_ep_type(USB_HID_RX_ENDP, USB_EP_EP_TYPE_INTERRUPT);
     usb_set_ep_rx_addr(USB_HID_RX_ENDP, USB_HID_RX_ADDR);
     usb_set_ep_rx_count(USB_HID_RX_ENDP, USB_HID_RX_EPSIZE);
     usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_VALID);
 
     /* set up data endpoint IN (TX)  */
-    usb_set_ep_type(USB_HID_TX_ENDP, USB_EP_EP_TYPE_BULK);
+    usb_set_ep_type(USB_HID_TX_ENDP, USB_EP_EP_TYPE_INTERRUPT);
     usb_set_ep_tx_addr(USB_HID_TX_ENDP, USB_HID_TX_ADDR);
     usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_NAK);
     usb_set_ep_rx_stat(USB_HID_TX_ENDP, USB_EP_STAT_RX_DISABLED);
@@ -605,6 +610,23 @@ static void usbReset(void) {
     n_unsent_bytes = 0;
     rx_offset = 0;
     transmitting = 0;
+}
+
+static uint8* HID_SetFeature(uint16 length) {
+    if (length ==0) {
+        uint8_t reportID = pInformation->USBwValues.w;
+        // todo: check
+        featureSize = pInformation->USBwLengths.w - pInformation->Ctrl_Info.Usb_wOffset;
+        featureReady = 0;
+        pInformation->Ctrl_Info.Usb_wLength = pInformation->USBwLengths.w - pInformation->Ctrl_Info.Usb_wOffset;
+        return NULL;
+    }
+
+    return featureBuffer + pInformation->Ctrl_Info.Usb_wOffset;
+}
+
+uint16_t getOffset(void) {
+    return pInformation->Ctrl_Info.Usb_wOffset;
 }
 
 static RESULT usbDataSetup(uint8 request) {
@@ -622,15 +644,23 @@ static RESULT usbDataSetup(uint8 request) {
 		
 	} /* End of GET_DESCRIPTOR */
 	  /*** GET_PROTOCOL ***/
-	else if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))//){
+	else if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 			 && request == GET_PROTOCOL){
 		CopyRoutine = HID_GetProtocolValue;
 	}
 	
+    if (request == HID_SET_REPORT && pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
+        flag = 0xFF;
+        if (featureSize == 0)
+            CopyRoutine = HID_SetFeature;
+        else
+            return USB_NOT_READY;
+    }
+
 	if (CopyRoutine == NULL){
 		return USB_UNSUPPORT;
 	}
-
+    
     pInformation->Ctrl_Info.CopyData = CopyRoutine;
     pInformation->Ctrl_Info.Usb_wOffset = 0;
     (*CopyRoutine)(0);

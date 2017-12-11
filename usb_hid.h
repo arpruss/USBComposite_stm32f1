@@ -70,6 +70,10 @@ typedef enum _HID_REQUESTS
  
 #define REPORT_DESCRIPTOR               0x22
 
+#define HID_SET_REPORT 0x09
+#define HID_REPORT_TYPE_INPUT         0x01
+#define HID_REPORT_TYPE_OUTPUT        0x02
+#define HID_REPORT_TYPE_FEATURE       0x03
 
 typedef struct
 {

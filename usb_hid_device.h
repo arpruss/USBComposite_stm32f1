@@ -163,7 +163,17 @@
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x81, 0x02,						/*  Input (variable,absolute) */ \
-    0xC0                           /*  End Collection */ 
+    \
+    0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
+    0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
+            0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
+            0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
+            0x75, 0x08,       /* REPORT_SIZE (8) */ \
+            0x95, 32,       /* REPORT_COUNT (32) */ \
+            0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
+    0xC0                           /*  End Collection */
+
+//                0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ 
 
 #define RAWHID_USAGE_PAGE	0xFFC0 // recommended: 0xFF00 to 0xFFFF
 #define RAWHID_USAGE		0x0C00 // recommended: 0x0100 to 0xFFFF
