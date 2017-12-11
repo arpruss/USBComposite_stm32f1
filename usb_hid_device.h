@@ -287,8 +287,8 @@ class HIDReporter {
 #define MOUSE_ALL (MOUSE_LEFT | MOUSE_RIGHT | MOUSE_MIDDLE)
 
 class HIDMouse : public HIDReporter {
-private:
-	uint8_t _buttons;
+protected:
+    uint8_t _buttons;
 	void buttons(uint8_t b);
     uint8_t reportBuffer[5];
 public:
@@ -311,7 +311,7 @@ typedef struct {
 } __packed AbsMouseReport_t;
 
 class HIDAbsMouse : public HIDReporter {
-private:
+protected:
 	void buttons(uint8_t b);
     AbsMouseReport_t report;
 public:
@@ -513,7 +513,7 @@ typedef struct{
 } __packed KeyReport_t;
 
 class HIDKeyboard : public Print, public HIDReporter {
-private:
+protected:
 	KeyReport_t keyReport;
 public:
 	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&keyReport, sizeof(KeyReport_t), reportID) {}
@@ -547,7 +547,7 @@ typedef struct {
 static_assert(sizeof(JoystickReport_t)==13, "Wrong endianness/packing!");
 
 class HIDJoystick : public HIDReporter {
-private:
+protected:
 	JoystickReport_t joyReport; 
     bool manualReport = false;
 	void safeSendReport(void);
