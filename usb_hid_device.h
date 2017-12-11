@@ -236,9 +236,12 @@
 	0x09, 0x01,				/*  usage */ \
 	0x81, 0x02,				/*  Input (array) */ \
 \
+	0x75, 0x08,				/*  report size = 8 bits */ \
+	0x15, 0x00,				/*  logical minimum = 0 */ \
+	0x26, 0xFF, 0x00,		/*  logical maximum = 255 */ \
 	0x95, rxSize,				/*  report count RX */ \
 	0x09, 0x02,				/*  usage */ \
-	0x91, 0x02,				/*  Output (array) */ \
+	0xB1, 0x02,				/*  FEATURE (array) : : OUTPUT (0x91) */ \
 	0xC0					/*  end collection */ 
     
 typedef struct {

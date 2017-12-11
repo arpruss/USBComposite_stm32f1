@@ -280,7 +280,6 @@ static DEVICE my_Device_Table = {
     .Total_Configuration = 1
 };
 
-static uint8_t rxbuf[65];
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
 static DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
@@ -293,7 +292,7 @@ static DEVICE_PROP my_Device_Property = {
     .GetDeviceDescriptor         = usbGetDeviceDescriptor,
     .GetConfigDescriptor         = usbGetConfigDescriptor,
     .GetStringDescriptor         = usbGetStringDescriptor,
-    .RxEP_buffer                 = rxbuf,
+    .RxEP_buffer                 = NULL,
     .MaxPacketSize               = MAX_PACKET_SIZE
 };
 
@@ -464,7 +463,8 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
         if (featureBuffers[i].reportID == reportID) {
             featureBuffers[i].state = FEATURE_BUFFER_UNREAD; // hackish mark of busyness
             memcpy(featureBuffers[i].buffer, data, featureBuffers[i].bufferLength);
-            featureBuffers[i].buffer[0] = reportID;
+            if (reportID)
+                featureBuffers[i].buffer[0] = reportID;
             featureBuffers[i].dataSize = featureBuffers[i].bufferLength;
             featureBuffers[i].state = FEATURE_BUFFER_READ;
             return;
@@ -747,6 +747,7 @@ static RESULT usbDataSetup(uint8 request) {
         if (featureBuffers[currentInFeature].state == FEATURE_BUFFER_UNREAD) {
             return USB_NOT_READY;
         }
+
         featureBuffers[currentInFeature].state = FEATURE_BUFFER_EMPTY;
         CopyRoutine = HID_SetFeature;        
     }
