@@ -30,9 +30,17 @@
 #define USB_HID_MOUSE_REPORT_ID 1
 #define USB_HID_KEYBOARD_REPORT_ID 2
 #define USB_HID_JOYSTICK_REPORT_ID 3
-#define USB_HID_RAW_REPORT_ID 10
 
-#define USB_HID_MOUSE_REPORT_DESCRIPTOR(reportId) \
+#define USB_HID_FEATURE_REPORT_DESCRIPTOR(featureSize) \
+    0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
+    0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
+            0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
+            0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
+            0x75, 0x08,       /* REPORT_SIZE (8) */ \
+            0x95, featureSize,       /* REPORT_COUNT (32) */ \
+            0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
+
+#define USB_HID_MOUSE_REPORT_DESCRIPTOR(reportId, ...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
     0x09, 0x02,						/*  USAGE (Mouse) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
@@ -57,9 +65,10 @@
     0x95, 0x03,						/*      REPORT_COUNT (3) */ \
     0x81, 0x06,						/*      INPUT (Data,Var,Rel) */ \
     0xc0,      						/*    END_COLLECTION */ \
+    __VA_ARGS__  \
     0xc0      						/*  END_COLLECTION */ 
 
-#define USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(reportId) \
+#define USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(reportId, ...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
     0x09, 0x02,						/*  USAGE (Mouse) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
@@ -89,9 +98,10 @@
     0x95, 0x01,						/*      REPORT_COUNT (1) */ \
     0x81, 0x06,						/*      INPUT (Data,Var,Rel) */ \
     0xc0,     						/*  END_COLLECTION */  \
+    __VA_ARGS__ \
     0xc0      						/*  END_COLLECTION */ 
 
-#define USB_HID_KEYBOARD_REPORT_DESCRIPTOR(reportId) \
+#define USB_HID_KEYBOARD_REPORT_DESCRIPTOR(reportId, ...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 47 */ \
     0x09, 0x06,						/*  USAGE (Keyboard) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
@@ -118,9 +128,10 @@
 	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
     0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
+    __VA_ARGS__ \
     0xc0      						/*  END_COLLECTION */
 	
-#define USB_HID_JOYSTICK_REPORT_DESCRIPTOR(reportId) \
+#define USB_HID_JOYSTICK_REPORT_DESCRIPTOR(reportId,...) \
 	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
 	0x09, 0x04,						/*  Usage (Joystick) */ \
 	0xA1, 0x01,						/*  Collection (Application) */ \
@@ -163,60 +174,8 @@
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x81, 0x02,						/*  Input (variable,absolute) */ \
-    0xC0                           /*  End Collection */
-
-#define USB_HID_JOYSTICK_WITH_FEATURE_REPORT_DESCRIPTOR(reportId, featureSize) \
-	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
-	0x09, 0x04,						/*  Usage (Joystick) */ \
-	0xA1, 0x01,						/*  Collection (Application) */ \
-    0x85, reportId,						/*    REPORT_ID (3) */ \
-	0x15, 0x00,						/* 	 Logical Minimum (0) */ \
-	0x25, 0x01,						/*    Logical Maximum (1) */ \
-	0x75, 0x01,						/*    Report Size (1) */ \
-	0x95, 0x20,						/*    Report Count (32) */ \
-	0x05, 0x09,						/*    Usage Page (Button) */ \
-	0x19, 0x01,						/*    Usage Minimum (Button #1) */ \
-	0x29, 0x20,						/*    Usage Maximum (Button #32) */ \
-	0x81, 0x02,						/*    Input (variable,absolute) */ \
-	0x15, 0x00,						/*    Logical Minimum (0) */ \
-	0x25, 0x07,						/*    Logical Maximum (7) */ \
-	0x35, 0x00,						/*    Physical Minimum (0) */ \
-	0x46, 0x3B, 0x01,				/*    Physical Maximum (315) */ \
-	0x75, 0x04,						/*    Report Size (4) */ \
-	0x95, 0x01,						/*    Report Count (1) */ \
-	0x65, 0x14,						/*    Unit (20) */ \
-    0x05, 0x01,                     /*    Usage Page (Generic Desktop) */ \
-	0x09, 0x39,						/*    Usage (Hat switch) */ \
-	0x81, 0x42,						/*    Input (variable,absolute,null_state) */ \
-    0x05, 0x01,                     /* Usage Page (Generic Desktop) */ \
-	0x09, 0x01,						/* Usage (Pointer) */ \
-    0xA1, 0x00,                     /* Collection () */ \
-	0x15, 0x00,						/*    Logical Minimum (0) */ \
-	0x26, 0xFF, 0x03,				/*    Logical Maximum (1023) */ \
-	0x75, 0x0A,						/*    Report Size (10) */ \
-	0x95, 0x04,						/*    Report Count (4) */ \
-	0x09, 0x30,						/*    Usage (X) */ \
-	0x09, 0x31,						/*    Usage (Y) */ \
-	0x09, 0x33,						/*    Usage (Rx) */ \
-	0x09, 0x34,						/*    Usage (Ry) */ \
-	0x81, 0x02,						/*    Input (variable,absolute) */ \
-    0xC0,                           /*  End Collection */ \
-	0x15, 0x00,						/*  Logical Minimum (0) */ \
-	0x26, 0xFF, 0x03,				/*  Logical Maximum (1023) */ \
-	0x75, 0x0A,						/*  Report Size (10) */ \
-	0x95, 0x02,						/*  Report Count (2) */ \
-	0x09, 0x36,						/*  Usage (Slider) */ \
-	0x09, 0x36,						/*  Usage (Slider) */ \
-	0x81, 0x02,						/*  Input (variable,absolute) */ \
-    \
-    0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
-    0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
-            0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
-            0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
-            0x75, 0x08,       /* REPORT_SIZE (8) */ \
-            0x95, featureSize,       /* REPORT_COUNT (32) */ \
-            0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
-    0xC0                           /*  End Collection */
+    __VA_ARGS__ \
+    0xC0
 
 #define RAWHID_USAGE_PAGE	0xFFC0 // recommended: 0xFF00 to 0xFFFF
 #define RAWHID_USAGE		0x0C00 // recommended: 0x0100 to 0xFFFF
@@ -241,7 +200,7 @@
 	0x26, 0xFF, 0x00,		/*  logical maximum = 255 */ \
 	0x95, rxSize,				/*  report count RX */ \
 	0x09, 0x02,				/*  usage */ \
-	0xB1, 0x02,				/*  FEATURE (array) : : OUTPUT (0x91) */ \
+	0xB1, 0x02,				/*  FEATURE (array) : TODO : OUTPUT (0x91) */ \
 	0xC0					/*  end collection */ 
     
 typedef struct {

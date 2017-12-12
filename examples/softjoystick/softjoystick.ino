@@ -29,7 +29,8 @@ class HIDJoystickRawData : public HIDJoystick {
 HIDJoystickRawData joy;
 
 const uint8_t reportDescription[] = {
-   USB_HID_JOYSTICK_WITH_FEATURE_REPORT_DESCRIPTOR(USB_HID_JOYSTICK_REPORT_ID, sizeof(JoystickReport_t)-1)
+   USB_HID_JOYSTICK_REPORT_DESCRIPTOR(USB_HID_JOYSTICK_REPORT_ID, 
+        USB_HID_FEATURE_REPORT_DESCRIPTOR(sizeof(JoystickReport_t)-1))
 };
 
 void setup() {
