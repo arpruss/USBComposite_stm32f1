@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
-#include "usb_hid.h"
+#include "usb_composite.h"
 #include <libmaple/usb.h>
 #include <string.h>
 
@@ -109,7 +109,7 @@ void HIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
             productDescriptor = NULL;
         }
 
-		usb_hid_enable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT, 
+		usb_composite_enable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT, 
             report_descriptor, report_descriptor_length,
             idVendor, idProduct, manufacturerDescriptor, productDescriptor);
             
@@ -128,19 +128,19 @@ void HIDDevice::setFeatureBuffers(volatile HIDFeatureBuffer_t* fb, int count) {
 
 void HIDDevice::end(void){
 	if(enabled){
-	    usb_hid_disable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT);
+	    usb_composite_disable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT);
 		enabled = false;
 	}
 }
 
 void HIDReporter::sendReport() {
-    while (usb_hid_is_transmitting() != 0) {
-    }
+//    while (usb_is_transmitting() != 0) {
+//    }
 
     usb_hid_tx(buffer, bufferSize);
     
-    while (usb_hid_is_transmitting() != 0) {
-    }
+//    while (usb_is_transmitting() != 0) {
+//    }
     /* flush out to avoid having the pc wait for more data */
     usb_hid_tx(NULL, 0);
 }

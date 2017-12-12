@@ -49,8 +49,6 @@ while True:
     myReport.set_raw_data(joystickData(buttons=7,x=0,y=0))    
     myReport.send()
     sleep(0.5)
-    print("fetch: "+str(myReport.get_raw_data()))
     myReport.set_raw_data(joystickData(buttons=0,x=1023,y=1023))
     myReport.send()
     sleep(0.5)
-    print("fetch: "+str(myReport.get_raw_data()))

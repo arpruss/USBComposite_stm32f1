@@ -22,7 +22,7 @@
 
 #include <Print.h>
 #include <boards.h>
-#include "usb_hid.h"
+#include "usb_composite.h"
 
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
