@@ -27,10 +27,11 @@ class HIDJoystickRawData : public HIDJoystick {
 };
 
 HIDJoystickRawData joy;
+JoystickReport_t report = {USB_HID_JOYSTICK_REPORT_ID};
 
 const uint8_t reportDescription[] = {
    USB_HID_JOYSTICK_REPORT_DESCRIPTOR(USB_HID_JOYSTICK_REPORT_ID, 
-        USB_HID_FEATURE_REPORT_DESCRIPTOR(sizeof(JoystickReport_t)-1))
+        USB_HID_FEATURE_REPORT_DESCRIPTOR(sizeof(JoystickReport_t)))
 };
 
 void setup() {
@@ -39,10 +40,10 @@ void setup() {
 }
 
 void loop() {
-  JoystickReport_t report;
   if (joy.getFeature((uint8_t*)&report)) {
     joy.setRawData(&report);
   }
+  
   delay(5);
 }
 

@@ -62,7 +62,7 @@ extern "C" {
 
 
 typedef struct {
-    uint8_t* buffer;
+    volatile uint8_t* buffer;
     uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature report length in the report descriptor
     uint8_t  reportID;
     uint8_t  dataSize;
