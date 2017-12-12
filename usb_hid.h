@@ -34,6 +34,8 @@
 #ifndef _LIBMAPLE_USB_HID_H_
 #define _LIBMAPLE_USB_HID_H_
 
+#undef USB_HID_RX_SUPPORT // RX support doesn't work right now
+
 #include <libmaple/libmaple_types.h>
 #include <libmaple/gpio.h>
 #include <libmaple/usb.h>
@@ -70,6 +72,23 @@ typedef enum _HID_REQUESTS
  
 #define REPORT_DESCRIPTOR               0x22
 
+#define HID_GET_REPORT 0x01
+#define HID_SET_REPORT 0x09
+#define HID_REPORT_TYPE_INPUT         0x01
+#define HID_REPORT_TYPE_OUTPUT        0x02
+#define HID_REPORT_TYPE_FEATURE       0x03
+
+#define FEATURE_BUFFER_EMPTY    0
+#define FEATURE_BUFFER_UNREAD   1
+#define FEATURE_BUFFER_READ     2
+
+typedef struct {
+    uint8_t* buffer;
+    uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature report length in the report descriptor
+    uint8_t  reportID;
+    uint8_t  dataSize;
+    uint8_t  state;
+} HIDFeatureBuffer_t;
 
 typedef struct
 {
@@ -133,15 +152,21 @@ typedef struct
 
 void usb_hid_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
+void usb_hid_set_feature_buffers(volatile HIDFeatureBuffer_t* featureBuffers, int count);    
+uint8_t usb_hid_get_feature(uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_hid_disable(gpio_dev*, uint8);
+void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
-uint32 usb_hid_peek(uint8* buffer, uint32 n);
 void   usb_hid_putc(char ch);
 uint32 usb_hid_tx(const uint8* buf, uint32 len);
 uint32 usb_hid_tx_mod(const uint8* buf, uint32 len);
-uint32 usb_hid_rx(uint8* buf, uint32 len);
 
+#ifdef USB_HID_RX_SUPPORT
+uint32 usb_hid_rx(uint8* buf, uint32 len);
 uint32 usb_hid_data_available(void); /* in RX buffer */
+uint32 usb_hid_peek(uint8* buffer, uint32 n);
+#endif
+
 uint16 usb_hid_get_pending(void);
 uint8 usb_hid_is_transmitting(void);
 
