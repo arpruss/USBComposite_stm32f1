@@ -46,6 +46,7 @@ namespace wirish {
     namespace priv {
 
         void board_setup_usb(void) {
+            //Serial = CompositeSerial;
 #ifdef GENERIC_BOOTLOADER			
 			//Reset the USB interface on generic boards - developed by Victor PV
 			gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_OUTPUT_PP);
