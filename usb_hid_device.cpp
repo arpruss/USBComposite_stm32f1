@@ -73,7 +73,7 @@ static void ifaceSetupHook(unsigned, void*);
 
 #define USB_TIMEOUT 50
 
-HIDDevice::HIDDevice(void) {
+USBDevice::USBDevice(void) {
 }
 
 static void generateUSBDescriptor(uint8* out, int maxLength, const char* in) {
@@ -91,7 +91,7 @@ static void generateUSBDescriptor(uint8* out, int maxLength, const char* in) {
     }    
 }
 
-void HIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length, uint16_t idVendor, uint16_t idProduct,
+void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length, uint16_t idVendor, uint16_t idProduct,
         const char* manufacturer, const char* product) {
             
     uint8_t* manufacturerDescriptor;
@@ -123,16 +123,16 @@ void HIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
 	}
 }
 
-void HIDDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint16_t idProduct,
+void USBDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint16_t idProduct,
         const char* manufacturer, const char* product) {
     begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product);
 }
 
-void HIDDevice::setFeatureBuffers(volatile HIDFeatureBuffer_t* fb, int count) {
+void USBDevice::setFeatureBuffers(volatile HIDFeatureBuffer_t* fb, int count) {
     usb_hid_set_feature_buffers(fb, count);
 }
 
-void HIDDevice::end(void){
+void USBDevice::end(void){
 	if(enabled){
 	    usb_composite_disable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT);
 		enabled = false;
@@ -169,135 +169,6 @@ uint8_t HIDReporter::getFeature(uint8_t* out, uint8_t poll) {
 }
 
 
-/*
- * USBSerial interface
- */
-
-USBCompositeSerial_Base::USBCompositeSerial_Base(void) {
-#if !BOARD_HAVE_SERIALUSB
-    ASSERT(0);
-#endif
-}
-
-void USBCompositeSerial_Base::begin(void) {
-}
-
-//Roger Clark. Two new begin functions has been added so that normal Arduino Sketches that use Serial.begin(xxx) will compile.
-void USBCompositeSerial_Base::begin(unsigned long ignoreBaud) 
-{
-	volatile unsigned long removeCompilerWarningsIgnoreBaud=ignoreBaud;
-
-	ignoreBaud=removeCompilerWarningsIgnoreBaud;
-}
-void USBCompositeSerial_Base::begin(unsigned long ignoreBaud, uint8_t ignore)
-{
-	volatile unsigned long removeCompilerWarningsIgnoreBaud=ignoreBaud;
-	volatile uint8_t removeCompilerWarningsIgnore=ignore;
-
-	ignoreBaud=removeCompilerWarningsIgnoreBaud;
-	ignore=removeCompilerWarningsIgnore;
-}
-
-void USBCompositeSerial_Base::end(void) {
-}
-
-size_t USBCompositeSerial_Base::write(uint8 ch) {
-size_t n = 0;
-    this->write(&ch, 1);
-		return n;
-}
-
-size_t USBCompositeSerial_Base::write(const char *str) {
-size_t n = 0;
-    this->write((const uint8*)str, strlen(str));
-	return n;
-}
-
-size_t USBCompositeSerial_Base::write(const uint8 *buf, uint32 len)
-{
-size_t n = 0;
-    if (!this->isConnected() || !buf) {
-        return 0;
-    }
-
-    uint32 txed = 0;
-    while (txed < len) {
-        txed += composite_cdcacm_tx((const uint8*)buf + txed, len - txed);
-    }
-
-	return n;
-}
-
-int USBCompositeSerial_Base::available(void) {
-    return composite_cdcacm_data_available();
-}
-
-int USBCompositeSerial_Base::peek(void)
-{
-    uint8 b;
-	if (composite_cdcacm_peek(&b, 1)==1)
-	{
-		return b;
-	}
-	else
-	{
-		return -1;
-	}
-}
-
-void USBCompositeSerial_Base::flush(void)
-{
-/*Roger Clark. Rather slow method. Need to improve this */
-    uint8 b;
-	while(composite_cdcacm_data_available())
-	{
-		this->read(&b, 1);
-	}
-    return;
-}
-
-uint32 USBCompositeSerial_Base::read(uint8 * buf, uint32 len) {
-    uint32 rxed = 0;
-    while (rxed < len) {
-        rxed += composite_cdcacm_rx(buf + rxed, len - rxed);
-    }
-
-    return rxed;
-}
-
-/* Blocks forever until 1 byte is received */
-int USBCompositeSerial_Base::read(void) {
-    uint8 b;
-	/*
-	    this->read(&b, 1);
-    return b;
-	*/
-	
-	if (composite_cdcacm_rx(&b, 1)==0)
-	{
-		return -1;
-	}
-	else
-	{
-		return b;
-	}
-}
-
-uint8 USBCompositeSerial_Base::pending(void) {
-    return composite_cdcacm_get_pending();
-}
-
-uint8 USBCompositeSerial_Base::isConnected(void) {
-    return usb_is_connected(USBLIB) && usb_is_configured(USBLIB) && composite_cdcacm_get_dtr();
-}
-
-uint8 USBCompositeSerial_Base::getDTR(void) {
-    return composite_cdcacm_get_dtr();
-}
-
-uint8 USBCompositeSerial_Base::getRTS(void) {
-    return composite_cdcacm_get_rts();
-}
 
 enum reset_state_t {
     DTR_UNSET,
@@ -401,5 +272,4 @@ static void rxHook(unsigned hook, void *ignored) {
     }
 }
 
-USBCompositeSerial_Base CompositeSerial;
-HIDDevice HID;
+USBDevice USB;

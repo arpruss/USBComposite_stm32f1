@@ -24,6 +24,7 @@
 #include <boards.h>
 #include "Stream.h"
 #include "usb_composite.h"
+#include "composite_serial.h"
 
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
@@ -209,13 +210,13 @@ typedef struct {
     uint16_t length;    
 } HIDReportDescriptor;
 
-class HIDDevice{
+class USBDevice{
 private:
 	bool enabled = false;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
 public:
-	HIDDevice(void);
+	USBDevice(void);
     void begin(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
@@ -561,21 +562,9 @@ public:
 //    }
 };
 
-extern HIDDevice HID;
-extern HIDMouse Mouse;
-extern HIDKeyboard Keyboard;
-extern HIDJoystick Joystick;
-
-extern const HIDReportDescriptor* hidReportMouse;
-extern const HIDReportDescriptor* hidReportKeyboard;
-extern const HIDReportDescriptor* hidReportJoystick;
-extern const HIDReportDescriptor* hidReportKeyboardMouse;
-extern const HIDReportDescriptor* hidReportKeyboardJoystick;
-extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
-
-class USBCompositeSerial_Base : public Stream {
+class USBCompositeSerial : public Stream {
 public:
-    USBCompositeSerial_Base (void);
+    USBCompositeSerial (void);
 
     void begin(void);
 
@@ -607,6 +596,19 @@ public:
     uint8 pending();
 };
 
+extern USBDevice USB;
+#define HID USB
+extern HIDMouse Mouse;
+extern HIDKeyboard Keyboard;
+extern HIDJoystick Joystick;
+extern USBCompositeSerial CompositeSerial;
+
+extern const HIDReportDescriptor* hidReportMouse;
+extern const HIDReportDescriptor* hidReportKeyboard;
+extern const HIDReportDescriptor* hidReportJoystick;
+extern const HIDReportDescriptor* hidReportKeyboardMouse;
+extern const HIDReportDescriptor* hidReportKeyboardJoystick;
+extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
 
 #define USB_HID_MOUSE                   hidReportMouse
 #define USB_HID_KEYBOARD                hidReportKeyboard
