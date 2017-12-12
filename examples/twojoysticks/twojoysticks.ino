@@ -19,22 +19,22 @@ void loop(){
   Joystick.X(0);
   Joystick.Y(0);
   Joystick.sliderRight(1023);
-  Joystick.sendManualReport();
+  Joystick.send();
   delay(400);
   Joystick.X(1023);
   Joystick.Y(1023);
   Joystick.sliderRight(0);
-  Joystick.sendManualReport();
+  Joystick.send();
   delay(400);
   Joystick2.X(0);
   Joystick2.Y(0);
   Joystick2.sliderRight(1023);
-  Joystick2.sendManualReport();
+  Joystick2.send();
   delay(400);
   Joystick2.X(1023);
   Joystick2.Y(1023);
   Joystick2.sliderRight(0);
-  Joystick2.sendManualReport();
+  Joystick2.send();
   delay(400);
 }
 
