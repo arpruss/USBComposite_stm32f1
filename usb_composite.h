@@ -31,11 +31,11 @@
  * IMPORTANT: this API is unstable, and may change without notice.
  */
 
-#ifndef _LIBMAPLE_USB_DEVICE_H_
-#define _LIBMAPLE_USB_DEVICE_H_
+#ifndef _USB_COMPOSITE_H_
+#define _USB_COMPOSITE_H_
 
+#define COMPOSITE_SERIAL
 #undef USB_HID_RX_SUPPORT
-
 
 #include <libmaple/libmaple_types.h>
 #include <libmaple/gpio.h>
@@ -45,6 +45,7 @@
 extern "C" {
 #endif
 
+#ifdef COMPOSITE_SERIAL
 /*
  * CDC ACM Requests
  */
@@ -55,6 +56,7 @@ extern "C" {
 #define USB_CDCACM_SET_CONTROL_LINE_STATE 0x22
 #define USB_CDCACM_CONTROL_LINE_DTR       (0x01)
 #define USB_CDCACM_CONTROL_LINE_RTS       (0x02)
+#endif
 
 /*
  * Descriptors, etc.
@@ -70,6 +72,11 @@ typedef struct {
 } HIDFeatureBuffer_t;
 
 
+#define USB_CDCACM_CTRL_ENDP            0
+#define USB_CDCACM_CTRL_RX_ADDR         0x40
+#define USB_CDCACM_CTRL_TX_ADDR         0x80
+
+#ifdef COMPOSITE_SERIAL
 typedef struct
 {
 	uint8_t bLength;
@@ -90,7 +97,7 @@ typedef struct
       uint8 SubType;                            \
       uint8 Data[DataSize];                     \
   } __packed
-
+ 
 #define USB_DEVICE_CLASS_CDC              0x02
 #define USB_DEVICE_SUBCLASS_CDC           0x00
 #define USB_INTERFACE_CLASS_CDC           0x02
@@ -101,9 +108,6 @@ typedef struct
  * Endpoint configuration
  */
 
-#define USB_CDCACM_CTRL_ENDP            0
-#define USB_CDCACM_CTRL_RX_ADDR         0x40
-#define USB_CDCACM_CTRL_TX_ADDR         0x80
 #define USB_CDCACM_CTRL_EPSIZE          0x40
 
 #define USB_CDCACM_TX_ENDP              1
@@ -117,6 +121,7 @@ typedef struct
 #define USB_CDCACM_RX_ENDP              3
 #define USB_CDCACM_RX_ADDR              0x110
 #define USB_CDCACM_RX_EPSIZE            0x40
+#endif
 
 void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
@@ -125,7 +130,7 @@ uint8_t usb_hid_get_feature(uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_composite_disable(gpio_dev*, uint8);
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
-
+#ifdef COMPOSITE_SERIAL
 /*
  * CDC ACM interface
  */
@@ -182,7 +187,7 @@ void composite_cdcacm_set_hooks(unsigned hook_flags, void (*hook)(unsigned, void
 static inline __always_inline void composite_cdcacm_remove_hooks(unsigned hook_flags) {
     composite_cdcacm_set_hooks(hook_flags, 0);
 }
-
+#endif
 
  
 #define FEATURE_BUFFER_EMPTY    0
@@ -246,14 +251,21 @@ typedef struct
  * Endpoint configuration
  */
 
+#define USB_HID_TX_EPSIZE            	0x40
+#define USB_HID_RX_EPSIZE            	0x40
+#ifdef COMPOSITE_SERIAL 
 #define USB_HID_TX_ENDP              	4
 #define USB_HID_TX_ADDR              	0x180
-#define USB_HID_TX_EPSIZE            	0x40
 
 #define USB_HID_RX_ENDP              	5
 #define USB_HID_RX_ADDR              	0x1C0
-#define USB_HID_RX_EPSIZE            	0x40
+#else
+#define USB_HID_TX_ENDP              1
+#define USB_HID_TX_ADDR              0xC0
 
+#define USB_HID_RX_ENDP              2
+#define USB_HID_RX_ADDR              0x100
+#endif
 /*
  * HID interface
  */

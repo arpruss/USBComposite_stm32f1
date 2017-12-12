@@ -18,8 +18,9 @@
  * @brief USB HID Keyboard device 
  */
  
+#include "USBHID.h"
 
-#include "usb_hid_device.h"
+#ifdef COMPOSITE_SERIAL
 
 #include <string.h>
 #include <stdint.h>
@@ -168,3 +169,4 @@ uint8 USBCompositeSerial::getRTS(void) {
 }
 
 USBCompositeSerial CompositeSerial;
+#endif

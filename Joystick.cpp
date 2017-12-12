@@ -1,4 +1,4 @@
-#include "usb_hid_device.h"
+#include "USBHID.h"
 
 // This code requires gcc on low-endian devices.
 

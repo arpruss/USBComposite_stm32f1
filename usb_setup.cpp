@@ -35,7 +35,7 @@
  */
 
 #include "boards_private.h"
-#include "usb_hid_device.h"
+#include "USBHID.h"
 #include <libmaple/gpio.h>
 #include <libmaple/timer.h>
 
