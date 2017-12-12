@@ -10,6 +10,7 @@ HID	KEYWORD1
 Joystick	KEYWORD1
 Keyboard	KEYWORD1
 Mouse	KEYWORD1
+CompositeSerial	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
