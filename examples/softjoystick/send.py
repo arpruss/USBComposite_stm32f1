@@ -33,7 +33,7 @@ def joystickData(reportID=REPORT_ID, buttons=0, hat=15, x=512, y=512, rx=512, ry
     joyData = ( toBits(reportID,8) + toBits(buttons,32) + toBits(hat,4) + toBits(x,10) + toBits(y,10) + 
                 toBits(rx,10) + toBits(ry,10) + toBits(sliderLeft,10) + toBits(sliderRight,10) )
     out = [getByteFromBits(joyData,n) for n in range(13)]
-    print("send: "+str(out))
+    print(out)
     return out
     
 myReport = None    
@@ -46,11 +46,10 @@ for report in device.find_feature_reports():
 assert myReport is not None        
 
 while True:
-    myReport.set_raw_data(joystickData(buttons=7,x=0,y=0))    
+    myReport.set_raw_data(joystickData(buttons=7,x=0,y=0))
+    
     myReport.send()
     sleep(0.5)
-    print("fetch: "+str(myReport.get_raw_data()))
     myReport.set_raw_data(joystickData(buttons=0,x=1023,y=1023))
     myReport.send()
     sleep(0.5)
-    print("fetch: "+str(myReport.get_raw_data()))

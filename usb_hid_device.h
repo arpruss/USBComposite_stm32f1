@@ -22,7 +22,9 @@
 
 #include <Print.h>
 #include <boards.h>
-#include "usb_hid.h"
+#include "Stream.h"
+#include "usb_composite.h"
+#include "composite_serial.h"
 
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
@@ -31,14 +33,17 @@
 #define USB_HID_KEYBOARD_REPORT_ID 2
 #define USB_HID_JOYSTICK_REPORT_ID 3
 
-#define USB_HID_FEATURE_REPORT_DESCRIPTOR(featureSize) \
+/* note that featureSize must be 1 less than the buffer size for the feature,
+   since the latter must include the reportId */
+/* this only works in a collection with a report_id */
+#define USB_HID_FEATURE_REPORT_DESCRIPTOR(featureBufferSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
-            0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
-            0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
-            0x75, 0x08,       /* REPORT_SIZE (8) */ \
-            0x95, featureSize,       /* REPORT_COUNT (32) */ \
-            0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
+    0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
+    0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
+    0x75, 0x08,       /* REPORT_SIZE (8) */ \
+    0x95, featureBufferSize-1,       /* REPORT_COUNT (32) */ \
+    0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
 #define USB_HID_MOUSE_REPORT_DESCRIPTOR(reportId, ...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
@@ -208,13 +213,13 @@ typedef struct {
     uint16_t length;    
 } HIDReportDescriptor;
 
-class HIDDevice{
+class USBDevice{
 private:
 	bool enabled = false;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
 public:
-	HIDDevice(void);
+	USBDevice(void);
     void begin(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
@@ -560,10 +565,46 @@ public:
 //    }
 };
 
-extern HIDDevice HID;
+class USBCompositeSerial : public Stream {
+public:
+    USBCompositeSerial (void);
+
+    void begin(void);
+
+	// Roger Clark. Added dummy function so that existing Arduino sketches which specify baud rate will compile.
+	void begin(unsigned long);
+	void begin(unsigned long, uint8_t);
+    void end(void);
+
+	operator bool() { return true; } // Roger Clark. This is needed because in cardinfo.ino it does if (!Serial) . It seems to be a work around for the Leonardo that we needed to implement just to be compliant with the API
+
+    virtual int available(void);// Changed to virtual
+
+    uint32 read(uint8 * buf, uint32 len);
+   // uint8  read(void);
+
+	// Roger Clark. added functions to support Arduino 1.0 API
+    virtual int peek(void);
+    virtual int read(void);
+    int availableForWrite(void);
+    virtual void flush(void);	
+	
+    size_t write(uint8);
+    size_t write(const char *str);
+    size_t write(const uint8*, uint32);
+
+    uint8 getRTS();
+    uint8 getDTR();
+    uint8 isConnected();
+    uint8 pending();
+};
+
+extern USBDevice USB;
+#define HID USB
 extern HIDMouse Mouse;
 extern HIDKeyboard Keyboard;
 extern HIDJoystick Joystick;
+extern USBCompositeSerial CompositeSerial;
 
 extern const HIDReportDescriptor* hidReportMouse;
 extern const HIDReportDescriptor* hidReportKeyboard;

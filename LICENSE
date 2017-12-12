@@ -18,6 +18,7 @@ SOFTWARE.
 The MIT License
 
 Copyright (c) 2011 LeafLabs LLC.
+Parts of composite HID+Serial code taken from https://github.com/libarra111/Arduino_STM32
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
