@@ -10,7 +10,7 @@ device.open()
 device.set_raw_data_handler(sample_handler)
 
 while True:
-    for out_report in device.find_feature_reports():
+    for out_report in device.find_output_reports():
         print("Send")
         buffer=[i for i in range(33)]
         buffer[0]=0x0 # report id

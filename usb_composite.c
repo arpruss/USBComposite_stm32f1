@@ -370,7 +370,7 @@ static ONE_DESCRIPTOR String_Descriptor[N_STRING_DESCRIPTORS] = {
 
 /* I/O state */
 
-#ifdef USB_HID_SUPPORT_RX
+#ifdef USB_HID_RX_SUPPORT
 #define HID_RX_BUFFER_SIZE	256 // must be power of 2
 #define HID_RX_BUFFER_SIZE_MASK (HID_RX_BUFFER_SIZE-1)
 /* Received data */
