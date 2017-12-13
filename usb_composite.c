@@ -328,13 +328,13 @@ static const usb_descriptor_string usbHIDDescriptor_iInterface = {
 };
 
 static const usb_descriptor_string usbVcomDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(3),
+    .bLength = USB_DESCRIPTOR_STRING_LEN(4),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString = {'V', 0, 'C', 0, 'O', 0, 'M', 0},
 };
 
 static const usb_descriptor_string usbCompositeDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(3),
+    .bLength = USB_DESCRIPTOR_STRING_LEN(9),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString = {'C', 0, 'O', 0, 'M', 0, 'P', 0, 'O', 0, 'S', 0, 'I', 0, 'T', 0, 'E', 0},
 };
