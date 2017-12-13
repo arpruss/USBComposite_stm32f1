@@ -169,7 +169,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .bInterfaceClass    = USB_INTERFACE_CLASS_CDC,
         .bInterfaceSubClass = USB_INTERFACE_SUBCLASS_CDC_ACM,
         .bInterfaceProtocol = 0x01, /* Common AT Commands */
-        .iInterface         = 0x03,
+        .iInterface         = 0x00,
     },
 
     .CDC_Functional_IntHeader = {
@@ -252,7 +252,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .bInterfaceClass    = USB_INTERFACE_CLASS_HID,
         .bInterfaceSubClass = USB_INTERFACE_SUBCLASS_HID,
         .bInterfaceProtocol = 0x00, /* Common AT Commands */
-        .iInterface         = 0x04,
+        .iInterface         = 0x00,
 	},
 	.HID_Descriptor = {
 		.len				= 9,//sizeof(HIDDescDescriptor),
@@ -321,6 +321,7 @@ static const usb_descriptor_string usbHIDDescriptor_iProduct = {
     .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
 };
 
+#if 0
 static const usb_descriptor_string usbHIDDescriptor_iInterface = {
     .bLength = USB_DESCRIPTOR_STRING_LEN(3),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
@@ -338,6 +339,7 @@ static const usb_descriptor_string usbCompositeDescriptor_iInterface = {
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString = {'C', 0, 'O', 0, 'M', 0, 'P', 0, 'O', 0, 'S', 0, 'I', 0, 'T', 0, 'E', 0},
 };
+#endif
 
 static ONE_DESCRIPTOR Device_Descriptor = {
     (uint8*)&usbCompositeDescriptor_Device,
@@ -354,13 +356,15 @@ static ONE_DESCRIPTOR HID_Report_Descriptor = {
     sizeof(hid_report_descriptor)
 };
 
-#define N_STRING_DESCRIPTORS 5
+#define N_STRING_DESCRIPTORS 3
 static ONE_DESCRIPTOR String_Descriptor[N_STRING_DESCRIPTORS] = {
     {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
     {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
     {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
+#if 0    
     {(uint8*)&usbVcomDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(4)},
     {(uint8*)&usbHIDDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(3)}
+#endif    
 };
 
 
