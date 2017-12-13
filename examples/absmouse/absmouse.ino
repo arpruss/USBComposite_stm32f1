@@ -18,7 +18,8 @@ void setup(){
 }
 
 void loop(){
-  delay(100);
+  mouse.move(0,0);
+  delay(1000);
   mouse.move(16384,16384);
-  delay(100);
+  delay(1000);
 }
