@@ -44,6 +44,7 @@
     0x95, featureBufferSize-1,       /* REPORT_COUNT (32) */ \
     0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
+// TODO: does not work yet!
 #define USB_HID_OUTPUT_REPORT_DESCRIPTOR(featureBufferSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
