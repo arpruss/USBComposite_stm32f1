@@ -159,7 +159,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
 		.bFunctionProtocol	= 0x01,
 		.iFunction			= 0x02,
 	},
-	
+
     .CCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
@@ -354,12 +354,15 @@ static ONE_DESCRIPTOR HID_Report_Descriptor = {
     sizeof(hid_report_descriptor)
 };
 
-#define N_STRING_DESCRIPTORS 3
+#define N_STRING_DESCRIPTORS 5
 static ONE_DESCRIPTOR String_Descriptor[N_STRING_DESCRIPTORS] = {
     {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
     {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
-    {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)}
+    {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
+    {(uint8*)&usbVcomDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(4)},
+    {(uint8*)&usbHIDDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(3)}
 };
+
 
 /*
  * Etc.
