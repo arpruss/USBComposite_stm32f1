@@ -42,6 +42,11 @@ for report in device.find_feature_reports():
     if report.report_id == REPORT_ID and report.report_type == "Feature":
         myReport = report
         break
+if myReport is None:        
+    for report in device.find_output_reports():
+        if report.report_id == REPORT_ID and report.report_type == "Output":
+            myReport = report
+            break
         
 assert myReport is not None        
 

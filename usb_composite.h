@@ -65,11 +65,11 @@ extern "C" {
 
 typedef struct {
     volatile uint8_t* buffer;
-    uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature report length in the report descriptor
+    uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature/output report length in the report descriptor
     uint8_t  reportID;
     uint8_t  dataSize;
     uint8_t  state;
-} HIDFeatureBuffer_t;
+} HIDBuffer_t;
 
 
 #define USB_CDCACM_CTRL_ENDP            0
@@ -125,8 +125,9 @@ typedef struct
 
 void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
-void usb_hid_set_feature_buffers(volatile HIDFeatureBuffer_t* featureBuffers, int count);    
-uint8_t usb_hid_get_feature(uint8_t reportID, uint8_t* out, uint8_t poll);
+void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
+uint8_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
+uint8_t usb_hid_get_output(uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_composite_disable(gpio_dev*, uint8);
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
@@ -190,9 +191,9 @@ static inline __always_inline void composite_cdcacm_remove_hooks(unsigned hook_f
 #endif
 
  
-#define FEATURE_BUFFER_EMPTY    0
-#define FEATURE_BUFFER_UNREAD   1
-#define FEATURE_BUFFER_READ     2
+#define HID_BUFFER_EMPTY    0
+#define HID_BUFFER_UNREAD   1
+#define HID_BUFFER_READ     2
 
 
 /*

@@ -132,8 +132,8 @@ void USBDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint
     begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product);
 }
 
-void USBDevice::setFeatureBuffers(volatile HIDFeatureBuffer_t* fb, int count) {
-    usb_hid_set_feature_buffers(fb, count);
+void USBDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count) {
+    usb_hid_set_buffers(type, fb, count);
 }
 
 void USBDevice::end(void){
@@ -168,8 +168,16 @@ void HIDReporter::setFeature(uint8_t* in) {
     return usb_hid_set_feature(reportID, in);
 }
 
+uint8_t HIDReporter::getData(uint8_t type, uint8_t* out, uint8_t poll) {
+    return usb_hid_get_data(type, reportID, out, poll);
+}
+
 uint8_t HIDReporter::getFeature(uint8_t* out, uint8_t poll) {
-    return usb_hid_get_feature(reportID, out, poll);
+    return usb_hid_get_data(HID_REPORT_TYPE_FEATURE, reportID, out, poll);
+}
+
+uint8_t HIDReporter::getOutput(uint8_t* out, uint8_t poll) {
+    return usb_hid_get_data(HID_REPORT_TYPE_OUTPUT, reportID, out, poll);
 }
 
 #ifdef COMPOSITE_SERIAL

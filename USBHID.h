@@ -233,7 +233,7 @@ public:
         const char* manufacturer=NULL, const char* product=NULL);
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
-    void setFeatureBuffers(volatile HIDFeatureBuffer_t* fb=NULL, int count=0);
+    void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
     void end(void);
 };
 
@@ -250,6 +250,8 @@ class HIDReporter {
     public:
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
         uint8_t getFeature(uint8_t* out, uint8_t poll=1);
+        uint8_t getOutput(uint8_t* out, uint8_t poll=1);
+        uint8_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
         void setFeature(uint8_t* feature);
 };
 
