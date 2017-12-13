@@ -258,14 +258,18 @@ typedef struct
 #define USB_HID_TX_ENDP              	4
 #define USB_HID_TX_ADDR              	0x180
 
+#ifdef USB_HID_RX_SUPPORT
 #define USB_HID_RX_ENDP              	5
 #define USB_HID_RX_ADDR              	0x1C0
+#endif
 #else
 #define USB_HID_TX_ENDP              1
 #define USB_HID_TX_ADDR              0xC0
 
+#ifdef USB_HID_RX_SUPPORT
 #define USB_HID_RX_ENDP              2
 #define USB_HID_RX_ADDR              0x100
+#endif
 #endif
 /*
  * HID interface

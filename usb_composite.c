@@ -89,13 +89,21 @@ volatile int currentOutput = -1;
 int currentOutFeature = -1;
 
 #ifdef COMPOSITE_SERIAL
+#define NUM_SERIAL_ENDPOINTS       3
 #define NUMINTERFACES 			0x03
 #define HID_INTERFACE_NUMBER 	0x02
 #define CCI_INTERFACE_NUMBER 	0x00
 #define DCI_INTERFACE_NUMBER 	0x01
 #else
+#define NUM_SERIAL_ENDPOINTS       0
 #define NUMINTERFACES           0x01
 #define HID_INTERFACE_NUMBER 	0x00
+#endif
+
+#ifdef USB_HID_RX_SUPPORT
+#define NUM_HID_ENDPOINTS          2
+#else
+#define NUM_HID_ENDPOINTS          1
 #endif
 
 
@@ -128,12 +136,14 @@ typedef struct {
     usb_descriptor_interface     	DCI_Interface;
     usb_descriptor_endpoint      	DataOutEndpoint;
     usb_descriptor_endpoint      	DataInEndpoint;
-    //HID
 #endif    
+    //HID
     usb_descriptor_interface     	HID_Interface;
 	HIDDescriptor			 	 	HID_Descriptor;
     usb_descriptor_endpoint      	HIDDataInEndpoint;
+#ifdef USB_HID_RX_SUPPORT    
     usb_descriptor_endpoint      	HIDDataOutEndpoint;
+#endif    
 } __packed usb_descriptor_config;
 
 
@@ -251,7 +261,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
         .bInterfaceNumber   = HID_INTERFACE_NUMBER,
         .bAlternateSetting  = 0x00,
-        .bNumEndpoints      = 0x02,
+        .bNumEndpoints      = NUM_HID_ENDPOINTS,
         .bInterfaceClass    = USB_INTERFACE_CLASS_HID,
         .bInterfaceSubClass = USB_INTERFACE_SUBCLASS_HID,
         .bInterfaceProtocol = 0x00, /* Common AT Commands */
@@ -276,6 +286,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .wMaxPacketSize   = USB_HID_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
         .bInterval        = 0x0A,
 	},
+#ifdef USB_HID_RX_SUPPORT    
     .HIDDataOutEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
@@ -284,6 +295,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .wMaxPacketSize   = USB_HID_RX_EPSIZE,
         .bInterval        = 0x00,
     },
+#endif    
 };
 
 /*
@@ -476,11 +488,7 @@ static void (*ep_int_out[7])(void) =
  * Globals required by usb_lib/
  */
  
-#ifdef COMPOSITE_SERIAL
-#define NUM_ENDPTS                0x06
-#else
-#define NUM_ENDPTS                0x03
-#endif
+#define NUM_ENDPTS                (1+NUM_SERIAL_ENDPOINTS+NUM_HID_ENDPOINTS)
     
 static DEVICE my_Device_Table = {
     .Total_Endpoint      = NUM_ENDPTS,
@@ -1051,6 +1059,10 @@ uint32 usb_hid_data_available(void) {
  *
  * Copies up to len bytes from our private data buffer (*NOT* the PMA)
  * into buf and deq's the FIFO. */
+/* Non-blocking byte receive.
+ *
+ * Copies up to len bytes from our private data buffer (*NOT* the PMA)
+ * into buf and deq's the FIFO. */
 uint32 usb_hid_rx(uint8* buf, uint32 len)
 {
     /* Copy bytes to buffer. */
@@ -1182,13 +1194,15 @@ static void usbReset(void) {
     usb_set_ep_tx_stat(USB_CDCACM_TX_ENDP, USB_EP_STAT_TX_NAK);
     usb_set_ep_rx_stat(USB_CDCACM_TX_ENDP, USB_EP_STAT_RX_DISABLED);
 #endif
-	
+
+#ifdef USB_HID_RX_SUPPORT	
     /* set up hid endpoint OUT (RX) */
     usb_set_ep_type(USB_HID_RX_ENDP, USB_EP_EP_TYPE_BULK);
     usb_set_ep_rx_addr(USB_HID_RX_ENDP, USB_HID_RX_ADDR);
     usb_set_ep_rx_count(USB_HID_RX_ENDP, USB_HID_RX_EPSIZE);
     usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_VALID);
-
+#endif
+    
     /* set up hid endpoint IN (TX)  */
     usb_set_ep_type(USB_HID_TX_ENDP, USB_EP_EP_TYPE_BULK);
     usb_set_ep_tx_addr(USB_HID_TX_ENDP, USB_HID_TX_ADDR);
