@@ -566,11 +566,21 @@ public:
     }
 };
 
+extern USBDevice USB;
+#define HID USB
+
 template<unsigned txSize,unsigned rxSize>class HIDRaw : public HIDReporter {
 private:
     uint8_t txBuffer[txSize];
+    volatile uint8_t rxBuffer[rxSize+1];
+    HIDBuffer_t buf;
 public:
-	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer), 0) {}
+	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer), 0) {
+        buf.buffer = rxBuffer;
+        buf.bufferLength = rxSize;
+        buf.reportID = 0;
+        HID.setOutputBuffers(&buf,1);
+    }
 	void begin(void);
 	void end(void);
 	void send(const uint8_t* data, unsigned n=sizeof(txBuffer)) {
@@ -614,8 +624,6 @@ public:
     uint8 pending();
 };
 
-extern USBDevice USB;
-#define HID USB
 extern HIDMouse Mouse;
 extern HIDKeyboard Keyboard;
 extern HIDJoystick Joystick;

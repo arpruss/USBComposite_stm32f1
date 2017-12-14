@@ -50,7 +50,7 @@ typedef struct HIDBuffer_t {
     uint8_t  dataSize;
     uint8_t  state;
 #ifdef __cplusplus
-    inline HIDBuffer_t(volatile uint8_t* _buffer, uint8_t _bufferLength, uint8_t _reportID) {
+    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint8_t _bufferLength=0, uint8_t _reportID=0) {
         reportID = _reportID;
         buffer = _buffer;
         bufferLength = _bufferLength;
