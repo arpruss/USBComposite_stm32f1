@@ -41,6 +41,23 @@
 #include <libmaple/gpio.h>
 #include <libmaple/usb.h>
 
+typedef struct HIDBuffer_t {
+    volatile uint8_t* buffer; // be careful: if bufferLength is odd, the code will write one byte beyond the end; if this is
+                              // allocated with proper alignment, that shouldn't be a problem
+                              
+    uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature/output report length in the report descriptor
+    uint8_t  reportID;
+    uint8_t  dataSize;
+    uint8_t  state;
+#ifdef __cplusplus
+    inline HIDBuffer_t(volatile uint8_t* _buffer, uint8_t _bufferLength, uint8_t _reportID) {
+        reportID = _reportID;
+        buffer = _buffer;
+        bufferLength = _bufferLength;
+    }
+#endif
+} HIDBuffer_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,14 +79,6 @@ extern "C" {
  * Descriptors, etc.
  */
 
-
-typedef struct {
-    volatile uint8_t* buffer;
-    uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature/output report length in the report descriptor
-    uint8_t  reportID;
-    uint8_t  dataSize;
-    uint8_t  state;
-} HIDBuffer_t;
 
 
 #define USB_CDCACM_CTRL_ENDP            0
