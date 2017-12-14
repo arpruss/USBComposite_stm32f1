@@ -68,7 +68,7 @@ const HIDReportDescriptor* hidReportKeyboardMouse = &_hidKeyboardMouse;
 const HIDReportDescriptor* hidReportKeyboardJoystick = &_hidKeyboardJoystick;
 const HIDReportDescriptor* hidReportKeyboardMouseJoystick = &_hidKeyboardMouseJoystick;
 
-#ifdef COMPOSITE_SERIAL
+#if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
 static void rxHook(unsigned, void*);
 static void ifaceSetupHook(unsigned, void*);
 #endif
@@ -118,7 +118,7 @@ void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
 		usb_composite_enable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT, 
             report_descriptor, report_descriptor_length,
             idVendor, idProduct, manufacturerDescriptor, productDescriptor);
-#ifdef COMPOSITE_SERIAL            
+#if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
 		composite_cdcacm_set_hooks(USB_CDCACM_HOOK_RX, rxHook);
 		composite_cdcacm_set_hooks(USB_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook);
 #endif
@@ -180,7 +180,7 @@ uint8_t HIDReporter::getOutput(uint8_t* out, uint8_t poll) {
     return usb_hid_get_data(HID_REPORT_TYPE_OUTPUT, reportID, out, poll);
 }
 
-#ifdef COMPOSITE_SERIAL
+#if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
 
 enum reset_state_t {
     DTR_UNSET,

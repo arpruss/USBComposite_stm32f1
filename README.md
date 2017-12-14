@@ -1,1 +1,2 @@
-USBHID library for STM32F1.
+USBHID library for STM32F1
+

@@ -8,7 +8,7 @@
 class HIDJoystickRawData : public HIDJoystick {
   private:
     uint8_t featureData[sizeof(JoystickReport_t)];
-    volatile HIDFeatureBuffer_t fb;
+    volatile HIDBuffer_t fb;
   public:
     HIDJoystickRawData(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {
       fb.buffer = featureData;

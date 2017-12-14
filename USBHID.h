@@ -196,8 +196,9 @@
     
 #define LSB(x) ((x) & 0xFF)    
 #define MSB(x) (((x) & 0xFF00) >> 8)    
+// TODO: make this work for sizes > 64 bytes
 #define USB_HID_RAW_REPORT_DESCRIPTOR(txSize, rxSize) \
-	0x06, LSB(RAWHID_USAGE_PAGE), MSB(RAWHID_USAGE_PAGE),	/*  30 */ \
+	0x06, LSB(RAWHID_USAGE_PAGE), MSB(RAWHID_USAGE_PAGE), \
 	0x0A, LSB(RAWHID_USAGE), MSB(RAWHID_USAGE), \
 	0xA1, 0x01,				/*  Collection 0x01 */ \
 /*    0x85, 10,				*/		/*    REPORT_ID (1) */ \
@@ -214,7 +215,7 @@
 	0x26, 0xFF, 0x00,		/*  logical maximum = 255 */ \
 	0x95, rxSize,				/*  report count RX */ \
 	0x09, 0x02,				/*  usage */ \
-	0xB1, 0x02,				/*  FEATURE (array) : TODO : OUTPUT (0x91) */ \
+	0x91, 0x02,				/*  OUTPUT (0x91) */ \
 	0xC0					/*  end collection */ 
     
 typedef struct {
@@ -234,6 +235,12 @@ public:
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
+    inline void setFeatureBuffers(volatile HIDBuffer_t* fb=NULL, int count=0) {
+        setBuffers(HID_REPORT_TYPE_FEATURE, fb, count);
+    }        
+    inline void setOutputBuffers(volatile HIDBuffer_t* fb=NULL, int count=0) {
+        setBuffers(HID_REPORT_TYPE_OUTPUT, fb, count);
+    }        
     void end(void);
 };
 
@@ -559,21 +566,18 @@ public:
     }
 };
 
-template<unsigned size>class HIDRaw : public HIDReporter {
+template<unsigned txSize,unsigned rxSize>class HIDRaw : public HIDReporter {
 private:
-    uint8_t outBuffer[size];
+    uint8_t txBuffer[txSize];
 public:
-	HIDRaw() : HIDReporter(outBuffer, sizeof(outBuffer), 0) {}
+	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer), 0) {}
 	void begin(void);
 	void end(void);
-	void send(const uint8_t* data, unsigned n) {
-        memset(outBuffer, 0, sizeof(outBuffer));
-        memcpy(outBuffer, data, n>sizeof(outBuffer)?sizeof(outBuffer):n);
+	void send(const uint8_t* data, unsigned n=sizeof(txBuffer)) {
+        memset(txBuffer, 0, sizeof(txBuffer));
+        memcpy(txBuffer, data, n>sizeof(txBuffer)?sizeof(txBuffer):n);
         sendReport();
     }
-//    uint32 receive(uint8_t* data, unsigned n) { /* does not seem to work! */
-//        return usb_hid_rx(data, n);
-//    }
 };
 
 class USBCompositeSerial : public Stream {
