@@ -5,9 +5,9 @@
 #define RXSIZE 32
 
 HIDRaw<TXSIZE,RXSIZE> raw;
-volatile uint8 buf[USB_HID_BUFFER_SIZE(RXSIZE,0)];
+volatile uint8 buf[RXSIZE];
 uint8 buf2[RXSIZE];
-volatile HIDBuffer_t fb = { buf, RXSIZE, 0 };
+volatile HIDBuffer_t fb {buf, RXSIZE, 0};
 
 const uint8_t reportDescription[] = {
    USB_HID_RAW_REPORT_DESCRIPTOR(TXSIZE,RXSIZE)

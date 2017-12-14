@@ -115,7 +115,7 @@ void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
             productDescriptor = NULL;
         }
 
-		usb_composite_enable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT, 
+		usb_composite_enable(BOARD_USB_DISC_DEV, (uint8)BOARD_USB_DISC_BIT, 
             report_descriptor, report_descriptor_length,
             idVendor, idProduct, manufacturerDescriptor, productDescriptor);
 #if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
@@ -138,7 +138,7 @@ void USBDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count) {
 
 void USBDevice::end(void){
 	if(enabled){
-	    usb_composite_disable(BOARD_USB_DISC_DEV, BOARD_USB_DISC_BIT);
+	    usb_composite_disable(BOARD_USB_DISC_DEV, (uint8)BOARD_USB_DISC_BIT);
 		enabled = false;
 	}
 }
@@ -192,6 +192,7 @@ enum reset_state_t {
 static reset_state_t reset_state = DTR_UNSET;
 
 static void ifaceSetupHook(unsigned hook, void *requestvp) {
+    (void)hook;
     uint8 request = *(uint8*)requestvp;
 
         // Ignore requests we're not interested in.
@@ -233,6 +234,8 @@ static void wait_reset(void) {
 #define EXC_RETURN 0xFFFFFFF9
 #define DEFAULT_CPSR 0x61000000
 static void rxHook(unsigned hook, void *ignored) {
+    (void)hook;
+    (void)ignored;
     /* FIXME this is mad buggy; we need a new reset sequence. E.g. NAK
      * after each RX means you can't reset if any bytes are waiting. */
     if (reset_state == DTR_NEGEDGE) {
