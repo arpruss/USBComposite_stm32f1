@@ -879,12 +879,12 @@ void usb_hid_putc(char ch) {
 static void hidStatusIn() {
     if (pInformation->ControlState == WAIT_STATUS_IN) {
         if (currentInFeature >= 0) {
-            if (featureBuffers[currentInFeature].bufferLength == featureBuffers[currentInFeature].dataSize) 
+            if (featureBuffers[currentInFeature].bufferSize == featureBuffers[currentInFeature].currentDataSize) 
                 featureBuffers[currentInFeature].state = HID_BUFFER_UNREAD;
             currentInFeature = -1;
         }
         if (currentOutput >= 0) {
-            if (outputBuffers[currentOutput].bufferLength == outputBuffers[currentOutput].dataSize) 
+            if (outputBuffers[currentOutput].bufferSize == outputBuffers[currentOutput].currentDataSize) 
                 outputBuffers[currentOutput].state = HID_BUFFER_UNREAD;
             currentOutput = -1;
         }
@@ -895,10 +895,11 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     for(int i=0;i<featureBufferCount;i++) {
         if (featureBuffers[i].reportID == reportID) {
             usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
-            memcpy((void*)featureBuffers[i].buffer, data, featureBuffers[i].bufferLength);
+            unsigned delta = reportID != 0;
+            memcpy((uint8_t*)featureBuffers[i].buffer+delta, data, featureBuffers[i].bufferSize-delta);
             if (reportID)
                 featureBuffers[i].buffer[0] = reportID;
-            featureBuffers[i].dataSize = featureBuffers[i].bufferLength;
+            featureBuffers[i].currentDataSize = featureBuffers[i].bufferSize;
             featureBuffers[i].state = HID_BUFFER_READ;
             usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
             return;
@@ -906,7 +907,7 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     }
 }
 
-uint8_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll) {
+uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll) {
     volatile HIDBuffer_t* bufs;
     int n;
     
@@ -929,19 +930,20 @@ uint8_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t p
             usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
 
             if (oldState == HID_BUFFER_EMPTY || (poll && oldState == HID_BUFFER_READ) ||
-                bufs[i].bufferLength != bufs[i].dataSize ) {
+                bufs[i].bufferSize != bufs[i].currentDataSize ) {
                 bufs[i].state = oldState;
                 usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
                 return 0;
             }
-            memcpy(out, (void*)bufs[i].buffer, bufs[i].bufferLength);
+            unsigned delta = reportID != 0;
+            memcpy(out, (uint8*)bufs[i].buffer+delta, bufs[i].bufferSize-delta);
             if (poll) {
                 bufs[i].state = HID_BUFFER_READ;
             }
 
             usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
             
-            return bufs[i].bufferLength;
+            return bufs[i].bufferSize-delta;
         }
     }
 
@@ -1259,9 +1261,9 @@ static uint8* Dummy_Set(uint16 length) {
 static uint8* HID_Set(volatile HIDBuffer_t* buf, uint16 length) {
     if (length ==0) {
         uint16 len = pInformation->USBwLengths.w;
-        if (len > buf->bufferLength)
-            len = buf->bufferLength;
-        buf->dataSize = len;
+        if (len > buf->bufferSize)
+            len = buf->bufferSize;
+        buf->currentDataSize = len;
         if (pInformation->Ctrl_Info.Usb_wOffset < len)
             pInformation->Ctrl_Info.Usb_wLength = len - pInformation->Ctrl_Info.Usb_wOffset;
         else
@@ -1292,7 +1294,7 @@ static uint8* HID_GetFeature(uint16 length) {
     
     if (length == 0)
     {
-        pInformation->Ctrl_Info.Usb_wLength = featureBuffers[currentOutFeature].bufferLength - wOffset;
+        pInformation->Ctrl_Info.Usb_wLength = featureBuffers[currentOutFeature].bufferSize - wOffset;
         return NULL;
     }
 

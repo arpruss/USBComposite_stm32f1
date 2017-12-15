@@ -7,14 +7,10 @@
 
 class HIDJoystickRawData : public HIDJoystick {
   private:
-    uint8_t featureData[sizeof(JoystickReport_t)];
-    volatile HIDBuffer_t fb;
+    uint8_t featureData[HID_BUFFER_ALLOCATE_SIZE(sizeof(JoystickReport_t)-1,1)];
+    HIDBuffer_t fb { featureData, HID_BUFFER_SIZE(sizeof(JoystickReport_t)-1,1), USB_HID_JOYSTICK_REPORT_ID }; 
   public:
-    HIDJoystickRawData(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {
-      fb.buffer = featureData;
-      fb.bufferLength = sizeof(featureData);
-      fb.reportID = reportID;
-    }
+    HIDJoystickRawData(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {}
     
     void begin() {
       HID.setFeatureBuffers(&fb, 1);
@@ -40,7 +36,7 @@ void setup() {
 }
 
 void loop() {
-  if (joy.getFeature((uint8_t*)&report)) {
+  if (joy.getFeature(1+(uint8_t*)&report)) {
     joy.setRawData(&report);
   }
   

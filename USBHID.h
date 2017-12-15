@@ -575,12 +575,12 @@ extern USBDevice USB;
 template<unsigned txSize,unsigned rxSize>class HIDRaw : public HIDReporter {
 private:
     uint8_t txBuffer[txSize];
-    volatile uint8_t rxBuffer[rxSize+1];
+    uint8_t rxBuffer[HID_BUFFER_ALLOCATE_SIZE(rxSize,0)];
     HIDBuffer_t buf;
 public:
 	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer), 0) {
         buf.buffer = rxBuffer;
-        buf.bufferLength = rxSize;
+        buf.bufferSize = HID_BUFFER_SIZE(rxSize,0);
         buf.reportID = 0;
         HID.setOutputBuffers(&buf,1);
     }

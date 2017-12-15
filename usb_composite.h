@@ -41,19 +41,20 @@
 #include <libmaple/gpio.h>
 #include <libmaple/usb.h>
 
+#define HID_BUFFER_SIZE(n,reportID) ((n)+((reportID)!=0))
+#define HID_BUFFER_ALLOCATE_SIZE(n,reportID) ((HID_BUFFER_SIZE((n),(reportID))+1)/2*2)
+
 typedef struct HIDBuffer_t {
-    volatile uint8_t* buffer; // be careful: if bufferLength is odd, the code will write one byte beyond the end; if this is
-                              // allocated with proper alignment, that shouldn't be a problem
-                              
-    uint16_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature/output report length in the report descriptor
-    uint16_t  dataSize;
+    volatile uint8_t* buffer; // use HID_BUFFER_ALLOCATE_SIZE() to calculate amount of memory to allocate                            
+    uint16_t  bufferSize; // this should match HID_BUFFER_SIZE
+    uint16_t  currentDataSize;
     uint8_t  reportID;
     uint8_t  state;
 #ifdef __cplusplus
-    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferLength=0, uint8_t _reportID=0) {
+    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferSize=0, uint8_t _reportID=0) {
         reportID = _reportID;
         buffer = _buffer;
-        bufferLength = _bufferLength;
+        bufferSize = _bufferSize;
     }
 #endif
 } HIDBuffer_t;
@@ -135,8 +136,7 @@ typedef struct
 void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
-uint8_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
-uint8_t usb_hid_get_output(uint8_t reportID, uint8_t* out, uint8_t poll);
+uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_composite_disable(gpio_dev*, uint8);
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
