@@ -1,8 +1,8 @@
 #include <USBHID.h>
 #include <libmaple/usb.h>
 
-#define TXSIZE 64
-#define RXSIZE 32
+#define TXSIZE 256
+#define RXSIZE 300
 
 HIDRaw<TXSIZE,RXSIZE> raw;
 uint8 buf[RXSIZE];
@@ -21,8 +21,7 @@ void setup(){
 void loop() {
   if (raw.getOutput(buf)) {
     for (int i=0;i<RXSIZE;i++) buf[i]++;
-    raw.send(buf,RXSIZE);
+    raw.send(buf+RXSIZE-min(RXSIZE,TXSIZE),min(RXSIZE,TXSIZE));
   }
 }
-
 

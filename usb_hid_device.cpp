@@ -147,10 +147,18 @@ void HIDReporter::sendReport() {
 //    while (usb_is_transmitting() != 0) {
 //    }
 
-    usb_hid_tx(buffer, bufferSize);
+    unsigned toSend = bufferSize;
+    uint8* b = buffer;
+    
+    while (toSend) {
+        unsigned delta = usb_hid_tx(b, toSend);
+        toSend -= delta;
+        b += delta;
+    }
     
 //    while (usb_is_transmitting() != 0) {
 //    }
+
     /* flush out to avoid having the pc wait for more data */
     usb_hid_tx(NULL, 0);
 }

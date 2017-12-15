@@ -199,7 +199,7 @@
     
 #define LSB(x) ((x) & 0xFF)    
 #define MSB(x) (((x) & 0xFF00) >> 8)    
-// TODO: make this work for sizes > 64 bytes
+// TODO: make this work for txSize > 255
 #define USB_HID_RAW_REPORT_DESCRIPTOR(txSize, rxSize) \
 	0x06, LSB(RAWHID_USAGE_PAGE), MSB(RAWHID_USAGE_PAGE), \
 	0x0A, LSB(RAWHID_USAGE), MSB(RAWHID_USAGE), \
@@ -209,7 +209,7 @@
 	0x15, 0x00,				/*  logical minimum = 0 */ \
 	0x26, 0xFF, 0x00,		/*  logical maximum = 255 */ \
 \
-	0x95, txSize,				/*  report count TX */ \
+	0x96, LSB(txSize), MSB(txSize),				/*  report count TX */ \
 	0x09, 0x01,				/*  usage */ \
 	0x81, 0x02,				/*  Input (array) */ \
 \

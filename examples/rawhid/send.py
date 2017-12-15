@@ -1,7 +1,7 @@
 from pywinusb import hid
 from time import sleep
 
-SIZE=96
+SIZE=300
 
 def sample_handler(data):
     print("Raw data: {0}".format(data))
