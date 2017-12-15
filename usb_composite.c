@@ -88,7 +88,7 @@ volatile int currentInFeature = -1;
 volatile int currentOutput = -1;
 int currentOutFeature = -1;
 
-#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
+//#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
 
 #ifdef COMPOSITE_SERIAL
 #define NUM_SERIAL_ENDPOINTS       3
@@ -876,10 +876,6 @@ void usb_hid_putc(char ch) {
         ;
 }
 
-static inline void clearEP0Status() {
-    usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
-}
-
 static void hidStatusIn() {
     if (pInformation->ControlState == WAIT_STATUS_IN) {
         if (currentInFeature >= 0) {
@@ -892,19 +888,19 @@ static void hidStatusIn() {
                 outputBuffers[currentOutput].state = HID_BUFFER_UNREAD;
             currentOutput = -1;
         }
-//        clearEP0Status();
     }
 }
 
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     for(int i=0;i<featureBufferCount;i++) {
         if (featureBuffers[i].reportID == reportID) {
-            featureBuffers[i].state = HID_BUFFER_UNREAD; // hackish mark of busyness
+            usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
             memcpy((void*)featureBuffers[i].buffer, data, featureBuffers[i].bufferLength);
             if (reportID)
                 featureBuffers[i].buffer[0] = reportID;
             featureBuffers[i].dataSize = featureBuffers[i].bufferLength;
             featureBuffers[i].state = HID_BUFFER_READ;
+            usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
             return;
         }
     }
@@ -929,19 +925,22 @@ uint8_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t p
     for(int i=0;i<n;i++) {
         if (bufs[i].reportID == reportID) {
             uint8_t oldState = bufs[i].state;
-            bufs[i].state = HID_BUFFER_UNREAD; // temporary
+
+            usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
 
             if (oldState == HID_BUFFER_EMPTY || (poll && oldState == HID_BUFFER_READ) ||
                 bufs[i].bufferLength != bufs[i].dataSize ) {
                 bufs[i].state = oldState;
+                usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
                 return 0;
             }
             memcpy(out, (void*)bufs[i].buffer, bufs[i].bufferLength);
             if (poll) {
                 bufs[i].state = HID_BUFFER_READ;
             }
-            else
-                bufs[i].state = oldState;
+
+            usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+            
             return bufs[i].bufferLength;
         }
     }
@@ -1241,6 +1240,7 @@ static void usbReset(void) {
 #endif    
 }
 
+/*
 static uint8* Dummy_Set(uint16 length) {
     static uint8 dummyBuffer[DUMMY_BUFFER_SIZE];
     if (length ==0) {
@@ -1254,6 +1254,7 @@ static uint8* Dummy_Set(uint16 length) {
 
     return dummyBuffer;// + pInformation->Ctrl_Info.Usb_wOffset;
 }
+*/
 
 static uint8* HID_Set(volatile HIDBuffer_t* buf, uint16 length) {
     if (length ==0) {
@@ -1332,10 +1333,11 @@ static RESULT usbDataSetup(uint8 request) {
                         return USB_UNSUPPORT;
                     }
                     
-                    if (featureBuffers[currentInFeature].state == HID_BUFFER_UNREAD) {
+/*                    if (featureBuffers[currentInFeature].state == HID_BUFFER_UNREAD) {
                         CopyRoutine = Dummy_Set; // TODO: proper handling of busy data
-                    }
-                    else {
+                    } 
+                    else */
+                    {
                         featureBuffers[currentInFeature].state = HID_BUFFER_EMPTY;
                         CopyRoutine = HID_SetFeature;        
                     }
@@ -1348,10 +1350,11 @@ static RESULT usbDataSetup(uint8 request) {
                         return USB_UNSUPPORT;
                     }
                     
-                    if (outputBuffers[currentOutput].state == HID_BUFFER_UNREAD) {
+/*                    if (outputBuffers[currentOutput].state == HID_BUFFER_UNREAD) {
                         CopyRoutine = Dummy_Set; // TODO: proper handling of busy data
                     }
-                    else {
+                    else */
+                    {
                         outputBuffers[currentOutput].state = HID_BUFFER_EMPTY;
                         CopyRoutine = HID_SetOutput;        
                     }
