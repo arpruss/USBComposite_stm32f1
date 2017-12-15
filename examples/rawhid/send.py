@@ -1,7 +1,7 @@
 from pywinusb import hid
 from time import sleep
 
-SIZE=32
+SIZE=96
 
 def sample_handler(data):
     print("Raw data: {0}".format(data))
@@ -13,10 +13,11 @@ device.set_raw_data_handler(sample_handler)
 
 while True:
     for out_report in device.find_output_reports():
-        print("sending")
         buffer=[i for i in range(SIZE+1)]
         buffer[0]=0x0 # report id
         out_report.set_raw_data(buffer)
+        print("sending")
         out_report.send()
-        #sleep(0.001)
+        print("sent")
+        #sleep(0.005)
         

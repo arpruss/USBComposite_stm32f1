@@ -88,7 +88,7 @@ volatile int currentInFeature = -1;
 volatile int currentOutput = -1;
 int currentOutFeature = -1;
 
-#define DUMMY_BUFFER_SIZE 0x40
+#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
 
 #ifdef COMPOSITE_SERIAL
 #define NUM_SERIAL_ENDPOINTS       3
@@ -1245,16 +1245,14 @@ static uint8* Dummy_Set(uint16 length) {
     static uint8 dummyBuffer[DUMMY_BUFFER_SIZE];
     if (length ==0) {
         uint16 len = pInformation->USBwLengths.w;
-        if (len > DUMMY_BUFFER_SIZE)
-            len = DUMMY_BUFFER_SIZE;
-        if (pInformation->Ctrl_Info.Usb_wOffset < DUMMY_BUFFER_SIZE)
+        if (pInformation->Ctrl_Info.Usb_wOffset < len)
             pInformation->Ctrl_Info.Usb_wLength = len - pInformation->Ctrl_Info.Usb_wOffset;
         else
             pInformation->Ctrl_Info.Usb_wLength = 0;
         return NULL;
     }
 
-    return dummyBuffer + pInformation->Ctrl_Info.Usb_wOffset;
+    return dummyBuffer;// + pInformation->Ctrl_Info.Usb_wOffset;
 }
 
 static uint8* HID_Set(volatile HIDBuffer_t* buf, uint16 length) {
@@ -1266,7 +1264,7 @@ static uint8* HID_Set(volatile HIDBuffer_t* buf, uint16 length) {
         if (pInformation->Ctrl_Info.Usb_wOffset < len)
             pInformation->Ctrl_Info.Usb_wLength = len - pInformation->Ctrl_Info.Usb_wOffset;
         else
-            pInformation->Ctrl_Info.Usb_wLength = 0;
+            pInformation->Ctrl_Info.Usb_wLength = 0; 
         return NULL;
     }
 

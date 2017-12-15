@@ -32,6 +32,9 @@
 #define USB_HID_KEYBOARD_REPORT_ID 2
 #define USB_HID_JOYSTICK_REPORT_ID 3
 
+// HIDBuffer_t data buffers must have even memory length because of how PMA transfers work
+#define HID_DATA_BUFFER_SIZE(n) (((n)+1)/2*2)
+
 /* note that featureSize must be 1 less than the buffer size for the feature,
    since the latter must include the reportId */
 /* this only works in a collection with a report_id */
@@ -213,7 +216,7 @@
 	0x75, 0x08,				/*  report size = 8 bits */ \
 	0x15, 0x00,				/*  logical minimum = 0 */ \
 	0x26, 0xFF, 0x00,		/*  logical maximum = 255 */ \
-	0x95, rxSize,				/*  report count RX */ \
+	0x96, LSB(rxSize), MSB(rxSize),				/*  report count RX */ \
 	0x09, 0x02,				/*  usage */ \
 	0x91, 0x02,				/*  OUTPUT (0x91) */ \
 	0xC0					/*  end collection */ 

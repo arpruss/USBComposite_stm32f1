@@ -45,12 +45,12 @@ typedef struct HIDBuffer_t {
     volatile uint8_t* buffer; // be careful: if bufferLength is odd, the code will write one byte beyond the end; if this is
                               // allocated with proper alignment, that shouldn't be a problem
                               
-    uint8_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature/output report length in the report descriptor
+    uint16_t  bufferLength; // for HID descriptors with a reportID, this must be 1 + the feature/output report length in the report descriptor
+    uint16_t  dataSize;
     uint8_t  reportID;
-    uint8_t  dataSize;
     uint8_t  state;
 #ifdef __cplusplus
-    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint8_t _bufferLength=0, uint8_t _reportID=0) {
+    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferLength=0, uint8_t _reportID=0) {
         reportID = _reportID;
         buffer = _buffer;
         bufferLength = _bufferLength;
