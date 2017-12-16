@@ -1337,7 +1337,7 @@ static RESULT usbDataSetup(uint8 request) {
                         return USB_UNSUPPORT;
                     }
                     
-                   if (outputBuffers[i].state == HID_BUFFER_UNREAD) {
+                    if (outputBuffers[i].state == HID_BUFFER_UNREAD) {
                         return USB_NOT_READY;
                     }
                     else  
