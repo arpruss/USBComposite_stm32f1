@@ -84,9 +84,7 @@ volatile HIDBuffer_t* featureBuffers = NULL;
 volatile HIDBuffer_t* outputBuffers = NULL;
 static int featureBufferCount = 0;
 static int outputBufferCount = 0;
-volatile int currentInFeature = -1;
-volatile int currentOutput = -1;
-int currentOutFeature = -1;
+volatile HIDBuffer_t* currentHIDBuffer = NULL;
 
 //#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
 
@@ -960,18 +958,16 @@ void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* bufs, int n) {
     if (type == HID_REPORT_TYPE_FEATURE) {
         featureBuffers = bufs;
         featureBufferCount = n;
-        currentInFeature = -1;
-        currentOutFeature = -1;
     }
     else {
         outputBuffers = bufs;
         outputBufferCount = n;
-        currentOutput = -1;
     }
     for (int i=0; i<n; i++) {
         bufs[i].state = HID_BUFFER_EMPTY;
         bufs[i].buffer[0] = featureBuffers[i].reportID;
     }
+    currentHIDBuffer = NULL;
 }
 
 /* This function is non-blocking.
@@ -1163,8 +1159,7 @@ static void usbInit(void) {
     nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
     USBLIB->state = USB_UNCONNECTED;
     
-    currentInFeature = -1;
-    currentOutput = -1;
+    currentHIDBuffer = NULL;
 }
 
 #define BTABLE_ADDRESS        0x00
@@ -1248,19 +1243,22 @@ static void usbReset(void) {
 #endif    
 }
 
-static uint8* HID_Set(volatile HIDBuffer_t* buf, uint16 length) {
+static uint8* HID_Set(uint16 length) {
+    if (currentHIDBuffer == NULL)
+        return NULL;
+    
     if (length ==0) {
-        if (buf->state == HID_BUFFER_UNREAD && pInformation->Ctrl_Info.Usb_wOffset < pInformation->USBwLengths.w) {
+        if (currentHIDBuffer->state == HID_BUFFER_UNREAD && pInformation->Ctrl_Info.Usb_wOffset < pInformation->USBwLengths.w) {
             pInformation->Ctrl_Info.Usb_wLength = 0xFFFF;
             return NULL;
         }
 
         uint16 len = pInformation->USBwLengths.w;
-        if (len > buf->bufferSize)
-            len = buf->bufferSize;
-        buf->currentDataSize = len;
+        if (len > currentHIDBuffer->bufferSize)
+            len = currentHIDBuffer->bufferSize;
+        currentHIDBuffer->currentDataSize = len;
         
-        buf->state = HID_BUFFER_EMPTY;
+        currentHIDBuffer->state = HID_BUFFER_EMPTY;
         
         if (pInformation->Ctrl_Info.Usb_wOffset < len) { 
             pInformation->Ctrl_Info.Usb_wLength = len - pInformation->Ctrl_Info.Usb_wOffset;
@@ -1273,36 +1271,24 @@ static uint8* HID_Set(volatile HIDBuffer_t* buf, uint16 length) {
     }
     
     if (pInformation->USBwLengths.w <= pInformation->Ctrl_Info.Usb_wOffset + pInformation->Ctrl_Info.PacketSize)
-        buf->state = HID_BUFFER_UNREAD;
+        currentHIDBuffer->state = HID_BUFFER_UNREAD;
     
-    return (uint8*)buf->buffer + pInformation->Ctrl_Info.Usb_wOffset;
-}
-
-static uint8* HID_SetFeature(uint16 length) {
-    if (currentInFeature < 0)
-        return NULL;
-    return HID_Set(&featureBuffers[currentInFeature], length);
-}
-
-static uint8* HID_SetOutput(uint16 length) {
-    if (currentOutput < 0)
-        return NULL;
-    return HID_Set(&outputBuffers[currentOutput], length);
+    return (uint8*)currentHIDBuffer->buffer + pInformation->Ctrl_Info.Usb_wOffset;
 }
 
 static uint8* HID_GetFeature(uint16 length) {
-    if (currentOutFeature < 0)
+    if (currentHIDBuffer == NULL)
         return NULL;
     
     unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
     
     if (length == 0)
     {
-        pInformation->Ctrl_Info.Usb_wLength = featureBuffers[currentOutFeature].bufferSize - wOffset;
+        pInformation->Ctrl_Info.Usb_wLength = currentHIDBuffer->bufferSize - wOffset;
         return NULL;
     }
 
-    return (uint8*)featureBuffers[currentOutFeature].buffer + wOffset;
+    return (uint8*)currentHIDBuffer->buffer + wOffset;
 }
 
 static int get_buffer_index(volatile HIDBuffer_t* buf, int bufferCount, uint8_t reportID) {
@@ -1327,37 +1313,36 @@ static RESULT usbDataSetup(uint8 request) {
 #endif            
         case SET_REPORT:
             if (pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){                
-            
                 if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
-                    
-                    currentInFeature = get_buffer_index(featureBuffers, featureBufferCount, pInformation->USBwValue0);
+                    int i = get_buffer_index(featureBuffers, featureBufferCount, pInformation->USBwValue0);
                         
-                    if (currentInFeature < 0) {
+                    if (i < 0) {
                         return USB_UNSUPPORT;
                     }
                     
-                    if (featureBuffers[currentInFeature].state == HID_BUFFER_UNREAD) {
+                    if (featureBuffers[i].state == HID_BUFFER_UNREAD) {
                         return USB_NOT_READY;
                     } 
                     else 
                     {
-                        CopyRoutine = HID_SetFeature;        
+                        currentHIDBuffer = featureBuffers + i;
+                        CopyRoutine = HID_Set;        
                     }
                 }
                 else if (pInformation->USBwValue1 == HID_REPORT_TYPE_OUTPUT) {
-                    
-                    currentOutput = get_buffer_index(outputBuffers, outputBufferCount, pInformation->USBwValue0);
+                    int i = get_buffer_index(outputBuffers, outputBufferCount, pInformation->USBwValue0);
                         
-                    if (currentOutput < 0) {
+                    if (i < 0) {
                         return USB_UNSUPPORT;
                     }
                     
-                   if (outputBuffers[currentOutput].state == HID_BUFFER_UNREAD) {
+                   if (outputBuffers[i].state == HID_BUFFER_UNREAD) {
                         return USB_NOT_READY;
                     }
                     else  
                     {
-                        CopyRoutine = HID_SetOutput;        
+                        currentHIDBuffer = outputBuffers + i;
+                        CopyRoutine = HID_Set;        
                     }
                 }
             }
@@ -1365,11 +1350,12 @@ static RESULT usbDataSetup(uint8 request) {
         case GET_REPORT:
             if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE &&
                 pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){						
-            int currentOutFeature = get_buffer_index(featureBuffers, featureBufferCount, pInformation->USBwValue0);
+            int i = get_buffer_index(featureBuffers, featureBufferCount, pInformation->USBwValue0);
             
-            if (currentOutFeature < 0 || featureBuffers[currentOutFeature].state == HID_BUFFER_EMPTY) {
+            if (i < 0 || featureBuffers[i].state == HID_BUFFER_EMPTY) {
                 return USB_UNSUPPORT;
             }
+            currentHIDBuffer = featureBuffers + i;
             CopyRoutine = HID_GetFeature;        
             break;
         }
