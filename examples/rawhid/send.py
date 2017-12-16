@@ -21,6 +21,6 @@ while True:
         print("sending")
         if out_report.send():
             n = (n+1)&0xFF            
-        #sleep(0.05)
+        sleep(0.1)
         #sleep(0.005)
         

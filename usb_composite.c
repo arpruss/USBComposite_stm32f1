@@ -61,8 +61,6 @@ static void hidDataRxCb(void);
 #else
 #define hidDataRxCb NOP_Process
 #endif
-static void hidStatusIn(void);
-
 static void usbInit(void);
 static void usbReset(void);
 static RESULT usbDataSetup(uint8 request);
@@ -499,7 +497,7 @@ static DEVICE my_Device_Table = {
 static DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
-    .Process_Status_IN           = hidStatusIn,
+    .Process_Status_IN           = NOP_Process, //hidStatusIn,
     .Process_Status_OUT          = NOP_Process,
     .Class_Data_Setup            = usbDataSetup,
     .Class_NoData_Setup          = usbNoDataSetup,
@@ -874,8 +872,8 @@ void usb_hid_putc(char ch) {
         ;
 }
 
-static void hidStatusIn() {
     /*
+static void hidStatusIn() {
     if (pInformation->ControlState == WAIT_STATUS_IN) {
         if (currentInFeature >= 0) {
             if (featureBuffers[currentInFeature].bufferSize == featureBuffers[currentInFeature].currentDataSize) 
@@ -888,8 +886,8 @@ static void hidStatusIn() {
             currentOutput = -1;
         }
     }
-    */
 }
+    */
 
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     for(int i=0;i<featureBufferCount;i++) {
@@ -907,9 +905,19 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     }
 }
 
+uint8_t haveUnreadData(HIDBuffer_t* buf, int n) {
+    if(buf == NULL)
+       return NULL;
+    for (int i=0;i<n;i++)
+        if (buf[i].state == HID_BUFFER_UNREAD)
+            return 1;
+    return 0;
+}
+
 uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll) {
     volatile HIDBuffer_t* bufs;
     int n;
+    unsigned ret = 0;
     
     if (type == HID_REPORT_TYPE_FEATURE) {
         bufs = featureBuffers;
@@ -923,34 +931,36 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
         return 0;
     }
     
+    nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
+
     for(int i=0;i<n;i++) {
         if (bufs[i].reportID == reportID) {
-            if (bufs[i].state == HID_BUFFER_EMPTY || (poll && bufs[i].state == HID_BUFFER_READ)) {
-                    
-               return 0;
+            if (bufs[i].state == HID_BUFFER_EMPTY || (poll && bufs[i].state == HID_BUFFER_READ)) {                    
+               break;
             }            
             
             if (bufs[i].bufferSize != bufs[i].currentDataSize) {
-               usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
-               return 0;
+               bufs[i].state = HID_BUFFER_EMPTY;
+               break;
             }
  
-            nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
-
             unsigned delta = reportID != 0;
             memcpy(out, (uint8*)bufs[i].buffer+delta, bufs[i].bufferSize-delta);
             if (poll) {
                 bufs[i].state = HID_BUFFER_READ;
             }
 
-            nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
-            usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
-            
-            return bufs[i].bufferSize-delta;
+            ret = bufs[i].bufferSize-delta;
         }
     }
+    
+    if (! haveUnreadData(featureBuffers, featureBufferCount) && ! haveUnreadData(outputBuffers, outputBufferCount)) {
+        usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+    }
 
-    return 0;
+    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
+            
+    return ret;
 }
 
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* bufs, int n) {
