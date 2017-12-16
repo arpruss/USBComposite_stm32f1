@@ -925,15 +925,18 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
     
     for(int i=0;i<n;i++) {
         if (bufs[i].reportID == reportID) {
-            nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
-
-            if (bufs[i].state == HID_BUFFER_EMPTY || (poll && bufs[i].state == HID_BUFFER_READ) ||
-                bufs[i].bufferSize != bufs[i].currentDataSize ) {
+            if (bufs[i].state == HID_BUFFER_EMPTY || (poll && bufs[i].state == HID_BUFFER_READ)) {
                     
-               nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
                return 0;
             }            
+            
+            if (bufs[i].bufferSize != bufs[i].currentDataSize) {
+               usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+               return 0;
+            }
  
+            nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
+
             unsigned delta = reportID != 0;
             memcpy(out, (uint8*)bufs[i].buffer+delta, bufs[i].bufferSize-delta);
             if (poll) {
@@ -1267,8 +1270,9 @@ static uint8* HID_Set(uint16 length) {
         return NULL;
     }
     
-    if (pInformation->USBwLengths.w <= pInformation->Ctrl_Info.Usb_wOffset + pInformation->Ctrl_Info.PacketSize)
+    if (pInformation->USBwLengths.w <= pInformation->Ctrl_Info.Usb_wOffset + pInformation->Ctrl_Info.PacketSize) {
         currentHIDBuffer->state = HID_BUFFER_UNREAD;
+    }
     
     return (uint8*)currentHIDBuffer->buffer + pInformation->Ctrl_Info.Usb_wOffset;
 }
