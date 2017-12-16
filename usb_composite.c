@@ -925,17 +925,12 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
     
     for(int i=0;i<n;i++) {
         if (bufs[i].reportID == reportID) {
-            uint8_t oldState = bufs[i].state;
-            
-            uint32 savedState = USB_BASE->EP[USB_EP0];
+            nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
 
-            usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
-
-            if (oldState == HID_BUFFER_EMPTY || (poll && oldState == HID_BUFFER_READ) ||
+            if (bufs[i].state == HID_BUFFER_EMPTY || (poll && bufs[i].state == HID_BUFFER_READ) ||
                 bufs[i].bufferSize != bufs[i].currentDataSize ) {
                     
-//               USB_BASE->EP[USB_EP0] = savedState;
-               usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+               nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
                return 0;
             }            
  
@@ -945,6 +940,7 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
                 bufs[i].state = HID_BUFFER_READ;
             }
 
+            nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
             usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
             
             return bufs[i].bufferSize-delta;
@@ -1256,6 +1252,7 @@ static uint8* HID_Set(uint16 length) {
         uint16 len = pInformation->USBwLengths.w;
         if (len > currentHIDBuffer->bufferSize)
             len = currentHIDBuffer->bufferSize;
+        
         currentHIDBuffer->currentDataSize = len;
         
         currentHIDBuffer->state = HID_BUFFER_EMPTY;
@@ -1355,6 +1352,7 @@ static RESULT usbDataSetup(uint8 request) {
             if (i < 0 || featureBuffers[i].state == HID_BUFFER_EMPTY) {
                 return USB_UNSUPPORT;
             }
+
             currentHIDBuffer = featureBuffers + i;
             CopyRoutine = HID_GetFeature;        
             break;
