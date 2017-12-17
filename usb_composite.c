@@ -907,7 +907,7 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
 
 uint8_t haveUnreadData(HIDBuffer_t* buf, int n) {
     if(buf == NULL)
-       return NULL;
+       return 0;
     for (int i=0;i<n;i++)
         if (buf[i].state == HID_BUFFER_UNREAD)
             return 1;
@@ -954,7 +954,8 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
         }
     }
     
-    if (! haveUnreadData(featureBuffers, featureBufferCount) && ! haveUnreadData(outputBuffers, outputBufferCount)) {
+    if (! haveUnreadData((HIDBuffer_t*)featureBuffers, featureBufferCount) && 
+            ! haveUnreadData((HIDBuffer_t*)outputBuffers, outputBufferCount) ) {
         usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
     }
 
