@@ -1,7 +1,7 @@
 from pywinusb import hid
 from time import sleep
 
-REPORT_ID = 3
+REPORT_ID = 20
 HID_REPORT_FEATURE = 3
 
 device = hid.HidDeviceFilter(vendor_id = 0x1EAF, product_id = 0x0024).get_devices()[0]
