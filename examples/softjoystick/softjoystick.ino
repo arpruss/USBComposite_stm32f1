@@ -5,10 +5,12 @@
 
 #include <USBHID.h>
 
+#define DATA_SIZE (sizeof(JoystickReport_t)-1)
+
 class HIDJoystickRawData : public HIDJoystick {
   private:
-    uint8_t featureData[HID_BUFFER_ALLOCATE_SIZE(sizeof(JoystickReport_t)-1,1)];
-    HIDBuffer_t fb { featureData, HID_BUFFER_SIZE(sizeof(JoystickReport_t)-1,1), HID_JOYSTICK_REPORT_ID }; 
+    uint8_t featureData[HID_BUFFER_ALLOCATE_SIZE(DATA_SIZE,1)];
+    HIDBuffer_t fb { featureData, HID_BUFFER_SIZE(DATA_SIZE,1), HID_JOYSTICK_REPORT_ID }; 
   public:
     HIDJoystickRawData(uint8_t reportID=HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {}
     
@@ -27,7 +29,7 @@ JoystickReport_t report = {HID_JOYSTICK_REPORT_ID};
 
 const uint8_t reportDescription[] = {
    HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID, 
-        HID_FEATURE_REPORT_DESCRIPTOR(sizeof(JoystickReport_t)))
+        HID_FEATURE_REPORT_DESCRIPTOR(DATA_SIZE))
 };
 
 void setup() {

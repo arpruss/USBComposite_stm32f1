@@ -43,23 +43,23 @@
 /* note that featureSize must be 1 less than the buffer size for the feature,
    since the latter must include the reportId */
 /* this only works in a collection with a report_id */
-#define HID_FEATURE_REPORT_DESCRIPTOR(featureBufferSize) \
+#define HID_FEATURE_REPORT_DESCRIPTOR(dataSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
     0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
     0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
     0x75, 0x08,       /* REPORT_SIZE (8) */ \
-    0x95, featureBufferSize-1,       /* REPORT_COUNT (32) */ \
+    0x95, dataSize,       /* REPORT_COUNT (xx) */ \
     0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
-// TODO: does not work yet!
-#define HID_OUTPUT_REPORT_DESCRIPTOR(featureBufferSize) \
+// untested
+#define HID_OUTPUT_REPORT_DESCRIPTOR(dataSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
     0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
     0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
     0x75, 0x08,       /* REPORT_SIZE (8) */ \
-    0x95, featureBufferSize-1,       /* REPORT_COUNT (32) */ \
+    0x95, dataSize,       /* REPORT_COUNT (32) */ \
     0x91, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
 #define HID_CONSUMER_REPORT_DESCRIPTOR(...) \
