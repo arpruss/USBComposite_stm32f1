@@ -32,6 +32,10 @@
 #define USB_HID_KEYBOARD_REPORT_ID 2
 #define USB_HID_JOYSTICK_REPORT_ID 3
 
+#define MACRO_GET_ARGUMENT_2(x, y, ...) y
+#define MACRO_GET_ARGUMENT_1_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_2(placeholder, ## __VA_ARGS__, default)
+#define MACRO_ARGUMENT_2_TO_END(skip, ...) __VA_ARGS__
+
 // HIDBuffer_t data buffers must have even memory length because of how PMA transfers work
 #define HID_DATA_BUFFER_SIZE(n) (((n)+1)/2*2)
 
@@ -57,11 +61,11 @@
     0x95, featureBufferSize-1,       /* REPORT_COUNT (32) */ \
     0x91, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
-#define USB_HID_MOUSE_REPORT_DESCRIPTOR(reportId, ...) \
+#define USB_HID_MOUSE_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
     0x09, 0x02,						/*  USAGE (Mouse) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
-    0x85, reportId,						/*    REPORT_ID (1) */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     0x09, 0x01,						/*    USAGE (Pointer) */ \
     0xa1, 0x00,						/*    COLLECTION (Physical) */ \
     0x05, 0x09,						/*      USAGE_PAGE (Button) */ \
@@ -82,14 +86,14 @@
     0x95, 0x03,						/*      REPORT_COUNT (3) */ \
     0x81, 0x06,						/*      INPUT (Data,Var,Rel) */ \
     0xc0,      						/*    END_COLLECTION */ \
-    __VA_ARGS__  \
+    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */ 
 
-#define USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(reportId, ...) \
+#define USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
     0x09, 0x02,						/*  USAGE (Mouse) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
-    0x85, reportId,						/*    REPORT_ID (1) */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     0x09, 0x01,						/*    USAGE (Pointer) */ \
     0xa1, 0x00,						/*    COLLECTION (Physical) */ \
     0x05, 0x09,						/*      USAGE_PAGE (Button) */ \
@@ -115,14 +119,14 @@
     0x95, 0x01,						/*      REPORT_COUNT (1) */ \
     0x81, 0x06,						/*      INPUT (Data,Var,Rel) */ \
     0xc0,     						/*  END_COLLECTION */  \
-    __VA_ARGS__ \
+    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */ 
 
-#define USB_HID_KEYBOARD_REPORT_DESCRIPTOR(reportId, ...) \
+#define USB_HID_KEYBOARD_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 47 */ \
     0x09, 0x06,						/*  USAGE (Keyboard) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
-    0x85, reportId,				    /*    REPORT_ID (2) */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_KEYBOARD_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     0x05, 0x07,						/*    USAGE_PAGE (Keyboard) */ \
 	0x19, 0xe0,						/*    USAGE_MINIMUM (Keyboard LeftControl) */ \
     0x29, 0xe7,						/*    USAGE_MAXIMUM (Keyboard Right GUI) */ \
@@ -145,14 +149,14 @@
 	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
     0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
-    __VA_ARGS__ \
+    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */
 	
-#define USB_HID_JOYSTICK_REPORT_DESCRIPTOR(reportId,...) \
+#define USB_HID_JOYSTICK_REPORT_DESCRIPTOR(...) \
 	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
 	0x09, 0x04,						/*  Usage (Joystick) */ \
 	0xA1, 0x01,						/*  Collection (Application) */ \
-    0x85, reportId,						/*    REPORT_ID (3) */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_JOYSTICK_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
 	0x15, 0x00,						/* 	 Logical Minimum (0) */ \
 	0x25, 0x01,						/*    Logical Maximum (1) */ \
 	0x75, 0x01,						/*    Report Size (1) */ \
@@ -191,7 +195,7 @@
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x09, 0x36,						/*  Usage (Slider) */ \
 	0x81, 0x02,						/*  Input (variable,absolute) */ \
-    __VA_ARGS__ \
+    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xC0
 
 #define RAWHID_USAGE_PAGE	0xFFC0 // recommended: 0xFF00 to 0xFFFF

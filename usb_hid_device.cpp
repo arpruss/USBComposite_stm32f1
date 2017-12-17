@@ -40,9 +40,9 @@ template<int... args> static constexpr int countIntegers() {
 }
 
 static uint8_t reportDescriptors[] = {
-        USB_HID_MOUSE_REPORT_DESCRIPTOR(USB_HID_MOUSE_REPORT_ID),
-        USB_HID_KEYBOARD_REPORT_DESCRIPTOR(USB_HID_KEYBOARD_REPORT_ID),
-        USB_HID_JOYSTICK_REPORT_DESCRIPTOR(USB_HID_JOYSTICK_REPORT_ID)
+        USB_HID_MOUSE_REPORT_DESCRIPTOR(),
+        USB_HID_KEYBOARD_REPORT_DESCRIPTOR(),
+        USB_HID_JOYSTICK_REPORT_DESCRIPTOR()
 };
 
 static const uint16_t mouseSize = countIntegers<USB_HID_MOUSE_REPORT_DESCRIPTOR(0)>();
