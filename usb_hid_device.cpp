@@ -35,39 +35,6 @@
  * USB HID interface
  */
 
-template<int... args> static constexpr int countIntegers() {
-    return sizeof...(args);
-}
-
-static uint8_t reportDescriptors[] = {
-        HID_MOUSE_REPORT_DESCRIPTOR(),
-        HID_KEYBOARD_REPORT_DESCRIPTOR(),
-        HID_JOYSTICK_REPORT_DESCRIPTOR()
-};
-
-static const uint16_t mouseSize = countIntegers<HID_MOUSE_REPORT_DESCRIPTOR(0)>();
-static const uint16_t keyboardSize = countIntegers<HID_KEYBOARD_REPORT_DESCRIPTOR(0)>();
-static const uint16_t joystickSize = countIntegers<HID_JOYSTICK_REPORT_DESCRIPTOR(0)>();
-static const uint16_t mouseOffset = 0;
-static const uint16_t keyboardOffset = mouseOffset+mouseSize;
-static const uint16_t joystickOffset = keyboardOffset+keyboardSize;
-
-static_assert(mouseSize+keyboardSize+joystickSize == sizeof(reportDescriptors), "sizes match!");
-
-static const HIDReportDescriptor _hidMouse = { reportDescriptors+mouseOffset, mouseSize };
-static const HIDReportDescriptor _hidKeyboard = { reportDescriptors+keyboardOffset, keyboardSize };
-static const HIDReportDescriptor _hidJoystick = { reportDescriptors+joystickOffset, joystickSize };
-static const HIDReportDescriptor _hidKeyboardMouse = { reportDescriptors+mouseOffset, mouseSize+keyboardSize };
-static const HIDReportDescriptor _hidKeyboardJoystick = { reportDescriptors+keyboardOffset, keyboardSize+joystickSize };
-static const HIDReportDescriptor _hidKeyboardMouseJoystick = { reportDescriptors+mouseOffset, mouseSize+keyboardSize+joystickSize };
-
-const HIDReportDescriptor* hidReportMouse = &_hidMouse;
-const HIDReportDescriptor* hidReportKeyboard = &_hidKeyboard;
-const HIDReportDescriptor* hidReportJoystick = &_hidJoystick;
-const HIDReportDescriptor* hidReportKeyboardMouse = &_hidKeyboardMouse;
-const HIDReportDescriptor* hidReportKeyboardJoystick = &_hidKeyboardJoystick;
-const HIDReportDescriptor* hidReportKeyboardMouseJoystick = &_hidKeyboardMouseJoystick;
-
 #if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
 static void rxHook(unsigned, void*);
 static void ifaceSetupHook(unsigned, void*);
