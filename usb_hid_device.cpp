@@ -40,14 +40,14 @@ template<int... args> static constexpr int countIntegers() {
 }
 
 static uint8_t reportDescriptors[] = {
-        USB_HID_MOUSE_REPORT_DESCRIPTOR(),
-        USB_HID_KEYBOARD_REPORT_DESCRIPTOR(),
-        USB_HID_JOYSTICK_REPORT_DESCRIPTOR()
+        HID_MOUSE_REPORT_DESCRIPTOR(),
+        HID_KEYBOARD_REPORT_DESCRIPTOR(),
+        HID_JOYSTICK_REPORT_DESCRIPTOR()
 };
 
-static const uint16_t mouseSize = countIntegers<USB_HID_MOUSE_REPORT_DESCRIPTOR(0)>();
-static const uint16_t keyboardSize = countIntegers<USB_HID_KEYBOARD_REPORT_DESCRIPTOR(0)>();
-static const uint16_t joystickSize = countIntegers<USB_HID_JOYSTICK_REPORT_DESCRIPTOR(0)>();
+static const uint16_t mouseSize = countIntegers<HID_MOUSE_REPORT_DESCRIPTOR(0)>();
+static const uint16_t keyboardSize = countIntegers<HID_KEYBOARD_REPORT_DESCRIPTOR(0)>();
+static const uint16_t joystickSize = countIntegers<HID_JOYSTICK_REPORT_DESCRIPTOR(0)>();
 static const uint16_t mouseOffset = 0;
 static const uint16_t keyboardOffset = mouseOffset+mouseSize;
 static const uint16_t joystickOffset = keyboardOffset+keyboardSize;

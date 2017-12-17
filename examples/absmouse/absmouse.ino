@@ -1,13 +1,13 @@
 #include <USBHID.h>
 
 const uint8_t reportDescription[] = {
-  USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(USB_HID_MOUSE_REPORT_ID)
+  HID_ABS_MOUSE_REPORT_DESCRIPTOR(HID_MOUSE_REPORT_ID)
 };
 
 HIDAbsMouse mouse;
 
 void setup(){
-  HID.begin(reportDescription, sizeof(reportDescription));
+  USB.begin(reportDescription, sizeof(reportDescription));
   delay(1000);
   mouse.move(0,0);
   delay(1000);

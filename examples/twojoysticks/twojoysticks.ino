@@ -1,16 +1,16 @@
 #include <USBHID.h>
 
 const uint8_t reportDescription[] = {
-   USB_HID_MOUSE_REPORT_DESCRIPTOR(),
-   USB_HID_KEYBOARD_REPORT_DESCRIPTOR(),
-   USB_HID_JOYSTICK_REPORT_DESCRIPTOR(),
-   USB_HID_JOYSTICK_REPORT_DESCRIPTOR(USB_HID_JOYSTICK_REPORT_ID+1),
+   HID_MOUSE_REPORT_DESCRIPTOR(),
+   HID_KEYBOARD_REPORT_DESCRIPTOR(),
+   HID_JOYSTICK_REPORT_DESCRIPTOR(),
+   HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID+1),
 };
 
-HIDJoystick Joystick2(USB_HID_JOYSTICK_REPORT_ID+1);
+HIDJoystick Joystick2(HID_JOYSTICK_REPORT_ID+1);
 
 void setup(){
-  HID.begin(reportDescription, sizeof(reportDescription));
+  USB.begin(reportDescription, sizeof(reportDescription));
   Joystick.setManualReportMode(true);
   Joystick2.setManualReportMode(true);
 }

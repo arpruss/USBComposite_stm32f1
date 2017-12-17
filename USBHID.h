@@ -17,8 +17,8 @@
  * @brief USB HID port (HID USB).
  */
 
-#ifndef _USB_HID_DEVICE_H_
-#define _USB_HID_DEVICE_H_
+#ifndef _HID_DEVICE_H_
+#define _HID_DEVICE_H_
 
 #include <Print.h>
 #include <boards.h>
@@ -28,9 +28,10 @@
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
 
-#define USB_HID_MOUSE_REPORT_ID 1
-#define USB_HID_KEYBOARD_REPORT_ID 2
-#define USB_HID_JOYSTICK_REPORT_ID 3
+#define HID_MOUSE_REPORT_ID 1
+#define HID_KEYBOARD_REPORT_ID 2
+#define HID_CONSUMER_REPORT_ID 3
+#define HID_JOYSTICK_REPORT_ID 20
 
 #define MACRO_GET_ARGUMENT_2(x, y, ...) y
 #define MACRO_GET_ARGUMENT_1_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_2(placeholder, ## __VA_ARGS__, default)
@@ -42,7 +43,7 @@
 /* note that featureSize must be 1 less than the buffer size for the feature,
    since the latter must include the reportId */
 /* this only works in a collection with a report_id */
-#define USB_HID_FEATURE_REPORT_DESCRIPTOR(featureBufferSize) \
+#define HID_FEATURE_REPORT_DESCRIPTOR(featureBufferSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
     0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
@@ -52,7 +53,7 @@
     0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
 // TODO: does not work yet!
-#define USB_HID_OUTPUT_REPORT_DESCRIPTOR(featureBufferSize) \
+#define HID_OUTPUT_REPORT_DESCRIPTOR(featureBufferSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
     0x15, 0x00,    /* LOGICAL_MINIMUM (0) */  \
@@ -61,11 +62,26 @@
     0x95, featureBufferSize-1,       /* REPORT_COUNT (32) */ \
     0x91, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
-#define USB_HID_MOUSE_REPORT_DESCRIPTOR(...) \
+#define HID_CONSUMER_REPORT_DESCRIPTOR(...) \
+    0x05, 0x0C,									/* usage page (consumer device) */ \
+	0x09, 0x01, 								/* usage -- consumer control */ \
+	0xA1, 0x01, 								/* collection (application) */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_CONSUMER_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+	0x15, 0x00, 								/* logical minimum */ \
+	0x26, 0xFF, 0x03, 							/* logical maximum (3ff) */ \
+	0x19, 0x00, 								/* usage minimum (0) */ \
+	0x2A, 0xFF, 0x03, 							/* usage maximum (3ff) */ \
+	0x75, 0x10, 								/* report size (16) */ \
+	0x95, 0x01, 								/* report count (1) */ \
+	0x81, 0x00, 								/* input */ \
+    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
+	0xC0 /* end collection */    
+    
+#define HID_MOUSE_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
     0x09, 0x02,						/*  USAGE (Mouse) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
-    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     0x09, 0x01,						/*    USAGE (Pointer) */ \
     0xa1, 0x00,						/*    COLLECTION (Physical) */ \
     0x05, 0x09,						/*      USAGE_PAGE (Button) */ \
@@ -89,11 +105,11 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */ 
 
-#define USB_HID_ABS_MOUSE_REPORT_DESCRIPTOR(...) \
+#define HID_ABS_MOUSE_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 54 */ \
     0x09, 0x02,						/*  USAGE (Mouse) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
-    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     0x09, 0x01,						/*    USAGE (Pointer) */ \
     0xa1, 0x00,						/*    COLLECTION (Physical) */ \
     0x05, 0x09,						/*      USAGE_PAGE (Button) */ \
@@ -122,11 +138,11 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */ 
 
-#define USB_HID_KEYBOARD_REPORT_DESCRIPTOR(...) \
+#define HID_KEYBOARD_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 47 */ \
     0x09, 0x06,						/*  USAGE (Keyboard) */ \
     0xa1, 0x01,						/*  COLLECTION (Application) */ \
-    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_KEYBOARD_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_KEYBOARD_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     0x05, 0x07,						/*    USAGE_PAGE (Keyboard) */ \
 	0x19, 0xe0,						/*    USAGE_MINIMUM (Keyboard LeftControl) */ \
     0x29, 0xe7,						/*    USAGE_MAXIMUM (Keyboard Right GUI) */ \
@@ -152,11 +168,11 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */
 	
-#define USB_HID_JOYSTICK_REPORT_DESCRIPTOR(...) \
+#define HID_JOYSTICK_REPORT_DESCRIPTOR(...) \
 	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
 	0x09, 0x04,						/*  Usage (Joystick) */ \
 	0xA1, 0x01,						/*  Collection (Application) */ \
-    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(USB_HID_JOYSTICK_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_JOYSTICK_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
 	0x15, 0x00,						/* 	 Logical Minimum (0) */ \
 	0x25, 0x01,						/*    Logical Maximum (1) */ \
 	0x75, 0x01,						/*    Report Size (1) */ \
@@ -204,7 +220,7 @@
 #define LSB(x) ((x) & 0xFF)    
 #define MSB(x) (((x) & 0xFF00) >> 8)    
 // TODO: make this work for txSize > 255
-#define USB_HID_RAW_REPORT_DESCRIPTOR(txSize, rxSize) \
+#define HID_RAW_REPORT_DESCRIPTOR(txSize, rxSize) \
 	0x06, LSB(RAWHID_USAGE_PAGE), MSB(RAWHID_USAGE_PAGE), \
 	0x0A, LSB(RAWHID_USAGE), MSB(RAWHID_USAGE), \
 	0xA1, 0x01,				/*  Collection 0x01 */ \
@@ -284,7 +300,7 @@ protected:
 	void buttons(uint8_t b);
     uint8_t reportBuffer[5];
 public:
-	HIDMouse(uint8_t reportID=USB_HID_MOUSE_REPORT_ID) : HIDReporter(reportBuffer, sizeof(reportBuffer), reportID), _buttons(0) {}
+	HIDMouse(uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter(reportBuffer, sizeof(reportBuffer), reportID), _buttons(0) {}
 	void begin(void);
 	void end(void);
 	void click(uint8_t b = MOUSE_LEFT);
@@ -307,7 +323,7 @@ protected:
 	void buttons(uint8_t b);
     AbsMouseReport_t report;
 public:
-	HIDAbsMouse(uint8_t reportID=USB_HID_MOUSE_REPORT_ID) : HIDReporter((uint8_t*)&report, sizeof(report), reportID) {
+	HIDAbsMouse(uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter((uint8_t*)&report, sizeof(report), reportID) {
         report.buttons = 0;
         report.x = 0;
         report.y = 0;
@@ -320,6 +336,33 @@ public:
 	void press(uint8_t b = MOUSE_LEFT);		// press LEFT by default
 	void release(uint8_t b = MOUSE_LEFT);	// release LEFT by default
 	bool isPressed(uint8_t b = MOUSE_ALL);	// check all buttons by default
+};
+
+typedef struct {
+    uint8_t reportID;
+    uint16_t button;
+} __packed ConsumerReport_t;
+
+class HIDConsumer : public HIDReporter {
+protected:
+    ConsumerReport_t report;
+public:
+    enum { 
+           BRIGHTNESS_UP = 0x6F, 
+           BRIGHTNESS_DOWN = 0x70, 
+           VOLUME_UP = 0xE9, 
+           VOLUME_DOWN = 0xEA,
+           MUTE = 0xE2, 
+           PLAY_OR_PAUSE = 0xCD
+           // see pages 75ff of http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+           };
+	HIDConsumer(uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter((uint8_t*)&report, sizeof(report), reportID) {
+        report.button = 0;
+    }
+	void begin(void);
+	void end(void);
+    void press(uint16_t button);
+    void release();
 };
 
 //================================================================================
@@ -508,7 +551,7 @@ class HIDKeyboard : public Print, public HIDReporter {
 protected:
 	KeyReport_t keyReport;
 public:
-	HIDKeyboard(uint8_t reportID=USB_HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&keyReport, sizeof(KeyReport_t), reportID) {}
+	HIDKeyboard(uint8_t reportID=HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&keyReport, sizeof(KeyReport_t), reportID) {}
 	void begin(void);
 	void end(void);
 	virtual size_t write(uint8_t k);
@@ -561,7 +604,7 @@ public:
 	void sliderRight(uint16_t val);
 	void slider(uint16_t val);
 	void hat(int16_t dir);
-	HIDJoystick(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDReporter((uint8_t*)&joyReport, sizeof(joyReport), reportID) {
+	HIDJoystick(uint8_t reportID=HID_JOYSTICK_REPORT_ID) : HIDReporter((uint8_t*)&joyReport, sizeof(joyReport), reportID) {
         joyReport.buttons = 0;
         joyReport.hat = 15;
         joyReport.x = 512;
@@ -574,7 +617,6 @@ public:
 };
 
 extern USBDevice USB;
-#define HID USB
 
 template<unsigned txSize,unsigned rxSize>class HIDRaw : public HIDReporter {
 private:
@@ -586,7 +628,7 @@ public:
         buf.buffer = rxBuffer;
         buf.bufferSize = HID_BUFFER_SIZE(rxSize,0);
         buf.reportID = 0;
-        HID.setOutputBuffers(&buf,1);
+        USB.setOutputBuffers(&buf,1);
     }
 	void begin(void);
 	void end(void);
@@ -643,12 +685,12 @@ extern const HIDReportDescriptor* hidReportKeyboardMouse;
 extern const HIDReportDescriptor* hidReportKeyboardJoystick;
 extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
 
-#define USB_HID_MOUSE                   hidReportMouse
-#define USB_HID_KEYBOARD                hidReportKeyboard
-#define USB_HID_JOYSTICK                hidReportJoystick
-#define USB_HID_KEYBOARD_MOUSE          hidReportKeyboardMouse
-#define USB_HID_KEYBOARD_JOYSTICK       hidReportKeyboardJoystick
-#define USB_HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
+#define HID_MOUSE                   hidReportMouse
+#define HID_KEYBOARD                hidReportKeyboard
+#define HID_JOYSTICK                hidReportJoystick
+#define HID_KEYBOARD_MOUSE          hidReportKeyboardMouse
+#define HID_KEYBOARD_JOYSTICK       hidReportKeyboardJoystick
+#define HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
 
 #endif
         

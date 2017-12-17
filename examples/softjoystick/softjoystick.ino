@@ -8,12 +8,12 @@
 class HIDJoystickRawData : public HIDJoystick {
   private:
     uint8_t featureData[HID_BUFFER_ALLOCATE_SIZE(sizeof(JoystickReport_t)-1,1)];
-    HIDBuffer_t fb { featureData, HID_BUFFER_SIZE(sizeof(JoystickReport_t)-1,1), USB_HID_JOYSTICK_REPORT_ID }; 
+    HIDBuffer_t fb { featureData, HID_BUFFER_SIZE(sizeof(JoystickReport_t)-1,1), HID_JOYSTICK_REPORT_ID }; 
   public:
-    HIDJoystickRawData(uint8_t reportID=USB_HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {}
+    HIDJoystickRawData(uint8_t reportID=HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {}
     
     void begin() {
-      HID.setFeatureBuffers(&fb, 1);
+      USB.setFeatureBuffers(&fb, 1);
     }
     
     void setRawData(JoystickReport_t* p) {
@@ -23,15 +23,15 @@ class HIDJoystickRawData : public HIDJoystick {
 };
 
 HIDJoystickRawData joy;
-JoystickReport_t report = {USB_HID_JOYSTICK_REPORT_ID};
+JoystickReport_t report = {HID_JOYSTICK_REPORT_ID};
 
 const uint8_t reportDescription[] = {
-   USB_HID_JOYSTICK_REPORT_DESCRIPTOR(USB_HID_JOYSTICK_REPORT_ID, 
-        USB_HID_FEATURE_REPORT_DESCRIPTOR(sizeof(JoystickReport_t)))
+   HID_JOYSTICK_REPORT_DESCRIPTOR(HID_JOYSTICK_REPORT_ID, 
+        HID_FEATURE_REPORT_DESCRIPTOR(sizeof(JoystickReport_t)))
 };
 
 void setup() {
-  HID.begin(reportDescription, sizeof(reportDescription));
+  USB.begin(reportDescription, sizeof(reportDescription));
   joy.begin();
 }
 
