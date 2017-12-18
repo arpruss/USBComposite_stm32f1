@@ -1466,7 +1466,7 @@ static uint8* usbGetConfigDescriptor(uint16 length) {
 static uint8* usbGetStringDescriptor(uint16 length) {
     uint8 wValue0 = pInformation->USBwValue0;
 
-    if (wValue0 > N_STRING_DESCRIPTORS) {
+    if (wValue0 >= N_STRING_DESCRIPTORS) {
         return NULL;
     }
     return Standard_GetDescriptorData(length, &String_Descriptor[wValue0]);
