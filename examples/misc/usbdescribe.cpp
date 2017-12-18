@@ -14,7 +14,24 @@ constexpr uint8 convertByte(unsigned x, unsigned interfaceStart, unsigned endpoi
         return x;
 }
 
-template<unsigned interfaces, unsigned endpoints, uint8 interfaceStart, uint8 endpointStart, unsigned... args>struct USBCompositeComponent {
+template<unsigned interfaces, unsigned endpoints, uint8 interfaceStart, uint8 endpointStart, unsigned... args>
+struct USBCompositeComponent {
+    constexpr static unsigned numInterfaces = interfaces;
+    constexpr static unsigned numEndpoints = endpoints;
+    constexpr static unsigned descriptor_config_size = (unsigned int)sizeof...(args);
+    constexpr static uint8 convertByte(unsigned x) {
+        if (x&ENDPOINT_MASK) 
+            return (x&0xFF)+endpointStart;
+        else if (x&INTERFACE_MASK)
+            return (x&0xFF)+interfaceStart;
+        else
+            return x;
+    }
+    constexpr static uint8 descriptor_config[] = { convertByte(args)... };
+};
+
+template<unsigned interfaces, unsigned endpoints, uint8 interfaceStart, uint8 endpointStart, unsigned... args>
+struct USBCompositeComponent {
     constexpr static unsigned numInterfaces = interfaces;
     constexpr static unsigned numEndpoints = endpoints;
     constexpr static unsigned descriptor_config_size = (unsigned int)sizeof...(args);
