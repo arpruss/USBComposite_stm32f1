@@ -60,37 +60,37 @@ static void generateUSBDescriptor(uint8* out, int maxLength, const char* in) {
     }    
 }
 
-static uint8* putSerialNumber(uint8* out, int nibbles, uint32 id) {
+static char* putSerialNumber(char* out, int nibbles, uint32 id) {
     for (int i=0; i<nibbles; i++, id >>= 4) {
         uint8 nibble = id & 0xF;
         if (nibble <= 9)
             *out++ = nibble + '0';
         else
             *out++ = nibble - 10 + 'a';
-        *out++ = 0;
     }
     return out;
 }
 
-static void generateSerialNumber(uint8* out) {
-    int outLength = USB_DESCRIPTOR_STRING_LEN(80/4);
+const char* getDeviceIDString() {
+    static char string[80/4+1];
+    char* p = string;
     
-    out[0] = outLength;
-    out[1] = USB_DESCRIPTOR_TYPE_STRING;
-    
-    uint8* p = out + 2;
     uint32 id = (uint32) *(uint16*) (0x1FFFF7E8+0x02);
-    out = putSerialNumber(out, 4, id);
+    p = putSerialNumber(p, 4, id);
     
     id = *(uint32*) (0x1FFFF7E8+0x04);
-    out = putSerialNumber(out, 8, id);
+    p = putSerialNumber(p, 8, id);
     
     id = *(uint32*) (0x1FFFF7E8+0x08);
-    putSerialNumber(out, 8, id);
+    p = putSerialNumber(p, 8, id);
+    
+    *p = 0;
+    
+    return string;
 }
 
 void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length, uint16_t idVendor, uint16_t idProduct,
-        const char* manufacturer, const char* product, const char* serialNumberOverride) {
+        const char* manufacturer, const char* product, const char* serialNumber) {
             
     uint8_t* manufacturerDescriptor;
     uint8_t* productDescriptor;
@@ -107,25 +107,20 @@ void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
 
         if (product != NULL) {
             generateUSBDescriptor(iProduct, USB_HID_MAX_PRODUCT_LENGTH, product);
+            productDescriptor = iProduct;
         }
         else {
             productDescriptor = NULL;
         }
         
-        if (serialNumberOverride != NULL) {
-            if (serialNumberOverride[0]) {
-                generateUSBDescriptor(iSerialNumber, USB_HID_MAX_SERIAL_LENGTH, serialNumberOverride);
-                serialNumberDescriptor = iSerialNumber;
-            }
-            else {
-                serialNumberDescriptor = NULL;
-            }
-        }
-        else {
-            generateSerialNumber(iSerialNumber);
+        if (serialNumber != NULL) {
+            generateUSBDescriptor(iSerialNumber, USB_HID_MAX_SERIAL_NUMBER_LENGTH, serialNumber);
             serialNumberDescriptor = iSerialNumber;
         }
-
+        else {
+            serialNumberDescriptor = NULL;
+        }
+        
 		usb_composite_enable(BOARD_USB_DISC_DEV, (uint8)BOARD_USB_DISC_BIT, 
             report_descriptor, report_descriptor_length,
             idVendor, idProduct, manufacturerDescriptor, productDescriptor, serialNumberDescriptor);
@@ -140,8 +135,8 @@ void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
 }
 
 void USBDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint16_t idProduct,
-        const char* manufacturer, const char* product, const char* serialNumberOverride) {
-    begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product, serialNumberOverride);
+        const char* manufacturer, const char* product, const char* serialNumber) {
+    begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product, serialNumber);
 }
 
 void USBDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count) {
