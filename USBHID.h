@@ -27,6 +27,7 @@
 
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
+#define USB_HID_MAX_SERIAL_LENGTH  20
 
 #define HID_MOUSE_REPORT_ID 1
 #define HID_KEYBOARD_REPORT_ID 2
@@ -251,12 +252,15 @@ private:
 	bool enabled = false;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
+    uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_LENGTH)];    
 public:
 	USBDevice(void);
+    // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
+    // The default serial number is the unique device ID. To omit serial number, pass an empty string.
     void begin(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
-        const char* manufacturer=NULL, const char* product=NULL);
+        const char* manufacturer=NULL, const char* product=NULL, const char* serialOverride=NULL);
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
-        const char* manufacturer=NULL, const char* product=NULL);
+        const char* manufacturer=NULL, const char* product=NULL, const char* serialOverride=NULL);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
     inline void setFeatureBuffers(volatile HIDBuffer_t* fb=NULL, int count=0) {
         setBuffers(HID_REPORT_TYPE_FEATURE, fb, count);

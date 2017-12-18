@@ -369,11 +369,14 @@ static ONE_DESCRIPTOR HID_Report_Descriptor = {
     sizeof(hid_report_descriptor)
 };
 
-#define N_STRING_DESCRIPTORS 3
-static ONE_DESCRIPTOR String_Descriptor[N_STRING_DESCRIPTORS] = {
+static uint8 numStringDescriptors = 3;
+
+#define MAX_STRING_DESCRIPTORS 4
+static ONE_DESCRIPTOR String_Descriptor[MAX_STRING_DESCRIPTORS] = {
     {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
     {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
     {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
+    {NULL,                                            0},
 #if 0    
     {(uint8*)&usbVcomDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(4)},
     {(uint8*)&usbHIDDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(3)}
@@ -782,7 +785,7 @@ static uint8* vcomGetSetLineCoding(uint16 length) {
  */
 
 void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
-    uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct
+    uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber
     ) {
     /* Present ourselves to the host. Writing 0 to "disc" pin must
      * pull USB_DP pin up while leaving USB_DM pulled down by the
@@ -824,6 +827,17 @@ void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* repor
            
     String_Descriptor[2].Descriptor = (uint8*)iProduct;
     String_Descriptor[2].Descriptor_Size = iProduct[0];
+    
+    if (iSerialNumber == NULL) {
+        numStringDescriptors = 3;
+        usbCompositeDescriptor_Device.iSerialNumber = 0;
+    }
+    else {
+        String_Descriptor[3].Descriptor = (uint8*)iSerialNumber;
+        String_Descriptor[3].Descriptor_Size = iSerialNumber[0];
+        numStringDescriptors = 4;
+        usbCompositeDescriptor_Device.iSerialNumber = 3;
+    }
     
 #ifdef GENERIC_BOOTLOADER			
     //Reset the USB interface on generic boards - developed by Victor PV
@@ -1463,10 +1477,10 @@ static uint8* usbGetConfigDescriptor(uint16 length) {
     return Standard_GetDescriptorData(length, &Config_Descriptor);
 }
 
-static uint8* usbGetStringDescriptor(uint16 length) {
+static uint8* usbGetStringDescriptor(uint16 length) {    
     uint8 wValue0 = pInformation->USBwValue0;
-
-    if (wValue0 >= N_STRING_DESCRIPTORS) {
+    
+    if (wValue0 > numStringDescriptors) {
         return NULL;
     }
     return Standard_GetDescriptorData(length, &String_Descriptor[wValue0]);

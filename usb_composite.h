@@ -134,7 +134,7 @@ typedef struct
 #endif
 
 void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
-    uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct);
+    uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
 uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_composite_disable(gpio_dev*, uint8);
