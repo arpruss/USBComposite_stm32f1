@@ -115,7 +115,7 @@ const uint8_t hid_report_descriptor[] = {
 
 /* FIXME move to Wirish */
 #define LEAFLABS_ID_VENDOR                0x1EAF
-#define MAPLE_ID_PRODUCT                  0x0024
+#define MAPLE_ID_PRODUCT                  0x0004 // was 0x0024
 static usb_descriptor_device usbCompositeDescriptor_Device =
     USB_DECLARE_DEV_DESC(LEAFLABS_ID_VENDOR, MAPLE_ID_PRODUCT);
 	
