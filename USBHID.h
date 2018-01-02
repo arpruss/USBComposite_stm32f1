@@ -61,7 +61,7 @@
     0x26, 0xff, 0x00, /* LOGICAL_MAXIMUM (255) */ \
     0x75, 0x08,       /* REPORT_SIZE (8) */ \
     0x95, dataSize,       /* REPORT_COUNT (32) */ \
-    0x91, 0x02,     /* FEATURE (Data,Var,Abs) */ \
+    0x91, 0x02,     /* OUTPUT (Data,Var,Abs) */ \
 
 #define HID_CONSUMER_REPORT_DESCRIPTOR(...) \
     0x05, 0x0C,									/* usage page (consumer device) */ \
@@ -286,9 +286,9 @@ class HIDReporter {
         
     public:
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
-        uint8_t getFeature(uint8_t* out, uint8_t poll=1);
-        uint8_t getOutput(uint8_t* out, uint8_t poll=1);
-        uint8_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
+        uint16_t getFeature(uint8_t* out, uint8_t poll=1);
+        uint16_t getOutput(uint8_t* out, uint8_t poll=1);
+        uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
         void setFeature(uint8_t* feature);
 };
 

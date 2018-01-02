@@ -183,15 +183,15 @@ void HIDReporter::setFeature(uint8_t* in) {
     return usb_hid_set_feature(reportID, in);
 }
 
-uint8_t HIDReporter::getData(uint8_t type, uint8_t* out, uint8_t poll) {
+uint16_t HIDReporter::getData(uint8_t type, uint8_t* out, uint8_t poll) {
     return usb_hid_get_data(type, reportID, out, poll);
 }
 
-uint8_t HIDReporter::getFeature(uint8_t* out, uint8_t poll) {
+uint16_t HIDReporter::getFeature(uint8_t* out, uint8_t poll) {
     return usb_hid_get_data(HID_REPORT_TYPE_FEATURE, reportID, out, poll);
 }
 
-uint8_t HIDReporter::getOutput(uint8_t* out, uint8_t poll) {
+uint16_t HIDReporter::getOutput(uint8_t* out, uint8_t poll) {
     return usb_hid_get_data(HID_REPORT_TYPE_OUTPUT, reportID, out, poll);
 }
 
