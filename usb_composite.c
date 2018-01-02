@@ -113,7 +113,6 @@ volatile HIDBuffer_t* currentHIDBuffer = NULL;
 const uint8_t hid_report_descriptor[] = {
 };
 
-/* FIXME move to Wirish */
 #define LEAFLABS_ID_VENDOR                0x1EAF
 #define MAPLE_ID_PRODUCT                  0x0004 // was 0x0024
 static usb_descriptor_device usbCompositeDescriptor_Device =
