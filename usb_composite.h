@@ -44,17 +44,21 @@
 #define HID_BUFFER_SIZE(n,reportID) ((n)+((reportID)!=0))
 #define HID_BUFFER_ALLOCATE_SIZE(n,reportID) ((HID_BUFFER_SIZE((n),(reportID))+1)/2*2)
 
+#define HID_BUFFER_MODE_NO_WAIT 1
+
 typedef struct HIDBuffer_t {
     volatile uint8_t* buffer; // use HID_BUFFER_ALLOCATE_SIZE() to calculate amount of memory to allocate                            
-    uint16_t  bufferSize; // this should match HID_BUFFER_SIZE
-    uint16_t  currentDataSize;
+    uint16_t bufferSize; // this should match HID_BUFFER_SIZE
     uint8_t  reportID;
+    uint8_t  mode;
+    uint16_t currentDataSize;
     uint8_t  state;
 #ifdef __cplusplus
-    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferSize=0, uint8_t _reportID=0) {
+    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferSize=0, uint8_t _reportID=0, uint8_t _mode=0) {
         reportID = _reportID;
         buffer = _buffer;
         bufferSize = _bufferSize;
+        mode = _mode;
     }
 #endif
 } HIDBuffer_t;

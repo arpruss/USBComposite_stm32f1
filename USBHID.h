@@ -53,7 +53,6 @@
     0x95, dataSize,       /* REPORT_COUNT (xx) */ \
     0xB1, 0x02,     /* FEATURE (Data,Var,Abs) */ \
 
-// untested
 #define HID_OUTPUT_REPORT_DESCRIPTOR(dataSize) \
     0x06, 0x00, 0xFF,      /* USAGE_PAGE (Vendor Defined Page 1) */ \
     0x09, 0x01,            /* USAGE (Vendor Usage 1) */ \
@@ -62,7 +61,16 @@
     0x75, 0x08,       /* REPORT_SIZE (8) */ \
     0x95, dataSize,       /* REPORT_COUNT (32) */ \
     0x91, 0x02,     /* OUTPUT (Data,Var,Abs) */ \
-
+    
+#define HID_KEYBOARD_LEDS_REPORT_DESCRIPTOR() \
+	/* 5 for ordinary, 3 for advanced */ \
+	0x05, 0x08,						 /*   USAGE_PAGE (LEDs) */ \
+	0x19, 0x01,						 /*   USAGE_MINIMUM (Num Lock) */ \
+	0x29, 0x08,						 /*   USAGE_MAXIMUM (Kana + 3 custom)*/ \
+	0x95, 0x08,						 /*   REPORT_COUNT (8) */ \
+	0x75, 0x01,						 /*   REPORT_SIZE (1) */ \
+	0x91, 0x02,						 /*   OUTPUT (Data,Var,Abs) */    
+    
 #define HID_CONSUMER_REPORT_DESCRIPTOR(...) \
     0x05, 0x0C,									/* usage page (consumer device) */ \
 	0x09, 0x01, 								/* usage -- consumer control */ \
@@ -150,9 +158,9 @@
     0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
     0x25, 0x01,						/*    LOGICAL_MAXIMUM (1) */ \
     0x75, 0x01,						/*    REPORT_SIZE (1) */ \
-\
 	0x95, 0x08,						/*    REPORT_COUNT (8) */ \
     0x81, 0x02,						/*    INPUT (Data,Var,Abs) */ \
+\
     0x95, 0x01,						/*    REPORT_COUNT (1) */ \
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x81, 0x03,						/*    INPUT (Cnst,Var,Abs) */ \
@@ -168,7 +176,7 @@
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */
-	
+    
 #define HID_JOYSTICK_REPORT_DESCRIPTOR(...) \
 	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
 	0x09, 0x04,						/*  Usage (Joystick) */ \
@@ -286,8 +294,8 @@ class HIDReporter {
         
     public:
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
-        uint16_t getFeature(uint8_t* out, uint8_t poll=1);
-        uint16_t getOutput(uint8_t* out, uint8_t poll=1);
+        uint16_t getFeature(uint8_t* out=NULL, uint8_t poll=1);
+        uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
         void setFeature(uint8_t* feature);
 };

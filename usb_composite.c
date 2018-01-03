@@ -958,7 +958,9 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
             }
  
             unsigned delta = reportID != 0;
-            memcpy(out, (uint8*)bufs[i].buffer+delta, bufs[i].bufferSize-delta);
+            if (out != NULL)
+                memcpy(out, (uint8*)bufs[i].buffer+delta, bufs[i].bufferSize-delta);
+            
             if (poll) {
                 bufs[i].state = HID_BUFFER_READ;
             }
@@ -1271,7 +1273,9 @@ static uint8* HID_Set(uint16 length) {
         return NULL;
     
     if (length ==0) {
-        if (currentHIDBuffer->state == HID_BUFFER_UNREAD && pInformation->Ctrl_Info.Usb_wOffset < pInformation->USBwLengths.w) {
+        if ( (0 == (currentHIDBuffer->mode & HID_BUFFER_MODE_NO_WAIT)) && 
+                currentHIDBuffer->state == HID_BUFFER_UNREAD && 
+                pInformation->Ctrl_Info.Usb_wOffset < pInformation->USBwLengths.w) {
             pInformation->Ctrl_Info.Usb_wLength = 0xFFFF;
             return NULL;
         }
@@ -1345,7 +1349,7 @@ static RESULT usbDataSetup(uint8 request) {
                         return USB_UNSUPPORT;
                     }
                     
-                    if (featureBuffers[i].state == HID_BUFFER_UNREAD) {
+                    if (0 == (outputBuffers[i].mode & HID_BUFFER_MODE_NO_WAIT) && featureBuffers[i].state == HID_BUFFER_UNREAD) {
                         return USB_NOT_READY;
                     } 
                     else 
@@ -1361,7 +1365,7 @@ static RESULT usbDataSetup(uint8 request) {
                         return USB_UNSUPPORT;
                     }
                     
-                    if (outputBuffers[i].state == HID_BUFFER_UNREAD) {
+                    if (0 == (outputBuffers[i].mode & HID_BUFFER_MODE_NO_WAIT) && outputBuffers[i].state == HID_BUFFER_UNREAD) {
                         return USB_NOT_READY;
                     }
                     else  
