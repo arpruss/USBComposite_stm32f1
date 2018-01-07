@@ -40,10 +40,11 @@ public:
 	void X(int16_t val);
 	void Y(int16_t val);
 	void position(int16_t x, int16_t y);
-	void Xrotate(int16_t val);
-	void Yrotate(int16_t val);
-	void sliderLeft(uint16_t val);
-	void sliderRight(uint16_t val);
+	void positionRight(int16_t x, int16_t y);
+	void XRight(int16_t val);
+	void YRight(int16_t val);
+	void sliderLeft(uint8_t val);
+	void sliderRight(uint8_t val);
 	void hat(int16_t dir);
 };
 

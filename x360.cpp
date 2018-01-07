@@ -94,7 +94,6 @@ void HIDXbox360::button(uint8_t button, bool val){
 }
 
 void HIDXbox360::X(int16_t val){
-//	if (val > 1023) val = 1023;
 	xbox360_Report[6] = val;
     xbox360_Report[7] = (uint16)val >> 8;
 		
@@ -102,22 +101,20 @@ void HIDXbox360::X(int16_t val){
 }
 
 void HIDXbox360::Y(int16_t val){
-//	if (val > 1023) val = 1023;
 	xbox360_Report[8] = val;
     xbox360_Report[9] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXbox360::Xrotate(int16_t val){
-//	if (val > 1023) val = 1023;
+void HIDXbox360::XRight(int16_t val){
 	xbox360_Report[0xA] = val;
     xbox360_Report[0xB] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXbox360::Yrotate(int16_t val){
+void HIDXbox360::YRight(int16_t val){
 	xbox360_Report[0xC] = val;
     xbox360_Report[0xD] = (uint16)val >> 8;
 		
@@ -133,34 +130,26 @@ void HIDXbox360::position(int16_t x, int16_t y){
     safeSendReport();
 }
 
-void HIDXbox360::sliderLeft(uint16_t val){
+void HIDXbox360::positionRight(int16_t x, int16_t y){
+	xbox360_Report[0xA] = x;
+    xbox360_Report[0xB] = (uint16)x >> 8;
+	xbox360_Report[0xC] = y;
+    xbox360_Report[0xD] = (uint16)y >> 8;
+		
+    safeSendReport();
+}
+
+void HIDXbox360::sliderLeft(uint8_t val){
 	xbox360_Report[5] = val;
 	
     safeSendReport();
 }
 
-void HIDXbox360::sliderRight(uint16_t val){
+void HIDXbox360::sliderRight(uint8_t val){
 	xbox360_Report[6] = val;
 	
     safeSendReport();
 }
-
-void HIDXbox360::hat(int16_t dir){
-/*	uint8_t val;
-	if (dir < 0) val = 15;
-	else if (dir < 23) val = 0;
-	else if (dir < 68) val = 1;
-	else if (dir < 113) val = 2;
-	else if (dir < 158) val = 3;
-	else if (dir < 203) val = 4;
-	else if (dir < 245) val = 5;
-	else if (dir < 293) val = 6;
-	else if (dir < 338) val = 7;
-	xbox360_Report[5] = (xbox360_Report[5] & 0xF0) | val;
-	
-    safeSendReport(); */ // TODO
-}
-
 
 HIDXbox360 XBox360;
 
