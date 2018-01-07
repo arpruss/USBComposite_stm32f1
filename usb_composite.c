@@ -51,7 +51,7 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 #include "usb_core.h"
 #include "usb_def.h"
 
-uint32 ProtocolValue;
+static uint32 ProtocolValue;
 // Are we currently sending an IN packet?
 static volatile int8 transmitting;
 
