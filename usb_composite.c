@@ -34,7 +34,7 @@
  */
 
 #include "usb_composite.h"
-
+#include "usb_generic.h"
 #include <string.h>
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
@@ -523,10 +523,6 @@ static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
     .User_SetDeviceAddress   = usbSetDeviceAddress
 };
 
-DEVICE saved_Device_Table;
-DEVICE_PROP saved_Device_Property;
-USER_STANDARD_REQUESTS saved_User_Standard_Requests;
-
 uint8 usb_is_transmitting(void) {
     return transmitting;
 }
@@ -783,17 +779,9 @@ static uint8* vcomGetSetLineCoding(uint16 length) {
  * HID interface
  */
 
-void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* report_descriptor, uint16 report_descriptor_length, 
+void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber
     ) {
-    /* Present ourselves to the host. Writing 0 to "disc" pin must
-     * pull USB_DP pin up while leaving USB_DM pulled down by the
-     * transceiver. See USB 2.0 spec, section 7.1.7.3. */
-     
-    saved_Device_Table = Device_Table;
-    saved_Device_Property = Device_Property;
-    saved_User_Standard_Requests = User_Standard_Requests;
-
     Device_Table = my_Device_Table;
     Device_Property = my_Device_Property;
     User_Standard_Requests = my_User_Standard_Requests;
@@ -838,46 +826,14 @@ void usb_composite_enable(gpio_dev *disc_dev, uint8 disc_bit, const uint8* repor
         usbCompositeDescriptor_Device.iSerialNumber = 3;
     }
     
-#ifdef GENERIC_BOOTLOADER			
-    //Reset the USB interface on generic boards - developed by Victor PV
-    gpio_set_mode(GPIOA, 12, GPIO_OUTPUT_PP);
-    gpio_write_bit(GPIOA, 12, 0);
-    
-    for(volatile unsigned int i=0;i<512;i++);// Only small delay seems to be needed
-    gpio_set_mode(GPIOA, 12, GPIO_INPUT_FLOATING);
-#endif			
-
-    if (disc_dev != NULL) {
-        gpio_set_mode(disc_dev, disc_bit, GPIO_OUTPUT_PP);
-        gpio_write_bit(disc_dev, disc_bit, 0);
-    }
-
-    /* Initialize the USB peripheral. */
-    usb_init_usblib(USBLIB, ep_int_in, ep_int_out);
+    usb_generic_enable(&my_Device_Table, &my_Device_Property, &my_User_Standard_Requests, ep_int_in, ep_int_out);
 }
 
-static void usb_power_down() {
-    USB_BASE->CNTR = USB_CNTR_FRES;
-    USB_BASE->ISTR = 0;
-    USB_BASE->CNTR = USB_CNTR_FRES + USB_CNTR_PDWN;
-}
+void usb_composite_disable(void) {
+    usb_generic_disable();
 
-void usb_composite_disable(gpio_dev *disc_dev, uint8 disc_bit) {
-    /* Turn off the interrupt and signal disconnect (see e.g. USB 2.0
-     * spec, section 7.1.7.3). */
-    nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
-    if (disc_dev != NULL) {
-        gpio_write_bit(disc_dev, disc_bit, 1);
-    }
-    
-    Device_Table = saved_Device_Table;
-    Device_Property = saved_Device_Property;
-    User_Standard_Requests = saved_User_Standard_Requests;
-    
     featureBufferCount = 0;
     outputBufferCount = 0;
-
-    usb_power_down();
 }
 
 void usb_hid_putc(char ch) {

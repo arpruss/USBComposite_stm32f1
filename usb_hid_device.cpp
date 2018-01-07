@@ -121,8 +121,7 @@ void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descr
             serialNumberDescriptor = NULL;
         }
         
-		usb_composite_enable(BOARD_USB_DISC_DEV, (uint8)BOARD_USB_DISC_BIT, 
-            report_descriptor, report_descriptor_length,
+		usb_composite_enable(report_descriptor, report_descriptor_length,
             idVendor, idProduct, manufacturerDescriptor, productDescriptor, serialNumberDescriptor);
             
 #if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
@@ -145,7 +144,7 @@ void USBHIDDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count)
 
 void USBHIDDevice::end(void){
 	if(enabled){
-	    usb_composite_disable(BOARD_USB_DISC_DEV, (uint8)BOARD_USB_DISC_BIT);
+	    usb_composite_disable();
 		enabled = false;
 	}
 }
