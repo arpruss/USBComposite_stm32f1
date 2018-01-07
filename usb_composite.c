@@ -782,10 +782,6 @@ static uint8* vcomGetSetLineCoding(uint16 length) {
 void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, 
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber
     ) {
-    Device_Table = my_Device_Table;
-    Device_Property = my_Device_Property;
-    User_Standard_Requests = my_User_Standard_Requests;
-
     HID_Report_Descriptor.Descriptor = (uint8*)report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
     usbCompositeDescriptor_Config.HID_Descriptor.descLenL = (uint8_t)report_descriptor_length;
