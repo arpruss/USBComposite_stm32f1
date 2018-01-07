@@ -259,14 +259,14 @@ typedef struct {
 // and hence burning it for cryptographic purposes.
 const char* getDeviceIDString();
 
-class USBDevice{
+class USBHIDDevice{
 private:
 	bool enabled = false;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
     uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_NUMBER_LENGTH)];    
 public:
-	USBDevice(void);
+	USBHIDDevice(void);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
     void begin(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");
@@ -631,7 +631,7 @@ public:
     }
 };
 
-extern USBDevice USB;
+extern USBHIDDevice USB;
 
 template<unsigned txSize,unsigned rxSize>class HIDRaw : public HIDReporter {
 private:

@@ -14,8 +14,8 @@ HIDBuffer_t ledData = {
 };
 
 void setup() {
-  USB.begin(reportDescription, sizeof(reportDescription));
-  USB.setOutputBuffers(&ledData, 1);
+  USBHID.begin(reportDescription, sizeof(reportDescription));
+  USBHID.setOutputBuffers(&ledData, 1);
   delay(1000);
 }
 

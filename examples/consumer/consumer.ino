@@ -7,7 +7,7 @@ const uint8_t reportDescription[] = {
 HIDConsumer Consumer;
 
 void setup(){
-  USB.begin(reportDescription, sizeof(reportDescription));
+  USBHID.begin(reportDescription, sizeof(reportDescription));
 }
 
 void loop() {

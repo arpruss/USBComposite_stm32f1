@@ -14,7 +14,7 @@ const uint8_t reportDescription[] = {
 void setup(){
   pinMode(PB12,OUTPUT);
   digitalWrite(PB12,1);
-  USB.begin(reportDescription, sizeof(reportDescription));  
+  USBHID.begin(reportDescription, sizeof(reportDescription));  
   delay(1000);
 }
 

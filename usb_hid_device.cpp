@@ -42,7 +42,7 @@ static void ifaceSetupHook(unsigned, void*);
 
 #define USB_TIMEOUT 50
 
-USBDevice::USBDevice(void) {
+USBHIDDevice::USBHIDDevice(void) {
 }
 
 static void generateUSBDescriptor(uint8* out, int maxLength, const char* in) {
@@ -89,7 +89,7 @@ const char* getDeviceIDString() {
     return string;
 }
 
-void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length, uint16_t idVendor, uint16_t idProduct,
+void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length, uint16_t idVendor, uint16_t idProduct,
         const char* manufacturer, const char* product, const char* serialNumber) {
             
     uint8_t* manufacturerDescriptor;
@@ -134,16 +134,16 @@ void USBDevice::begin(const uint8_t* report_descriptor, uint16_t report_descript
 	}
 }
 
-void USBDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint16_t idProduct,
+void USBHIDDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint16_t idProduct,
         const char* manufacturer, const char* product, const char* serialNumber) {
     begin(report->descriptor, report->length, idVendor, idProduct, manufacturer, product, serialNumber);
 }
 
-void USBDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count) {
+void USBHIDDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count) {
     usb_hid_set_buffers(type, fb, count);
 }
 
-void USBDevice::end(void){
+void USBHIDDevice::end(void){
 	if(enabled){
 	    usb_composite_disable(BOARD_USB_DISC_DEV, (uint8)BOARD_USB_DISC_BIT);
 		enabled = false;
@@ -303,4 +303,4 @@ static void rxHook(unsigned hook, void *ignored) {
 }
 #endif
 
-USBDevice USB;
+USBHIDDevice USBHID;

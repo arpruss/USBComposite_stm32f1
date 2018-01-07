@@ -1,7 +1,7 @@
 #include <USBHID.h>
 
 void setup() {
-  USB.begin(HID_JOYSTICK);
+  USBHID.begin(HID_JOYSTICK);
 }
 
 void loop() {

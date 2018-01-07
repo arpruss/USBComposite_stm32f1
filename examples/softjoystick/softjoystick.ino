@@ -15,7 +15,7 @@ class HIDJoystickRawData : public HIDJoystick {
     HIDJoystickRawData(uint8_t reportID=HID_JOYSTICK_REPORT_ID) : HIDJoystick(reportID) {}
     
     void begin() {
-      USB.setFeatureBuffers(&fb, 1);
+      USBHID.setFeatureBuffers(&fb, 1);
     }
     
     void setRawData(JoystickReport_t* p) {
@@ -33,7 +33,7 @@ const uint8_t reportDescription[] = {
 };
 
 void setup() {
-  USB.begin(reportDescription, sizeof(reportDescription));
+  USBHID.begin(reportDescription, sizeof(reportDescription));
   joy.begin();
 }
 

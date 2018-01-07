@@ -1,7 +1,7 @@
 #include <USBHID.h>
 
 void setup() {
-  USB.begin(HID_KEYBOARD);
+  USBHID.begin(HID_KEYBOARD);
   delay(1000);
 }
 
