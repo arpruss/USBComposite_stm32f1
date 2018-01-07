@@ -631,7 +631,7 @@ public:
     }
 };
 
-extern USBHIDDevice USB;
+extern USBHIDDevice USBHID;
 
 template<unsigned txSize,unsigned rxSize>class HIDRaw : public HIDReporter {
 private:
@@ -643,7 +643,7 @@ public:
         buf.buffer = rxBuffer;
         buf.bufferSize = HID_BUFFER_SIZE(rxSize,0);
         buf.reportID = 0;
-        USB.setOutputBuffers(&buf,1);
+        USBHID.setOutputBuffers(&buf,1);
     }
 	void begin(void);
 	void end(void);
