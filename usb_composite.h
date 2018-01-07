@@ -123,20 +123,25 @@ typedef struct
 
 #define USB_CDCACM_CTRL_EPSIZE          0x40
 
-#define USB_CDCACM_TX_ENDP              1
-#define USB_CDCACM_TX_ADDR              0xC0
+#define USB_HID_TX_EPSIZE            	0x40
+#define USB_HID_TX_ENDP                 1
+#define USB_HID_TX_ADDR                 0xC0
+
+#ifdef COMPOSITE_SERIAL 
+#define USB_CDCACM_TX_ENDP              2
+#define USB_CDCACM_TX_ADDR              0x100
 #define USB_CDCACM_TX_EPSIZE            0x40
 
-#define USB_CDCACM_MANAGEMENT_ENDP      2
-#define USB_CDCACM_MANAGEMENT_ADDR      0x100
+#define USB_CDCACM_MANAGEMENT_ENDP      3
+#define USB_CDCACM_MANAGEMENT_ADDR      0x110
 #define USB_CDCACM_MANAGEMENT_EPSIZE    0x40
 
-#define USB_CDCACM_RX_ENDP              3
-#define USB_CDCACM_RX_ADDR              0x110
+#define USB_CDCACM_RX_ENDP              4
+#define USB_CDCACM_RX_ADDR              0x180
 #define USB_CDCACM_RX_EPSIZE            0x40
 #endif
 
-void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, 
+void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, uint8 serialSupport,
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
 uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
@@ -264,24 +269,6 @@ typedef struct
  * Endpoint configuration
  */
 
-#define USB_HID_TX_EPSIZE            	0x40
-#define USB_HID_RX_EPSIZE            	0x40
-#ifdef COMPOSITE_SERIAL 
-#define USB_HID_TX_ENDP              	4
-#define USB_HID_TX_ADDR              	0x180
-
-#ifdef USB_HID_RX_SUPPORT
-#define USB_HID_RX_ENDP              	5
-#define USB_HID_RX_ADDR              	0x1C0
-#endif
-#else
-#define USB_HID_TX_ENDP              1
-#define USB_HID_TX_ADDR              0xC0
-
-#ifdef USB_HID_RX_SUPPORT
-#define USB_HID_RX_ENDP              2
-#define USB_HID_RX_ADDR              0x100
-#endif
 #endif
 /*
  * HID interface
@@ -291,11 +278,6 @@ void   usb_hid_putc(char ch);
 uint32 usb_hid_tx(const uint8* buf, uint32 len);
 uint32 usb_hid_tx_mod(const uint8* buf, uint32 len);
 void	HID_SendReport(uint8_t id, const void* data, uint32_t len);
-
-#ifdef USB_HID_RX_SUPPORT
-uint32 usb_hid_rx(uint8* buf, uint32 len);
-uint32 usb_hid_peek(uint8* buf, uint32 len);
-#endif
 
 uint32 usb_hid_data_available(void); /* in RX buffer */
 uint16 usb_hid_get_pending(void);

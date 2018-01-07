@@ -121,16 +121,22 @@ void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descr
             serialNumberDescriptor = NULL;
         }
         
-		usb_composite_enable(report_descriptor, report_descriptor_length,
+		usb_composite_enable(report_descriptor, report_descriptor_length, serialSupport,
             idVendor, idProduct, manufacturerDescriptor, productDescriptor, serialNumberDescriptor);
             
-#if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
-		composite_cdcacm_set_hooks(USB_CDCACM_HOOK_RX, rxHook);
-		composite_cdcacm_set_hooks(USB_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook);
+#if defined(SERIAL_USB)
+        if (serialSupport) {
+            composite_cdcacm_set_hooks(USB_CDCACM_HOOK_RX, rxHook);
+            composite_cdcacm_set_hooks(USB_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook);
+        }
 #endif
             
 		enabled = true;
 	}
+}
+
+void USBHIDDevice::setSerial(uint8 _serialSupport) {
+    serialSupport = _serialSupport;
 }
 
 void USBHIDDevice::begin(const HIDReportDescriptor* report, uint16_t idVendor, uint16_t idProduct,
@@ -194,7 +200,7 @@ uint16_t HIDReporter::getOutput(uint8_t* out, uint8_t poll) {
     return usb_hid_get_data(HID_REPORT_TYPE_OUTPUT, reportID, out, poll);
 }
 
-#if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
+#if defined(SERIAL_USB)
 
 enum reset_state_t {
     DTR_UNSET,

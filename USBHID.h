@@ -262,6 +262,7 @@ const char* getDeviceIDString();
 class USBHIDDevice{
 private:
 	bool enabled = false;
+    uint8_t serialSupport = true;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
     uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_NUMBER_LENGTH)];    
@@ -272,6 +273,7 @@ public:
         const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");
     void begin(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");
+    void setSerial(uint8 serialSupport=true);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
     inline void setFeatureBuffers(volatile HIDBuffer_t* fb=NULL, int count=0) {
         setBuffers(HID_REPORT_TYPE_FEATURE, fb, count);
