@@ -140,13 +140,13 @@ void HIDXbox360::positionRight(int16_t x, int16_t y){
 }
 
 void HIDXbox360::sliderLeft(uint8_t val){
-	xbox360_Report[5] = val;
+	xbox360_Report[4] = val;
 	
     safeSendReport();
 }
 
 void HIDXbox360::sliderRight(uint8_t val){
-	xbox360_Report[6] = val;
+	xbox360_Report[5] = val;
 	
     safeSendReport();
 }

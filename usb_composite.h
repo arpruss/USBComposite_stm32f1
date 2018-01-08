@@ -34,9 +34,6 @@
 #ifndef _USB_COMPOSITE_H_
 #define _USB_COMPOSITE_H_
 
-#define COMPOSITE_SERIAL
-#undef USB_HID_RX_SUPPORT
-
 #include <libmaple/libmaple_types.h>
 #include <libmaple/usb.h>
 
@@ -66,18 +63,16 @@ typedef struct HIDBuffer_t {
 extern "C" {
 #endif
 
-#ifdef COMPOSITE_SERIAL
 /*
  * CDC ACM Requests
  */
 
-#define USB_CDCACM_SET_LINE_CODING        0x20
-#define USB_CDCACM_GET_LINE_CODING        0x21
-#define USB_CDCACM_SET_COMM_FEATURE       0x02
-#define USB_CDCACM_SET_CONTROL_LINE_STATE 0x22
-#define USB_CDCACM_CONTROL_LINE_DTR       (0x01)
-#define USB_CDCACM_CONTROL_LINE_RTS       (0x02)
-#endif
+#define USBHID_CDCACM_SET_LINE_CODING        0x20
+#define USBHID_CDCACM_GET_LINE_CODING        0x21
+#define USBHID_CDCACM_SET_COMM_FEATURE       0x02
+#define USBHID_CDCACM_SET_CONTROL_LINE_STATE 0x22
+#define USBHID_CDCACM_CONTROL_LINE_DTR       (0x01)
+#define USBHID_CDCACM_CONTROL_LINE_RTS       (0x02)
 
 /*
  * Descriptors, etc.
@@ -85,11 +80,10 @@ extern "C" {
 
 
 
-#define USB_CDCACM_CTRL_ENDP            0
-#define USB_CDCACM_CTRL_RX_ADDR         0x40
-#define USB_CDCACM_CTRL_TX_ADDR         0x80
+#define USBHID_CDCACM_CTRL_ENDP            0
+#define USBHID_CDCACM_CTRL_RX_ADDR         0x40
+#define USBHID_CDCACM_CTRL_TX_ADDR         0x80
 
-#ifdef COMPOSITE_SERIAL
 typedef struct
 {
 	uint8_t bLength;
@@ -121,25 +115,23 @@ typedef struct
  * Endpoint configuration
  */
 
-#define USB_CDCACM_CTRL_EPSIZE          0x40
+#define USBHID_CDCACM_CTRL_EPSIZE          0x40
 
 #define USB_HID_TX_EPSIZE            	0x40
 #define USB_HID_TX_ENDP                 1
 #define USB_HID_TX_ADDR                 0xC0
 
-#ifdef COMPOSITE_SERIAL 
-#define USB_CDCACM_TX_ENDP              2
-#define USB_CDCACM_TX_ADDR              0x100
-#define USB_CDCACM_TX_EPSIZE            0x40
+#define USBHID_CDCACM_TX_ENDP              2
+#define USBHID_CDCACM_TX_ADDR              0x100
+#define USBHID_CDCACM_TX_EPSIZE            0x40
 
-#define USB_CDCACM_MANAGEMENT_ENDP      3
-#define USB_CDCACM_MANAGEMENT_ADDR      0x110
-#define USB_CDCACM_MANAGEMENT_EPSIZE    0x40
+#define USBHID_CDCACM_MANAGEMENT_ENDP      3
+#define USBHID_CDCACM_MANAGEMENT_ADDR      0x110
+#define USBHID_CDCACM_MANAGEMENT_EPSIZE    0x40
 
-#define USB_CDCACM_RX_ENDP              4
-#define USB_CDCACM_RX_ADDR              0x180
-#define USB_CDCACM_RX_EPSIZE            0x40
-#endif
+#define USBHID_CDCACM_RX_ENDP              4
+#define USBHID_CDCACM_RX_ADDR              0x180
+#define USBHID_CDCACM_RX_EPSIZE            0x40
 
 void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, uint8 serialSupport,
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
@@ -148,7 +140,6 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
 void usb_composite_disable(void);
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
-#ifdef COMPOSITE_SERIAL
 /*
  * CDC ACM interface
  */
@@ -169,16 +160,16 @@ uint8 composite_cdcacm_get_rts(void);
 typedef struct composite_cdcacm_line_coding {
     uint32 dwDTERate;           /* Baud rate */
 
-#define USB_CDCACM_STOP_BITS_1   0
-#define USB_CDCACM_STOP_BITS_1_5 1
-#define USB_CDCACM_STOP_BITS_2   2
+#define USBHID_CDCACM_STOP_BITS_1   0
+#define USBHID_CDCACM_STOP_BITS_1_5 1
+#define USBHID_CDCACM_STOP_BITS_2   2
     uint8 bCharFormat;          /* Stop bits */
 
-#define USB_CDCACM_PARITY_NONE  0
-#define USB_CDCACM_PARITY_ODD   1
-#define USB_CDCACM_PARITY_EVEN  2
-#define USB_CDCACM_PARITY_MARK  3
-#define USB_CDCACM_PARITY_SPACE 4
+#define USBHID_CDCACM_PARITY_NONE  0
+#define USBHID_CDCACM_PARITY_ODD   1
+#define USBHID_CDCACM_PARITY_EVEN  2
+#define USBHID_CDCACM_PARITY_MARK  3
+#define USBHID_CDCACM_PARITY_SPACE 4
     uint8 bParityType;          /* Parity type */
 
     uint8 bDataBits;            /* Data bits: 5, 6, 7, 8, or 16 */
@@ -197,15 +188,14 @@ int composite_cdcacm_get_n_data_bits(void); /* bDataBits */
  * Hack: hooks for bootloader reset signalling
  */
 
-#define USB_CDCACM_HOOK_RX 0x1
-#define USB_CDCACM_HOOK_IFACE_SETUP 0x2
+#define USBHID_CDCACM_HOOK_RX 0x1
+#define USBHID_CDCACM_HOOK_IFACE_SETUP 0x2
 
 void composite_cdcacm_set_hooks(unsigned hook_flags, void (*hook)(unsigned, void*));
 
 static inline __always_inline void composite_cdcacm_remove_hooks(unsigned hook_flags) {
     composite_cdcacm_set_hooks(hook_flags, 0);
 }
-#endif
 
  
 #define HID_BUFFER_EMPTY    0
@@ -269,8 +259,8 @@ typedef struct
  * Endpoint configuration
  */
 
-#endif
-/*
+
+ /*
  * HID interface
  */
 

@@ -288,17 +288,16 @@ static const usb_descriptor_string usbHIDDescriptor_LangID = {
 };
 
 static const usb_descriptor_string usbHIDDescriptor_iManufacturer = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(15),
+    .bLength         = USB_DESCRIPTOR_STRING_LEN(8),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'M', 0, 'i', 0, 'c', 0, 'r', 0,
-                'o', 0, 's', 0, 'o', 0, 'f', 0, 't', 0, ' ', 0, 
-                'C', 0, 'o', 0, 'r', 0, 'p', 0, '.', 0},
+    .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0,
+                'L', 0, 'a', 0, 'b', 0, 's', 0},
 };
 
 static const usb_descriptor_string usbHIDDescriptor_iProduct = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(10),
+    .bLength = USB_DESCRIPTOR_STRING_LEN(5),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'C', 0, 'o', 0, 'n', 0, 't', 0, 'r', 0, 'o', 0, 'l', 0, 'l', 0, 'e', 0, 'r', 0},
+    .bString = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
 };
 
 /* FIXME move to Wirish */
@@ -328,8 +327,8 @@ static ONE_DESCRIPTOR HID_Report_Descriptor = {
 #define N_STRING_DESCRIPTORS 4
 static ONE_DESCRIPTOR usbHIDString_Descriptor[N_STRING_DESCRIPTORS] = {
     {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
-    {(uint8*)&usbHIDDescriptor_iManufacturer,USB_DESCRIPTOR_STRING_LEN(15)},
-    {(uint8*)&usbHIDDescriptor_iProduct,     USB_DESCRIPTOR_STRING_LEN(10)},
+    {(uint8*)&usbHIDDescriptor_iManufacturer,USB_DESCRIPTOR_STRING_LEN(8)},
+    {(uint8*)&usbHIDDescriptor_iProduct,     USB_DESCRIPTOR_STRING_LEN(5)},
     {(uint8*)&usbHIDDescriptor_iInterface,     USB_DESCRIPTOR_STRING_LEN(3)}
 };
 

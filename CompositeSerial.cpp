@@ -20,8 +20,6 @@
  
 #include "USBHID.h"
 
-#ifdef COMPOSITE_SERIAL
-
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
@@ -169,4 +167,3 @@ uint8 USBCompositeSerial::getRTS(void) {
 }
 
 USBCompositeSerial CompositeSerial;
-#endif

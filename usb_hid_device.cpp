@@ -35,7 +35,7 @@
  * USB HID interface
  */
 
-#if defined(COMPOSITE_SERIAL) && defined(SERIAL_USB)
+#if defined(SERIAL_USB)
 static void rxHook(unsigned, void*);
 static void ifaceSetupHook(unsigned, void*);
 #endif
@@ -126,8 +126,8 @@ void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descr
             
 #if defined(SERIAL_USB)
         if (serialSupport) {
-            composite_cdcacm_set_hooks(USB_CDCACM_HOOK_RX, rxHook);
-            composite_cdcacm_set_hooks(USB_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook);
+            composite_cdcacm_set_hooks(USBHID_CDCACM_HOOK_RX, rxHook);
+            composite_cdcacm_set_hooks(USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook);
         }
 #endif
             
@@ -216,7 +216,7 @@ static void ifaceSetupHook(unsigned hook, void *requestvp) {
     uint8 request = *(uint8*)requestvp;
 
         // Ignore requests we're not interested in.
-    if (request != USB_CDCACM_SET_CONTROL_LINE_STATE) {
+    if (request != USBHID_CDCACM_SET_CONTROL_LINE_STATE) {
         return;
     }
 
