@@ -87,21 +87,21 @@ typedef struct
  * Endpoint configuration
  */
 
-#define USB_HID_CTRL_ENDP            0
-#define USB_HID_CTRL_RX_ADDR         0x40
-#define USB_HID_CTRL_TX_ADDR         0x80
-#define USB_HID_CTRL_EPSIZE          0x40
+#define USB_X360_CTRL_ENDP            0
+#define USB_X360_CTRL_RX_ADDR         0x40
+#define USB_X360_CTRL_TX_ADDR         0x80
+#define USB_X360_CTRL_EPSIZE          0x40
 
-#define USB_HID_TX_ENDP              1
-#define USB_HID_TX_ADDR              0xC0
-#define USB_HID_TX_EPSIZE            0x40
+#define USB_X360_TX_ENDP              1
+#define USB_X360_TX_ADDR              0xC0
+#define USB_X360_TX_EPSIZE            0x40
 
-#define USB_HID_RX_ENDP              2
-#define USB_HID_RX_ADDR              0x100
-#define USB_HID_RX_EPSIZE            0x40
+#define USB_X360_RX_ENDP              2
+#define USB_X360_RX_ADDR              0x100
+#define USB_X360_RX_EPSIZE            0x40
 
 #ifndef __cplusplus
-#define USB_HID_DECLARE_DEV_DESC(vid, pid)                           \
+#define USB_X360_DECLARE_DEV_DESC(vid, pid)                           \
   {                                                                     \
       .bLength            = sizeof(usb_descriptor_device),              \
       .bDescriptorType    = USB_DESCRIPTOR_TYPE_DEVICE,                 \

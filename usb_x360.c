@@ -186,7 +186,7 @@ const uint8_t hid_report_descriptor[] = {
 
 /* FIXME move to Wirish */
 static const usb_descriptor_device usbHIDDescriptor_Device =
-USB_HID_DECLARE_DEV_DESC(0x045e, 0x028e);
+USB_X360_DECLARE_DEV_DESC(0x045e, 0x028e);
 
 typedef struct {
     usb_descriptor_config_header Config_Header;
@@ -248,18 +248,18 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
 	.DataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_HID_TX_ENDP),//0x81,//USB_HID_TX_ADDR,
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_X360_TX_ENDP),//0x81,//USB_X360_TX_ADDR,
         .bmAttributes     = 3, // USB_ENDPOINT_TYPE_INTERRUPT,
-        .wMaxPacketSize   = 0x20, // USB_HID_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
+        .wMaxPacketSize   = 0x20, // USB_X360_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
         .bInterval        = 4, // 0x0A,
 	},
 
     .DataOutEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_HID_RX_ENDP),
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_X360_RX_ENDP),
         .bmAttributes     = 3, // USB_EP_TYPE_BULK,
-        .wMaxPacketSize   = 0x20, // USB_HID_RX_EPSIZE,
+        .wMaxPacketSize   = 0x20, // USB_X360_RX_EPSIZE,
         .bInterval        = 8, // 0x00,
     },
 };
@@ -469,22 +469,22 @@ uint32 x360_tx(const uint8* buf, uint32 len) {
         return 0;
     }
 
-    /* We can only put USB_HID_TX_EPSIZE bytes in the buffer. */
-    if (len > USB_HID_TX_EPSIZE) {
-        len = USB_HID_TX_EPSIZE;
+    /* We can only put USB_X360_TX_EPSIZE bytes in the buffer. */
+    if (len > USB_X360_TX_EPSIZE) {
+        len = USB_X360_TX_EPSIZE;
     }
 
     /* Queue bytes for sending. */
     if (len) {
-        usb_copy_to_pma(buf, len, GetEPTxAddr(USB_HID_TX_ENDP));//USB_HID_TX_ADDR);
+        usb_copy_to_pma(buf, len, GetEPTxAddr(USB_X360_TX_ENDP));//USB_X360_TX_ADDR);
     }
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing
     // host-side buffers.)
-    usb_set_ep_tx_count(USB_HID_TX_ENDP, len);
+    usb_set_ep_tx_count(USB_X360_TX_ENDP, len);
     n_unsent_bytes = len;
     transmitting = 1;
-    usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_VALID);
+    usb_set_ep_tx_stat(USB_X360_TX_ENDP, USB_EP_STAT_TX_VALID);
 
     return len;
 }
@@ -516,9 +516,9 @@ uint32 x360_rx(uint8* buf, uint32 len) {
 
     /* If all bytes have been read, re-enable the RX endpoint, which
      * was set to NAK when the current batch of bytes was received. */
-    if (n_unread_bytes <= (HID_BUFFER_SIZE - USB_HID_RX_EPSIZE)) {
-        usb_set_ep_rx_count(USB_HID_RX_ENDP, USB_HID_RX_EPSIZE);
-        usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_VALID);
+    if (n_unread_bytes <= (HID_BUFFER_SIZE - USB_X360_RX_EPSIZE)) {
+        usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
+        usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
 		rx_offset = 0;
     }
 
@@ -539,16 +539,16 @@ static void hidDataTxCb(void) {
 static void hidDataRxCb(void) {
 	uint32 ep_rx_size;
 	uint32 tail = (rx_offset + n_unread_bytes) % HID_BUFFER_SIZE;
-	uint8 ep_rx_data[USB_HID_RX_EPSIZE];
+	uint8 ep_rx_data[USB_X360_RX_EPSIZE];
 	uint32 i;
 
-    usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_NAK);
-    ep_rx_size = usb_get_ep_rx_count(USB_HID_RX_ENDP);
+    usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_NAK);
+    ep_rx_size = usb_get_ep_rx_count(USB_X360_RX_ENDP);
     /* This copy won't overwrite unread bytes, since we've set the RX
      * endpoint to NAK, and will only set it to VALID when all bytes
      * have been read. */
     usb_copy_from_pma((uint8*)ep_rx_data, ep_rx_size,
-                      USB_HID_RX_ADDR);
+                      USB_X360_RX_ADDR);
 
 	for (i = 0; i < ep_rx_size; i++) {
 		hidBufferRx[tail] = ep_rx_data[i];
@@ -557,9 +557,9 @@ static void hidDataRxCb(void) {
 
 	n_unread_bytes += ep_rx_size;
 
-    if (n_unread_bytes <= (HID_BUFFER_SIZE - USB_HID_RX_EPSIZE)) {
-        usb_set_ep_rx_count(USB_HID_RX_ENDP, USB_HID_RX_EPSIZE);
-        usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_VALID);
+    if (n_unread_bytes <= (HID_BUFFER_SIZE - USB_X360_RX_EPSIZE)) {
+        usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
+        usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
     }
 }
 #endif
@@ -596,8 +596,8 @@ static void usbReset(void) {
     /* setup control endpoint 0 */
     usb_set_ep_type(USB_EP0, USB_EP_EP_TYPE_CONTROL);
     usb_set_ep_tx_stat(USB_EP0, USB_EP_STAT_TX_STALL);
-    usb_set_ep_rx_addr(USB_EP0, USB_HID_CTRL_RX_ADDR);
-    usb_set_ep_tx_addr(USB_EP0, USB_HID_CTRL_TX_ADDR);
+    usb_set_ep_rx_addr(USB_EP0, USB_X360_CTRL_RX_ADDR);
+    usb_set_ep_tx_addr(USB_EP0, USB_X360_CTRL_TX_ADDR);
     usb_clear_status_out(USB_EP0);
 
     usb_set_ep_rx_count(USB_EP0, pProperty->MaxPacketSize);
@@ -606,16 +606,16 @@ static void usbReset(void) {
     /* TODO figure out differences in style between RX/TX EP setup */
 
     /* set up data endpoint OUT (RX) */
-    usb_set_ep_type(USB_HID_RX_ENDP, USB_EP_EP_TYPE_BULK);
-    usb_set_ep_rx_addr(USB_HID_RX_ENDP, USB_HID_RX_ADDR);
-    usb_set_ep_rx_count(USB_HID_RX_ENDP, USB_HID_RX_EPSIZE);
-    usb_set_ep_rx_stat(USB_HID_RX_ENDP, USB_EP_STAT_RX_VALID);
+    usb_set_ep_type(USB_X360_RX_ENDP, USB_EP_EP_TYPE_BULK);
+    usb_set_ep_rx_addr(USB_X360_RX_ENDP, USB_X360_RX_ADDR);
+    usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
+    usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
 
     /* set up data endpoint IN (TX)  */
-    usb_set_ep_type(USB_HID_TX_ENDP, USB_EP_EP_TYPE_BULK);
-    usb_set_ep_tx_addr(USB_HID_TX_ENDP, USB_HID_TX_ADDR);
-    usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_NAK);
-    usb_set_ep_rx_stat(USB_HID_TX_ENDP, USB_EP_STAT_RX_DISABLED);
+    usb_set_ep_type(USB_X360_TX_ENDP, USB_EP_EP_TYPE_BULK);
+    usb_set_ep_tx_addr(USB_X360_TX_ENDP, USB_X360_TX_ADDR);
+    usb_set_ep_tx_stat(USB_X360_TX_ENDP, USB_EP_STAT_TX_NAK);
+    usb_set_ep_rx_stat(USB_X360_TX_ENDP, USB_EP_STAT_RX_DISABLED);
 
     USBLIB->state = USB_ATTACHED;
     SetDeviceAddress(0);
