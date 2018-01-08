@@ -42,7 +42,7 @@ void HIDXBox360::sendReport(void){
 	x360_tx(NULL, 0);
 }
 
-HIDXBox360::HIDXbox360(void){
+HIDXBox360::HIDXBox360(void){
 	
 }
 
@@ -64,11 +64,10 @@ void HIDXBox360::setManualReportMode(bool mode) {
     manualReport = mode;
 }
 
-void HIDXBox360::getManualReportMode(bool mode) {
-    manualReport = mode;
+bool HIDXBox360::getManualReportMode() {
+    return manualReport;
 }
 
-void HIDXBox360::safeSendReport() {	
 void HIDXBox360::safeSendReport() {	
     if (!manualReport) {
         while (x360_is_transmitting() != 0) {
