@@ -263,8 +263,8 @@ static const usb_descriptor_string usbMIDIDescriptor_LangID = {
 static const usb_descriptor_string usbMIDIDescriptor_iManufacturer = {
     .bLength = USB_DESCRIPTOR_STRING_LEN(8),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'M', 0, 'a', 0, 'p', 0, 'l', 0,
-                'e', 0, ' ', 0, ' ', 0, ' ', 0},
+    .bString = {'L', 0, 'e', 0, 'a', 0, 'f', 0,
+                'L', 0, 'a', 0, 'b', 0, 's', 0},
 };
 
 static const usb_descriptor_string usbMIDIDescriptor_iProduct = {

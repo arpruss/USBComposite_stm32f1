@@ -99,13 +99,14 @@ void usb_generic_disable(void) {
     /* Turn off the interrupt and signal disconnect (see e.g. USB 2.0
      * spec, section 7.1.7.3). */
     nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
+    
     if (BOARD_USB_DISC_DEV != NULL) {
         gpio_write_bit(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, 1);
     }
     
+    usb_power_down();
+
     Device_Table = saved_Device_Table;
     Device_Property = saved_Device_Property;
-    User_Standard_Requests = saved_User_Standard_Requests;
-    
-    usb_power_down();
+    User_Standard_Requests = saved_User_Standard_Requests;    
 }
