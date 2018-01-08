@@ -33,7 +33,7 @@
 
 #define USB_TIMEOUT 50
 
-void HIDXbox360::sendReport(void){
+void HIDXBox360::sendReport(void){
 	x360_tx(xbox360_Report, sizeof(xbox360_Report));
 	
 	while (x360_is_transmitting() != 0) {
@@ -42,29 +42,34 @@ void HIDXbox360::sendReport(void){
 	x360_tx(NULL, 0);
 }
 
-HIDXbox360::HIDXbox360(void){
+HIDXBox360::HIDXbox360(void){
 	
 }
 
-void HIDXbox360::begin(void){
+void HIDXBox360::begin(void){
 	if(!enabled){
 		x360_enable();
 		enabled = true;
 	}
 }
 
-void HIDXbox360::end(void){
+void HIDXBox360::end(void){
 	if(enabled){
 	    x360_disable();
 		enabled = false;
 	}
 }
 
-void HIDXbox360::setManualReportMode(bool mode) {
+void HIDXBox360::setManualReportMode(bool mode) {
     manualReport = mode;
 }
 
-void HIDXbox360::safeSendReport() {	
+void HIDXBox360::getManualReportMode(bool mode) {
+    manualReport = mode;
+}
+
+void HIDXBox360::safeSendReport() {	
+void HIDXBox360::safeSendReport() {	
     if (!manualReport) {
         while (x360_is_transmitting() != 0) {
         }
@@ -72,13 +77,13 @@ void HIDXbox360::safeSendReport() {
     }
 }
 
-void HIDXbox360::send() {
+void HIDXBox360::send() {
     while (x360_is_transmitting() != 0) {
     }
     sendReport();
 }
     
-void HIDXbox360::button(uint8_t button, bool val){
+void HIDXBox360::button(uint8_t button, bool val){
 	button--;
 	uint8_t mask = (1 << (button & 7));
 	if (val) {
@@ -93,35 +98,35 @@ void HIDXbox360::button(uint8_t button, bool val){
     safeSendReport();
 }
 
-void HIDXbox360::X(int16_t val){
+void HIDXBox360::X(int16_t val){
 	xbox360_Report[6] = val;
     xbox360_Report[7] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXbox360::Y(int16_t val){
+void HIDXBox360::Y(int16_t val){
 	xbox360_Report[8] = val;
     xbox360_Report[9] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXbox360::XRight(int16_t val){
+void HIDXBox360::XRight(int16_t val){
 	xbox360_Report[0xA] = val;
     xbox360_Report[0xB] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXbox360::YRight(int16_t val){
+void HIDXBox360::YRight(int16_t val){
 	xbox360_Report[0xC] = val;
     xbox360_Report[0xD] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXbox360::position(int16_t x, int16_t y){
+void HIDXBox360::position(int16_t x, int16_t y){
 	xbox360_Report[6] = x;
     xbox360_Report[7] = (uint16)x >> 8;
 	xbox360_Report[8] = y;
@@ -130,7 +135,7 @@ void HIDXbox360::position(int16_t x, int16_t y){
     safeSendReport();
 }
 
-void HIDXbox360::positionRight(int16_t x, int16_t y){
+void HIDXBox360::positionRight(int16_t x, int16_t y){
 	xbox360_Report[0xA] = x;
     xbox360_Report[0xB] = (uint16)x >> 8;
 	xbox360_Report[0xC] = y;
@@ -139,17 +144,17 @@ void HIDXbox360::positionRight(int16_t x, int16_t y){
     safeSendReport();
 }
 
-void HIDXbox360::sliderLeft(uint8_t val){
+void HIDXBox360::sliderLeft(uint8_t val){
 	xbox360_Report[4] = val;
 	
     safeSendReport();
 }
 
-void HIDXbox360::sliderRight(uint8_t val){
+void HIDXBox360::sliderRight(uint8_t val){
 	xbox360_Report[5] = val;
 	
     safeSendReport();
 }
 
-HIDXbox360 XBox360;
+HIDXBox360 XBox360;
 

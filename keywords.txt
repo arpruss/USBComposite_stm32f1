@@ -11,12 +11,15 @@ Joystick	KEYWORD1
 Keyboard	KEYWORD1
 Mouse	KEYWORD1
 CompositeSerial	KEYWORD1
+XBox360	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 begin			KEYWORD2
 end			KEYWORD2
+XRight			KEYWORD2
+YRight			KEYWORD2
 Yrotate			KEYWORD2
 Y				KEYWORD2
 Xrotate			KEYWORD2

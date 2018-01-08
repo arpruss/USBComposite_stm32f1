@@ -23,7 +23,7 @@
 #include <Print.h>
 #include <boards.h>
 
-class HIDXbox360{
+class HIDXBox360{
 private:
 	uint8_t xbox360_Report[20] = {0,0x14};//    3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
     bool manualReport = false;
@@ -33,7 +33,8 @@ private:
 public:
 	void send(void);
     void setManualReportMode(bool manualReport);
-	HIDXbox360(void);
+    bool getManualReportMode();
+	HIDXBox360(void);
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);
@@ -48,7 +49,7 @@ public:
 	void hat(int16_t dir);
 };
 
-extern HIDXbox360 XBox360;
+extern HIDXBox360 XBox360;
 
 #endif
 
