@@ -191,9 +191,6 @@ USB_X360_DECLARE_DEV_DESC(0x045e, 0x028e);
 typedef struct {
     usb_descriptor_config_header Config_Header;
     usb_descriptor_interface     HID_Interface;
-#if 0
-	HIDDescriptor			 	 HID_Descriptor;
-#endif    
     uint8                        unknown_descriptor1[17];
     usb_descriptor_endpoint      DataInEndpoint;
     usb_descriptor_endpoint      DataOutEndpoint;
@@ -229,38 +226,24 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
     
     .unknown_descriptor1 = {
         17,33,0,1,1,37,129,20,0,0,0,0,19,2,8,0,0,
-    },
-
-#if 0	
-	.HID_Descriptor = {
-		.len				= 9,//sizeof(HIDDescDescriptor),
-		.dtype				= HID_DESCRIPTOR_TYPE,
-		.versionL			= 0x10,
-		.versionH			= 0x01,
-		.country			= 0x00,
-		.numDesc			= 0x01,
-		.desctype			= REPORT_DESCRIPTOR,//0x22,
-		.descLenL			= sizeof(hid_report_descriptor),
-		.descLenH			= 0x00,
-	},
-#endif    
+    }, 
 	
 	.DataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_X360_TX_ENDP),//0x81,//USB_X360_TX_ADDR,
-        .bmAttributes     = 3, // USB_ENDPOINT_TYPE_INTERRUPT,
-        .wMaxPacketSize   = 0x20, // USB_X360_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
-        .bInterval        = 4, // 0x0A,
+        .bmAttributes     = 3, 
+        .wMaxPacketSize   = 0x20, 
+        .bInterval        = 4, 
 	},
 
     .DataOutEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_X360_RX_ENDP),
-        .bmAttributes     = 3, // USB_EP_TYPE_BULK,
-        .wMaxPacketSize   = 0x20, // USB_X360_RX_EPSIZE,
-        .bInterval        = 8, // 0x00,
+        .bmAttributes     = 3, 
+        .wMaxPacketSize   = 0x20, 
+        .bInterval        = 8, 
     },
 };
 
@@ -379,7 +362,7 @@ static void (*ep_int_out[7])(void) =
  * Override weak definitions in the core.
  */
 
-#define NUM_ENDPTS                0x02
+#define NUM_ENDPTS                0x03
 static DEVICE my_Device_Table = {
     .Total_Endpoint      = NUM_ENDPTS,
     .Total_Configuration = 1
@@ -604,13 +587,13 @@ static void usbReset(void) {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
 
     /* TODO figure out differences in style between RX/TX EP setup */
-
+#if 0
     /* set up data endpoint OUT (RX) */
     usb_set_ep_type(USB_X360_RX_ENDP, USB_EP_EP_TYPE_BULK);
     usb_set_ep_rx_addr(USB_X360_RX_ENDP, USB_X360_RX_ADDR);
     usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
     usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
-
+#endif
     /* set up data endpoint IN (TX)  */
     usb_set_ep_type(USB_X360_TX_ENDP, USB_EP_EP_TYPE_BULK);
     usb_set_ep_tx_addr(USB_X360_TX_ENDP, USB_X360_TX_ADDR);
