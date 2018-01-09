@@ -77,11 +77,13 @@ typedef struct
 	uint8_t	descLenH;
 } HIDDescriptor;
 
+#if 0
 #define USB_DEVICE_CLASS_HID              0x00
 #define USB_DEVICE_SUBCLASS_HID           0x00
 #define USB_INTERFACE_CLASS_HID           0x03
 #define USB_INTERFACE_SUBCLASS_HID		  0x00
 #define USB_INTERFACE_CLASS_DIC           0x0A
+#endif
 
 /*
  * Endpoint configuration
@@ -106,9 +108,9 @@ typedef struct
       .bLength            = sizeof(usb_descriptor_device),              \
       .bDescriptorType    = USB_DESCRIPTOR_TYPE_DEVICE,                 \
       .bcdUSB             = 0x0200,                                     \
-      .bDeviceClass       = USB_DEVICE_CLASS_HID,                       \
-      .bDeviceSubClass    = USB_DEVICE_SUBCLASS_HID,                    \
-      .bDeviceProtocol    = 0x00,                                       \
+      .bDeviceClass       = 255,                       \
+      .bDeviceSubClass    = 255,                    \
+      .bDeviceProtocol    = 255,                                       \
       .bMaxPacketSize0    = 0x40,                                       \
       .idVendor           = vid,                                        \
       .idProduct          = pid,                                        \
@@ -135,8 +137,6 @@ uint32 x360_rx(uint8* buf, uint32 len);
 uint32 x360_data_available(void); /* in RX buffer */
 uint16 x360_get_pending(void);
 uint8 x360_is_transmitting(void);
-
-void	HID_SendReport(uint8_t id, const void* data, uint32_t len);
 
 #ifdef __cplusplus
 }

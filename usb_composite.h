@@ -267,7 +267,6 @@ typedef struct
 void   usb_hid_putc(char ch);
 uint32 usb_hid_tx(const uint8* buf, uint32 len);
 uint32 usb_hid_tx_mod(const uint8* buf, uint32 len);
-void	HID_SendReport(uint8_t id, const void* data, uint32_t len);
 
 uint32 usb_hid_data_available(void); /* in RX buffer */
 uint16 usb_hid_get_pending(void);
