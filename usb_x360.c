@@ -47,19 +47,6 @@
 #include "usb_core.h"
 #include "usb_def.h"
 
-/******************************************************************************
- ******************************************************************************
- ***
- ***   HACK ALERT! FIXME FIXME FIXME FIXME!
- ***
- ***   A bunch of LeafLabs-specific configuration lives in here for
- ***   now.  This mess REALLY needs to get teased apart, with
- ***   appropriate pieces moved into Wirish.
- ***
- ******************************************************************************
- *****************************************************************************/
-
-
 u16 GetEPTxAddr(u8 bEpNum);
 
 static uint32 ProtocolValue;
@@ -184,7 +171,6 @@ const uint8_t hid_report_descriptor[] = {
 };
 #endif
 
-/* FIXME move to Wirish */
 static const usb_descriptor_device usbHIDDescriptor_Device =
 USB_X360_DECLARE_DEV_DESC(0x045e, 0x028e);
 
@@ -263,7 +249,6 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
 */
 
 /* Unicode language identifier: 0x0409 is US English */
-/* FIXME move to Wirish */
 static const usb_descriptor_string usbHIDDescriptor_LangID = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(1),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
@@ -283,7 +268,6 @@ static const usb_descriptor_string usbHIDDescriptor_iProduct = {
     .bString = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
 };
 
-/* FIXME move to Wirish */
 static const usb_descriptor_string usbHIDDescriptor_iInterface = {
     .bLength = USB_DESCRIPTOR_STRING_LEN(3),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
