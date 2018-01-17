@@ -47,12 +47,49 @@
 #include "usb_core.h"
 #include "usb_def.h"
 
+typedef enum _HID_REQUESTS
+{
+ 
+  GET_REPORT = 1,
+  GET_IDLE,
+  GET_PROTOCOL,
+ 
+  SET_REPORT = 9,
+  SET_IDLE,
+  SET_PROTOCOL
+ 
+} HID_REQUESTS;
+
+#define USB_ENDPOINT_IN(addr)           ((addr) | 0x80)
+#define HID_ENDPOINT_INT 				1
+#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
+ 
+#define HID_DESCRIPTOR_TYPE             0x21
+ 
+#define REPORT_DESCRIPTOR               0x22
+
+
+typedef struct
+{
+	uint8_t len;			// 9
+	uint8_t dtype;			// 0x21
+	uint8_t	versionL;		// 0x101
+	uint8_t	versionH;		// 0x101
+	uint8_t	country;
+	uint8_t	numDesc;
+	uint8_t	desctype;		// 0x22 report
+	uint8_t	descLenL;
+	uint8_t	descLenH;
+} HIDDescriptor;
+
+
 u16 GetEPTxAddr(u8 bEpNum);
 
 static uint32 ProtocolValue;
 
 static void hidDataTxCb(void);
-//static void hidDataRxCb(void);
+static void x360DataRxCb(void);
+static void (*x360_rx_callback)(const uint8* buffer, uint32 size);
 
 static void usbInit(void);
 static void usbReset(void);
@@ -73,7 +110,7 @@ static uint8 *HID_GetHIDDescriptor(uint16 Length);
  * Descriptors
  */
  
-#if 0
+#if 0 
 const uint8_t hid_report_descriptor[] = {
     0x05, 0x01,                    // USAGE_PAGE (Generic Desktop)
     0x09, 0x05,                    // USAGE (Game Pad)
@@ -305,18 +342,14 @@ static ONE_DESCRIPTOR usbHIDString_Descriptor[N_STRING_DESCRIPTORS] = {
 
 /* I/O state */
 
-#define HID_BUFFER_SIZE	512
-
 /* Received data */
-static volatile uint8 hidBufferRx[HID_BUFFER_SIZE];
-/* Read index into hidBufferRx */
-static volatile uint32 rx_offset = 0;
+static volatile uint8 hidBufferRx[USB_X360_RX_EPSIZE];
+
+
 /* Number of bytes left to transmit */
 static volatile uint32 n_unsent_bytes = 0;
 /* Are we currently sending an IN packet? */
 static volatile uint8 transmitting = 0;
-/* Number of unread bytes */
-static volatile uint32 n_unread_bytes = 0;
 
 /*
  * Endpoint callbacks
@@ -333,7 +366,7 @@ static void (*ep_int_in[7])(void) =
 
 static void (*ep_int_out[7])(void) =
     {NOP_Process,
-     NOP_Process, // hidDataRxCb,
+     x360DataRxCb,
      NOP_Process,
      NOP_Process,
      NOP_Process,
@@ -384,11 +417,16 @@ static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
  * HID interface
  */
 
+void x360_set_rx_callback(void (*hook)(const uint8* buffer, uint32 size)) {
+    x360_rx_callback = hook;
+}
+
 void x360_enable(void) {
     usb_generic_enable(&my_Device_Table, &my_Device_Property, &my_User_Standard_Requests, ep_int_in, ep_int_out);
 }
 
 void x360_disable(void) {
+    x360_set_rx_callback(NULL);
     usb_generic_disable();
 }
 
@@ -410,21 +448,6 @@ static void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
         *dst = *buf;
     }
 }
-
-#if 0
-static void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
-    uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
-    uint16 *dst = (uint16*)buf;
-    uint16 n = len >> 1;
-    uint16 i;
-    for (i = 0; i < n; i++) {
-        *dst++ = *src++;
-    }
-    if (len & 1) {
-        *dst = *src & 0xFF;
-    }
-}
-#endif
 
 /* This function is non-blocking.
  *
@@ -456,10 +479,6 @@ uint32 x360_tx(const uint8* buf, uint32 len) {
     return len;
 }
 
-uint32 x360_data_available(void) {
-    return n_unread_bytes;
-}
-
 uint8 x360_is_transmitting(void) {
     return transmitting;
 }
@@ -468,30 +487,28 @@ uint16 x360_get_pending(void) {
     return n_unsent_bytes;
 }
 
-#if 0
-/* Nonblocking byte receive.
- *
- * Copies up to len bytes from our private data buffer (*NOT* the PMA)
- * into buf and deq's the FIFO. */
-uint32 x360_rx(uint8* buf, uint32 len) {
-    /* Copy bytes to buffer. */
-    uint32 n_copied = x360_peek(buf, len);
-
-    /* Mark bytes as read. */
-    n_unread_bytes -= n_copied;
-    rx_offset = (rx_offset + n_copied) % HID_BUFFER_SIZE;
-
-    /* If all bytes have been read, re-enable the RX endpoint, which
-     * was set to NAK when the current batch of bytes was received. */
-    if (n_unread_bytes <= (HID_BUFFER_SIZE - USB_X360_RX_EPSIZE)) {
-        usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
-        usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
-		rx_offset = 0;
-    }
-
-    return n_copied;
+static void x360DataRxCb(void)
+{
+	uint32 ep_rx_size = usb_get_ep_rx_count(USB_X360_RX_ENDP);
+	// This copy won't overwrite unread bytes as long as there is 
+	// enough room in the USB Rx buffer for next packet
+	uint32 *src = usb_pma_ptr(USB_X360_RX_ADDR);
+    uint16 tmp = 0;
+	uint8 val;
+	uint32 i;
+	for (i = 0; i < ep_rx_size; i++) {
+		if (i&1) {
+			val = tmp>>8;
+		} else {
+			tmp = *src++;
+			val = tmp&0xFF;
+		}
+		hidBufferRx[i] = val;
+	}
+    
+    x360_rx_callback((uint8*)hidBufferRx, ep_rx_size);
+    usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
 }
-#endif
 
 /*
  * Callbacks
@@ -501,35 +518,6 @@ static void hidDataTxCb(void) {
     n_unsent_bytes = 0;
     transmitting = 0;
 }
-
-#if 0
-static void hidDataRxCb(void) {
-	uint32 ep_rx_size;
-	uint32 tail = (rx_offset + n_unread_bytes) % HID_BUFFER_SIZE;
-	uint8 ep_rx_data[USB_X360_RX_EPSIZE];
-	uint32 i;
-
-    usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_NAK);
-    ep_rx_size = usb_get_ep_rx_count(USB_X360_RX_ENDP);
-    /* This copy won't overwrite unread bytes, since we've set the RX
-     * endpoint to NAK, and will only set it to VALID when all bytes
-     * have been read. */
-    usb_copy_from_pma((uint8*)ep_rx_data, ep_rx_size,
-                      USB_X360_RX_ADDR);
-
-	for (i = 0; i < ep_rx_size; i++) {
-		hidBufferRx[tail] = ep_rx_data[i];
-		tail = (tail + 1) % HID_BUFFER_SIZE;
-	}
-
-	n_unread_bytes += ep_rx_size;
-
-    if (n_unread_bytes <= (HID_BUFFER_SIZE - USB_X360_RX_EPSIZE)) {
-        usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
-        usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
-    }
-}
-#endif
 
 static void usbInit(void) {
     pInformation->Current_Configuration = 0;
@@ -571,7 +559,7 @@ static void usbReset(void) {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
 
     /* TODO figure out differences in style between RX/TX EP setup */
-#if 0
+#if 1
     /* set up data endpoint OUT (RX) */
     usb_set_ep_type(USB_X360_RX_ENDP, USB_EP_EP_TYPE_BULK);
     usb_set_ep_rx_addr(USB_X360_RX_ENDP, USB_X360_RX_ADDR);
@@ -588,9 +576,7 @@ static void usbReset(void) {
     SetDeviceAddress(0);
 
     /* Reset the RX/TX state */
-    n_unread_bytes = 0;
     n_unsent_bytes = 0;
-    rx_offset = 0;
     transmitting = 0;
 }
 

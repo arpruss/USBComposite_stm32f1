@@ -42,49 +42,6 @@ extern "C" {
  
 //extern const uint8_t hid_report_descriptor[];
 
-typedef enum _HID_REQUESTS
-{
- 
-  GET_REPORT = 1,
-  GET_IDLE,
-  GET_PROTOCOL,
- 
-  SET_REPORT = 9,
-  SET_IDLE,
-  SET_PROTOCOL
- 
-} HID_REQUESTS;
-
-#define USB_ENDPOINT_IN(addr)           ((addr) | 0x80)
-#define HID_ENDPOINT_INT 				1
-#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
- 
-#define HID_DESCRIPTOR_TYPE             0x21
- 
-#define REPORT_DESCRIPTOR               0x22
-
-
-typedef struct
-{
-	uint8_t len;			// 9
-	uint8_t dtype;			// 0x21
-	uint8_t	versionL;		// 0x101
-	uint8_t	versionH;		// 0x101
-	uint8_t	country;
-	uint8_t	numDesc;
-	uint8_t	desctype;		// 0x22 report
-	uint8_t	descLenL;
-	uint8_t	descLenH;
-} HIDDescriptor;
-
-#if 0
-#define USB_DEVICE_CLASS_HID              0x00
-#define USB_DEVICE_SUBCLASS_HID           0x00
-#define USB_INTERFACE_CLASS_HID           0x03
-#define USB_INTERFACE_SUBCLASS_HID		  0x00
-#define USB_INTERFACE_CLASS_DIC           0x0A
-#endif
-
 /*
  * Endpoint configuration
  */
@@ -131,12 +88,12 @@ void x360_disable();
 
 void   x360_putc(char ch);
 uint32 x360_tx(const uint8* buf, uint32 len);
-uint32 x360_tx_mod(const uint8* buf, uint32 len);
 uint32 x360_rx(uint8* buf, uint32 len);
-
+uint32 x360_hid_peek(uint8* buf, uint32 len);
 uint32 x360_data_available(void); /* in RX buffer */
 uint16 x360_get_pending(void);
 uint8 x360_is_transmitting(void);
+void x360_set_rx_callback(void (*hook)(const uint8* buffer, uint32 size));
 
 #ifdef __cplusplus
 }
