@@ -89,7 +89,8 @@ static uint32 ProtocolValue;
 
 static void hidDataTxCb(void);
 static void x360DataRxCb(void);
-static void (*x360_rx_callback)(const uint8* buffer, uint32 size);
+static void (*x360_rumble_callback)(uint8 left, uint8 right);
+static void (*x360_led_callback)(uint8 pattern);
 
 static void usbInit(void);
 static void usbReset(void);
@@ -417,8 +418,12 @@ static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
  * HID interface
  */
 
-void x360_set_rx_callback(void (*hook)(const uint8* buffer, uint32 size)) {
-    x360_rx_callback = hook;
+void x360_set_rumble_callback(void (*callback)(uint8 left, uint8 right)) {
+    x360_rumble_callback = callback;
+}
+
+void x360_set_led_callback(void (*callback)(uint8 pattern)) {
+    x360_led_callback = callback;
 }
 
 void x360_enable(void) {
@@ -426,7 +431,8 @@ void x360_enable(void) {
 }
 
 void x360_disable(void) {
-    x360_set_rx_callback(NULL);
+    x360_set_rumble_callback(NULL);
+    x360_set_led_callback(NULL);
     usb_generic_disable();
 }
 
@@ -506,7 +512,14 @@ static void x360DataRxCb(void)
 		hidBufferRx[i] = val;
 	}
     
-    x360_rx_callback((uint8*)hidBufferRx, ep_rx_size);
+    if (ep_rx_size == 3) {
+        if (x360_led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
+            x360_led_callback(hidBufferRx[2]);
+    }
+    else if (ep_rx_size == 8) {
+        if (x360_rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 8)
+            x360_rumble_callback(hidBufferRx[3],hidBufferRx[4]);
+    }
     usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
 }
 

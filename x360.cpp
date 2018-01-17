@@ -42,6 +42,15 @@ void HIDXBox360::sendReport(void){
 	x360_tx(NULL, 0);
 }
 
+void HIDXBox360::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {
+    x360_set_rumble_callback(callback);
+}
+
+void HIDXBox360::setLEDCallback(void (*callback)(uint8 pattern)) {
+    x360_set_led_callback(callback);
+}
+
+
 HIDXBox360::HIDXBox360(void){
 	
 }
