@@ -47,6 +47,7 @@ public:
 	void sliderLeft(uint8_t val);
 	void sliderRight(uint8_t val);
 	void hat(int16_t dir);
+    void setRXCallback(void (*hook)(const uint8* buffer, uint32 size));
 };
 
 extern HIDXBox360 XBox360;
