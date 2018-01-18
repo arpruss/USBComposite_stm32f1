@@ -14,11 +14,6 @@
 ** SOFTWARE.
 */
 
-/**
- * @brief USB HID Keyboard device 
- */
- 
-
 #include "USBHID.h"
 
 #include <string.h>
@@ -176,12 +171,25 @@ void HIDReporter::sendReport() {
 }
         
 HIDReporter::HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID) {
+    if (_reportID == 0) {
+        buffer = _buffer+1;
+        bufferSize = _size-1;
+    }
+    else {
+        buffer = _buffer;
+        bufferSize = _size;
+    }
+    memset(buffer, 0, bufferSize);
+    reportID = _reportID;
+    if (_size > 0 && reportID != 0)
+        buffer[0] = _reportID;
+}
+
+HIDReporter::HIDReporter(uint8_t* _buffer, unsigned _size) {
     buffer = _buffer;
     bufferSize = _size;
     memset(buffer, 0, _size);
-    reportID = _reportID;
-    if (_size > 0)
-        buffer[0] = _reportID;
+    reportID = 0;
 }
 
 void HIDReporter::setFeature(uint8_t* in) {

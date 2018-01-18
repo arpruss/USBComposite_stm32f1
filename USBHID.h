@@ -177,6 +177,35 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */
     
+#define HID_BOOT_KEYBOARD_REPORT_DESCRIPTOR(...) \
+    0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 47 */ \
+    0x09, 0x06,						/*  USAGE (Keyboard) */ \
+    0xa1, 0x01,						/*  COLLECTION (Application) */ \
+    0x05, 0x07,						/*    USAGE_PAGE (Keyboard) */ \
+	0x19, 0xe0,						/*    USAGE_MINIMUM (Keyboard LeftControl) */ \
+    0x29, 0xe7,						/*    USAGE_MAXIMUM (Keyboard Right GUI) */ \
+    0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
+    0x25, 0x01,						/*    LOGICAL_MAXIMUM (1) */ \
+    0x75, 0x01,						/*    REPORT_SIZE (1) */ \
+	0x95, 0x08,						/*    REPORT_COUNT (8) */ \
+    0x81, 0x02,						/*    INPUT (Data,Var,Abs) */ \
+\
+    0x95, 0x01,						/*    REPORT_COUNT (1) */ \
+    0x75, 0x08,						/*    REPORT_SIZE (8) */ \
+    0x81, 0x03,						/*    INPUT (Cnst,Var,Abs) */ \
+\
+	0x95, 0x06,						/*    REPORT_COUNT (6) */ \
+    0x75, 0x08,						/*    REPORT_SIZE (8) */ \
+    0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
+    0x25, 0x65,						/*    LOGICAL_MAXIMUM (101) */ \
+    0x05, 0x07,						/*    USAGE_PAGE (Keyboard) */ \
+\
+	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
+    0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
+    0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
+    __VA_ARGS__  \
+    0xc0      						/*  END_COLLECTION */
+    
 #define HID_JOYSTICK_REPORT_DESCRIPTOR(...) \
 	0x05, 0x01,						/*  Usage Page (Generic Desktop) */ \
 	0x09, 0x04,						/*  Usage (Joystick) */ \
@@ -295,7 +324,12 @@ class HIDReporter {
         void sendReport(); 
         
     public:
+        // if you use this init function, the buffer starts with a reportID, even if the reportID is zero,
+        // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
+        // reportID byte
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
+        // if you use this init function, the buffer has no reportID function in it
+        HIDReporter(uint8_t* _buffer, unsigned _size);
         uint16_t getFeature(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
@@ -641,7 +675,7 @@ private:
     uint8_t rxBuffer[HID_BUFFER_ALLOCATE_SIZE(rxSize,0)];
     HIDBuffer_t buf;
 public:
-	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer), 0) {
+	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer)) {
         buf.buffer = rxBuffer;
         buf.bufferSize = HID_BUFFER_SIZE(rxSize,0);
         buf.reportID = 0;
