@@ -728,6 +728,7 @@ extern HIDMouse Mouse;
 extern HIDKeyboard Keyboard;
 extern HIDJoystick Joystick;
 extern USBCompositeSerial CompositeSerial;
+extern HIDKeyboard BootKeyboard;
 
 extern const HIDReportDescriptor* hidReportMouse;
 extern const HIDReportDescriptor* hidReportKeyboard;
@@ -735,6 +736,7 @@ extern const HIDReportDescriptor* hidReportJoystick;
 extern const HIDReportDescriptor* hidReportKeyboardMouse;
 extern const HIDReportDescriptor* hidReportKeyboardJoystick;
 extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
+extern const HIDReportDescriptor* hidReportBootKeyboard;
 
 #define HID_MOUSE                   hidReportMouse
 #define HID_KEYBOARD                hidReportKeyboard
@@ -742,6 +744,7 @@ extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
 #define HID_KEYBOARD_MOUSE          hidReportKeyboardMouse
 #define HID_KEYBOARD_JOYSTICK       hidReportKeyboardJoystick
 #define HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
+#define HID_BOOT_KEYBOARD           hidReportBootKeyboard
 
 #endif
         
