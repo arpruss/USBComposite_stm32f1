@@ -2,6 +2,7 @@
 
 void setup() 
 {
+    USBHID.setSerial(0);
     USBHID.begin(HID_BOOT_KEYBOARD);
 }
 
