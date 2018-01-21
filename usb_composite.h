@@ -37,10 +37,12 @@
 #include <libmaple/libmaple_types.h>
 #include <libmaple/usb.h>
 
+#define MAX_HID_BUFFERS 12
 #define HID_BUFFER_SIZE(n,reportID) ((n)+((reportID)!=0))
 #define HID_BUFFER_ALLOCATE_SIZE(n,reportID) ((HID_BUFFER_SIZE((n),(reportID))+1)/2*2)
 
 #define HID_BUFFER_MODE_NO_WAIT 1
+#define HID_BUFFER_MODE_OUTPUT  2
 
 typedef struct HIDBuffer_t {
     volatile uint8_t* buffer; // use HID_BUFFER_ALLOCATE_SIZE() to calculate amount of memory to allocate                            
@@ -135,6 +137,8 @@ typedef struct
 
 void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, uint8 serialSupport,
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
+void usb_hid_clear_buffers(uint8_t type);
+uint8_t usb_hid_add_buffer(uint8_t type, volatile HIDBuffer_t* buf);
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
 uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_composite_disable(void);

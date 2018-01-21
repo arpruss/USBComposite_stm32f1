@@ -5,6 +5,7 @@
 //	Keyboard
 
 void HIDKeyboard::begin(void){
+    USBHID.addOutputBuffer(&ledData);
 }
 
 void HIDKeyboard::end(void) {

@@ -7,15 +7,17 @@
 HIDRaw<TXSIZE,RXSIZE> raw;
 uint8 buf[RXSIZE];
 
+extern "C" {
+  extern uint32 info;
+};
+
 const uint8_t reportDescription[] = {
    HID_RAW_REPORT_DESCRIPTOR(TXSIZE,RXSIZE)
 };
 
 void setup(){
-  pinMode(PB12,OUTPUT);
-  digitalWrite(PB12,1);
   USBHID.begin(reportDescription, sizeof(reportDescription));  
-  delay(1000);
+  raw.begin();
 }
 
 void loop() {

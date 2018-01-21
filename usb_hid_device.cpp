@@ -143,9 +143,15 @@ void USBHIDDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count)
     usb_hid_set_buffers(type, fb, count);
 }
 
+bool USBHIDDevice::addBuffer(uint8_t type, volatile HIDBuffer_t* buffer) {
+    return 0 != usb_hid_add_buffer(type, buffer);
+}
+
 void USBHIDDevice::end(void){
 	if(enabled){
 	    usb_composite_disable();
+        usb_hid_clear_buffers(HID_REPORT_TYPE_FEATURE);
+        usb_hid_clear_buffers(HID_REPORT_TYPE_OUTPUT);
 		enabled = false;
 	}
 }

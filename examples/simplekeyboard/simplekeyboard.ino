@@ -2,6 +2,7 @@
 
 void setup() {
   USBHID.begin(HID_KEYBOARD);
+  Keyboard.begin(); // needed in case you want LED support
   delay(1000);
 }
 

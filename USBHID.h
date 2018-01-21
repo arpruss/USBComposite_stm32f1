@@ -62,15 +62,6 @@
     0x95, dataSize,       /* REPORT_COUNT (32) */ \
     0x91, 0x02,     /* OUTPUT (Data,Var,Abs) */ \
     
-#define HID_KEYBOARD_LEDS_REPORT_DESCRIPTOR() \
-	/* 5 for ordinary, 3 for advanced */ \
-	0x05, 0x08,						 /*   USAGE_PAGE (LEDs) */ \
-	0x19, 0x01,						 /*   USAGE_MINIMUM (Num Lock) */ \
-	0x29, 0x08,						 /*   USAGE_MAXIMUM (Kana + 3 custom)*/ \
-	0x95, 0x08,						 /*   REPORT_COUNT (8) */ \
-	0x75, 0x01,						 /*   REPORT_SIZE (1) */ \
-	0x91, 0x02,						 /*   OUTPUT (Data,Var,Abs) */    
-    
 #define HID_CONSUMER_REPORT_DESCRIPTOR(...) \
     0x05, 0x0C,									/* usage page (consumer device) */ \
 	0x09, 0x01, 								/* usage -- consumer control */ \
@@ -174,6 +165,13 @@
 	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
     0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
+\
+	0x05, 0x08,						 /*   USAGE_PAGE (LEDs) */ \
+	0x19, 0x01,						 /*   USAGE_MINIMUM (Num Lock) */ \
+	0x29, 0x08,						 /*   USAGE_MAXIMUM (Kana + 3 custom)*/ \
+	0x95, 0x08,						 /*   REPORT_COUNT (8) */ \
+	0x75, 0x01,						 /*   REPORT_SIZE (1) */ \
+	0x91, 0x02,						 /*   OUTPUT (Data,Var,Abs) */    \
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */
     
@@ -203,6 +201,13 @@
 	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
     0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
+\
+	0x05, 0x08,						 /*   USAGE_PAGE (LEDs) */ \
+	0x19, 0x01,						 /*   USAGE_MINIMUM (Num Lock) */ \
+	0x29, 0x08,						 /*   USAGE_MAXIMUM (Kana + 3 custom)*/ \
+	0x95, 0x08,						 /*   REPORT_COUNT (8) */ \
+	0x75, 0x01,						 /*   REPORT_SIZE (1) */ \
+	0x91, 0x02,						 /*   OUTPUT (Data,Var,Abs) */    \
     __VA_ARGS__  \
     0xc0      						/*  END_COLLECTION */
     
@@ -304,12 +309,19 @@ public:
         const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");
     void setSerial(uint8 serialSupport=true);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
+    bool addBuffer(uint8_t type, volatile HIDBuffer_t* buffer);
+    inline bool addFeatureBuffer(volatile HIDBuffer_t* buffer) {
+        return addBuffer(HID_REPORT_TYPE_FEATURE, buffer);
+    }
+    inline bool addOutputBuffer(volatile HIDBuffer_t* buffer) {
+        return addBuffer(HID_REPORT_TYPE_OUTPUT, buffer);
+    }
     inline void setFeatureBuffers(volatile HIDBuffer_t* fb=NULL, int count=0) {
         setBuffers(HID_REPORT_TYPE_FEATURE, fb, count);
     }        
     inline void setOutputBuffers(volatile HIDBuffer_t* fb=NULL, int count=0) {
         setBuffers(HID_REPORT_TYPE_OUTPUT, fb, count);
-    }        
+    }     
     void end(void);
 };
 
@@ -599,12 +611,23 @@ typedef struct{
 } __packed KeyReport_t;
 
 class HIDKeyboard : public Print, public HIDReporter {
-protected:
-	KeyReport_t keyReport;
 public:
-	HIDKeyboard(uint8_t reportID=HID_KEYBOARD_REPORT_ID) : HIDReporter((uint8*)&keyReport, sizeof(KeyReport_t), reportID) {}
+	KeyReport_t keyReport;
+    uint8_t leds[HID_BUFFER_ALLOCATE_SIZE(1,1)];
+    HIDBuffer_t ledData;
+    uint8_t reportID;
+
+public:
+	HIDKeyboard(uint8_t _reportID=HID_KEYBOARD_REPORT_ID) : 
+        HIDReporter((uint8*)&keyReport, sizeof(KeyReport_t), _reportID),
+        ledData(leds, HID_BUFFER_SIZE(1,_reportID), _reportID, HID_BUFFER_MODE_NO_WAIT),
+        reportID(_reportID)
+        {}
 	void begin(void);
 	void end(void);
+    inline uint8 getLEDs(void) {
+        return leds[reportID != 0 ? 1 : 0];
+    }
 	virtual size_t write(uint8_t k);
 	virtual size_t press(uint8_t k);
 	virtual size_t release(uint8_t k);
@@ -675,13 +698,13 @@ private:
     uint8_t rxBuffer[HID_BUFFER_ALLOCATE_SIZE(rxSize,0)];
     HIDBuffer_t buf;
 public:
-	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer)) {
+	HIDRaw() : HIDReporter(txBuffer, sizeof(txBuffer)) {}
+	void begin(void) {
         buf.buffer = rxBuffer;
         buf.bufferSize = HID_BUFFER_SIZE(rxSize,0);
         buf.reportID = 0;
-        USBHID.setOutputBuffers(&buf,1);
+        USBHID.addOutputBuffer(&buf);
     }
-	void begin(void);
 	void end(void);
 	void send(const uint8_t* data, unsigned n=sizeof(txBuffer)) {
         memset(txBuffer, 0, sizeof(txBuffer));
