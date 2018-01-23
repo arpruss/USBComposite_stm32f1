@@ -332,7 +332,7 @@ class HIDReporter {
         unsigned bufferSize;
         uint8_t reportID;
         
-    protected:
+    public:
         void sendReport(); 
         
     public:
@@ -613,6 +613,8 @@ typedef struct{
 class HIDKeyboard : public Print, public HIDReporter {
 public:
 	KeyReport_t keyReport;
+    
+protected:    
     uint8_t leds[HID_BUFFER_ALLOCATE_SIZE(1,1)];
     HIDBuffer_t ledData;
     uint8_t reportID;
