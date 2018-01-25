@@ -261,7 +261,7 @@ void LglSysexHandler(uint32 *midiBufferRx, uint32 *rx_offset, uint32 *n_unread_p
                 sysexBuffer[sysexFinger++]=packet->midi1;
                 sysexBuffer[sysexFinger++]=packet->midi2;
                 if (sysexState==YUP_ITS_MY_SYSEX) {
-                    if(cPacket>=(*n_unread_packets)){
+                    if(cPacket>=(int32)(*n_unread_packets)){
                         *n_unread_packets = soPackets;
                         *rx_offset = soPackets;
                     } else {

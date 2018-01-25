@@ -518,7 +518,7 @@ uint32 usb_midi_rx(uint32* buf, uint32 packets) {
  *
  * Looks at unread bytes without marking them as read. */
 uint32 usb_midi_peek(uint32* buf, uint32 packets) {
-    int i;
+    uint32 i;
     if (packets > n_unread_packets) {
         packets = n_unread_packets;
     }
@@ -549,7 +549,8 @@ static void midiDataRxCb(void) {
     usb_copy_from_pma((uint8*)midiBufferRx, n_unread_packets * 4,
                       USB_MIDI_RX_ADDR);
     
-    LglSysexHandler(midiBufferRx,&rx_offset,&n_unread_packets);
+    // discard volatile
+    LglSysexHandler((uint32*)midiBufferRx,(uint32*)&rx_offset,(uint32*)&n_unread_packets);
     
     if (n_unread_packets == 0) {
         usb_set_ep_rx_count(USB_MIDI_RX_ENDP, USB_MIDI_RX_EPSIZE);
@@ -623,6 +624,7 @@ static void usbReset(void) {
 }
 
 static RESULT usbDataSetup(uint8 request) {
+    (void)request;//unused
     uint8* (*CopyRoutine)(uint16) = 0;
 
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
@@ -639,6 +641,7 @@ static RESULT usbDataSetup(uint8 request) {
 }
 
 static RESULT usbNoDataSetup(uint8 request) {
+    (void)request;//unused
     RESULT ret = USB_UNSUPPORT;
 
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
@@ -687,7 +690,7 @@ static void usbSetDeviceAddress(void) {
 static uint8_t sysexbuffer[80]={CIN_SYSEX,0xF0,0x7D,0x33,CIN_SYSEX,0x33,0x00,0xf7}; // !!!bad hardcoded number foo !!!
 uint8_t iSysHexLine(uint8_t rectype, uint16_t address, uint8_t *payload,uint8_t payloadlength, uint8_t *buffer);
 void sendThroughSysex(char *printbuffer, int bufferlength) {
-    int i,n;
+    int n;
     n = iSysHexLine(1, 0 , (uint8_t *) printbuffer, (uint8_t) bufferlength , sysexbuffer+6);
     usb_midi_tx((uint32*)sysexbuffer,n/4);
 }
