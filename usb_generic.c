@@ -53,6 +53,30 @@
 
 #include <board/board.h>
 
+#define LEAFLABS_ID_VENDOR                0x1EAF
+#define MAPLE_ID_PRODUCT                  0x0004 // was 0x0024
+#define USB_DEVICE_CLASS              	  0x00
+#define USB_DEVICE_SUBCLASS	           	  0x00
+#define DEVICE_PROTOCOL					  0x01
+
+static usb_descriptor_device usbGenericDescriptor_Device
+  {                                                                     
+      .bLength            = sizeof(usb_descriptor_device),              
+      .bDescriptorType    = USB_DESCRIPTOR_TYPE_DEVICE,                 
+      .bcdUSB             = 0x0200,                                     
+      .bDeviceClass       = USB_DEVICE_CLASS,                       	
+      .bDeviceSubClass    = USB_DEVICE_SUBCLASS,                    	
+      .bDeviceProtocol    = DEVICE_PROTOCOL,                            
+      .bMaxPacketSize0    = 0x40,                                       
+      .idVendor           = LEAFLABS_ID_VENDOR,                         
+      .idProduct          = MAPLE_ID_PRODUCT,                           
+      .bcdDevice          = 0x0200,                                     
+      .iManufacturer      = 0x01,                                       
+      .iProduct           = 0x02,                                       
+      .iSerialNumber      = 0x00,                                       
+      .bNumConfigurations = 0x01,                                       
+};
+
 struct {
     usb_descriptor_config_header Config_Header;
     uint8 descriptorData[MAX_USB_DESCRIPTOR_DATA_SIZE];
