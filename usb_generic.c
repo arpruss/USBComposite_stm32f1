@@ -70,7 +70,7 @@ static void usbSetDeviceAddress(void);
 #define USB_DEVICE_CLASS              	  0x00
 #define USB_DEVICE_SUBCLASS	           	  0x00
 #define DEVICE_PROTOCOL					  0x01
-#define USB_DESCRIPTOR_TYPE               0x21
+#define HID_DESCRIPTOR_TYPE               0x21
 
 static usb_descriptor_device usbGenericDescriptor_Device =
   {                                                                     
@@ -150,7 +150,7 @@ static const usb_descriptor_string usbHIDDescriptor_iProduct = {
 
 
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
-static const DEVICE_PROP my_Device_Property = {
+static DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
     .Process_Status_IN           = NOP_Process, 
@@ -213,16 +213,14 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     usbDescriptorSize = 0;
     for (unsigned i = 0 ; i < _numParts ; i++ ) {
         parts[i]->startInterface = numInterfaces;
-        parts[i]->startEndpoint = numEndpoints;
         numInterfaces += parts[i]->numInterfaces;
         if (numEndpoints + parts[i]->numEndpoints > 8)
             return 0;
         if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) 
             return 0;
-        parts[i]->getPartDescriptor(parts[i], usbConfig.descriptorData + usbDescriptorSize);
-        usbDescriptorSize += parts[i]->descriptorSize;
+        parts[i]->startEndpoint = numEndpoints;
         USBEndpointInfo* ep = parts[i]->endpoints;
-        for (unsigned j = 0 ; j < numEndpoints ; j++) {
+        for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
             if (ep[j].bufferSize + pmaOffset > PMA_MEMORY_SIZE) 
                 return 0;
             ep[j].pmaAddress = pmaOffset;
@@ -238,6 +236,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
             }
             numEndpoints++;
         }
+        parts[i]->getPartDescriptor(parts[i], usbConfig.descriptorData + usbDescriptorSize);
+        usbDescriptorSize += parts[i]->descriptorSize;
     }
     
     usbConfig.Config_Header = Base_Header;    
@@ -292,14 +292,6 @@ void usb_generic_enable(void) {
      * pull USB_DP pin up while leaving USB_DM pulled down by the
      * transceiver. See USB 2.0 spec, section 7.1.7.3. */
      
-    saved_Device_Table = Device_Table;
-    saved_Device_Property = Device_Property;
-    saved_User_Standard_Requests = User_Standard_Requests;
-
-    Device_Table = my_Device_Table;
-    Device_Property = my_Device_Property;
-    User_Standard_Requests = my_User_Standard_Requests;
-    
 #ifdef GENERIC_BOOTLOADER			
     //Reset the USB interface on generic boards - developed by Victor PV
     gpio_set_mode(GPIOA, 12, GPIO_OUTPUT_PP);
@@ -314,6 +306,14 @@ void usb_generic_enable(void) {
         gpio_write_bit(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, 0);
     }
 
+    saved_Device_Table = Device_Table;
+    saved_Device_Property = Device_Property;
+    saved_User_Standard_Requests = User_Standard_Requests;
+
+    Device_Table = my_Device_Table;
+    Device_Property = my_Device_Property;
+    User_Standard_Requests = my_User_Standard_Requests;
+    
     /* Initialize the USB peripheral. */
     usb_init_usblib(USBLIB, ep_int_in, ep_int_out);
 }
@@ -413,7 +413,7 @@ static RESULT usbDataSetup(uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
 	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT) && request == GET_DESCRIPTOR &&
-        pInformation->USBwValue1 == USB_DESCRIPTOR_TYPE){
+        pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
             CopyRoutine = usbGetConfigDescriptor;
     }
 

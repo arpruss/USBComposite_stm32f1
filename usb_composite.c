@@ -302,6 +302,11 @@ static USBEndpointInfo serialEndpoints[3] = {
 
 static void getSerialPartDescriptor(USBCompositePart* part, uint8* out) {
     memcpy(out, &serialPartConfigData, sizeof(serial_part_config));
+
+    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
+
     OUT_BYTE(serialPartConfigData, IAD.bFirstInterface) += part->startInterface;
     OUT_BYTE(serialPartConfigData, CCI_Interface.bInterfaceNumber) += part->startInterface;
     OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
@@ -309,14 +314,10 @@ static void getSerialPartDescriptor(USBCompositePart* part, uint8* out) {
     OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[0]) += part->startInterface;
     OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[1]) += part->startInterface;
     OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
-
-    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
 }
 
 USBCompositePart serialPart = {
-    .numInterfaces = 3,
+    .numInterfaces = 2,
     .numEndpoints = sizeof(serialEndpoints)/sizeof(*serialEndpoints),
     .descriptorSize = sizeof(serial_part_config),
     .getPartDescriptor = getSerialPartDescriptor,
@@ -638,7 +639,8 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
     HID_Report_Descriptor.Descriptor = (uint8*)report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
 
-    usb_generic_set_parts(hidSerialParts, serial ? 2 : 0);
+    usb_generic_set_parts(hidSerialParts, serial ? 2 : 1);
+    //usb_generic_set_parts(hidSerialParts+1, 1);
     
     usb_generic_enable();
 }
