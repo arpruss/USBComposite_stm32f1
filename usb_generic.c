@@ -53,9 +53,104 @@
 
 #include <board/board.h>
 
+struct {
+    usb_descriptor_config_header Config_Header;
+    uint8 descriptorData[MAX_USB_DESCRIPTOR_DATA_SIZE];
+} __packed usb_descriptor_config;
+
+static const usb_descriptor_config_header Base_Header = {
+        .bLength              = sizeof(usb_descriptor_config_header),
+        .bDescriptorType      = USB_DESCRIPTOR_TYPE_CONFIGURATION,
+        .wTotalLength         = 0,
+        .bNumInterfaces       = 0, 
+        .bConfigurationValue  = 0x01,
+        .iConfiguration       = 0x00,
+        .bmAttributes         = (USB_CONFIG_ATTR_BUSPOWERED |
+                                 USB_CONFIG_ATTR_SELF_POWERED),
+        .bMaxPower            = MAX_POWER,
+};
+
+static DEVICE my_Device_Table = {
+    .Total_Endpoint      = NUM_ENDPTS,
+    .Total_Configuration = 1
+};
+
+#define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
+static DEVICE_PROP my_Device_Property = {
+    .Init                        = usbInit,
+    .Reset                       = usbReset,
+    .Process_Status_IN           = NOP_Process, 
+    .Process_Status_OUT          = NOP_Process,
+    .Class_Data_Setup            = usbDataSetup,
+    .Class_NoData_Setup          = usbNoDataSetup,
+    .Class_Get_Interface_Setting = usbGetInterfaceSetting,
+    .GetDeviceDescriptor         = usbGetDeviceDescriptor,
+    .GetConfigDescriptor         = usbGetConfigDescriptor,
+    .GetStringDescriptor         = usbGetStringDescriptor,
+    .RxEP_buffer                 = NULL,
+    .MaxPacketSize               = MAX_PACKET_SIZE
+};
+
+static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
+    .User_GetConfiguration   = NOP_Process,
+    .User_SetConfiguration   = usbSetConfiguration,
+    .User_GetInterface       = NOP_Process,
+    .User_SetInterface       = NOP_Process,
+    .User_GetStatus          = NOP_Process,
+    .User_ClearFeature       = NOP_Process,
+    .User_SetEndPointFeature = NOP_Process,
+    .User_SetDeviceFeature   = NOP_Process,
+    .User_SetDeviceAddress   = usbSetDeviceAddress
+};
+
+
+static USBCompositePart* parts;
+static uint32 numParts;
 static DEVICE saved_Device_Table;
 static DEVICE_PROP saved_Device_Property;
 static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
+
+static void (*ep_int_in[7])(void);
+static void (*ep_int_out[7])(void);
+
+uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts) {
+    parts = _parts;
+    numParts = _numParts;
+    unsigned numInterfaces = 0;
+    unsigned numEndpoints = 0;
+    uint16 usbDescriptorSize = 0;
+    
+    usbDescriptorSize = 0;
+    for (unsigned i = 0 ; i < _numParts ; i++ ) {
+        parts[i]->startInterface = numInterfaces;
+        parts[i]->startEndpoint = numEndpoints;
+        numInterfaces += parts[i]->numInterfaces;
+        numEndpoints += parts[i]->numEndpoints;
+        if (numEndpoints > 7)
+            return 0;
+        if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_SIZE) 
+            return 0;
+        parts[i]->getPartDescriptor(parts[i], usb_descriptor_config->descriptorData + usbDescriptorSize);
+        usbDescriptorSize += parts[i]->descriptorSize;
+        for (unsigned j = 0 ; j < numEndpoints ; j++) {
+            ep_int_in[parts[i]->startEndpoint + j] = endpointsIn[j];
+            ep_int_out[parts[i]->startEndpoint + j] = endpointsOut[j];
+        }
+    }
+    
+    for (unsigned i = numEndpoints ; i < 7 ; i++) {
+        ep_int_in[i] = NOP_Process;
+        ep_int_out[i] = NOP_Process;
+    }
+    
+    usb_descriptor_config.Config_Header = Base_Header;    
+    usb_descriptor_config.Config_Header.bNumInterfaces = numInterfaces;
+    usb_descriptor_config.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
+    
+    my_Device_Table.Total_Endpoint = numEndpoints;
+    
+    return 1;
+}
  
 void usb_generic_enable(DEVICE* deviceTable, DEVICE_PROP* deviceProperty, USER_STANDARD_REQUESTS* userStandardRequests,
     void (**ep_int_in)(void), void (**ep_int_out)(void)) {
@@ -89,6 +184,45 @@ void usb_generic_enable(DEVICE* deviceTable, DEVICE_PROP* deviceProperty, USER_S
     usb_init_usblib(USBLIB, ep_int_in, ep_int_out);
 }
 
+static void usbInit(void) {
+    pInformation->Current_Configuration = 0;
+
+    USB_BASE->CNTR = USB_CNTR_FRES;
+
+    USBLIB->irq_mask = 0;
+    USB_BASE->CNTR = USBLIB->irq_mask;
+    USB_BASE->ISTR = 0;
+    USBLIB->irq_mask = USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM;
+    USB_BASE->CNTR = USBLIB->irq_mask;
+
+    USB_BASE->ISTR = 0;
+    USBLIB->irq_mask = USB_ISR_MSK;
+    USB_BASE->CNTR = USBLIB->irq_mask;
+
+    for (unsigned i = 0 ; i < numParts ; i++)
+        parts[i]->usbInit(parts[i]);
+
+    USBLIB->state = USB_UNCONNECTED;
+}
+
+#define BTABLE_ADDRESS        0x00
+static void usbReset(void) {
+    pInformation->Current_Configuration = 0;
+
+    /* current feature is current bmAttributes */
+    pInformation->Current_Feature = (USB_CONFIG_ATTR_BUSPOWERED |
+                                     USB_CONFIG_ATTR_SELF_POWERED);
+
+    USB_BASE->BTABLE = BTABLE_ADDRESS;
+
+    for (unsigned i = 0 ; i < numParts ; i++)
+        parts[i]->usbReset(parts[i]);
+
+    USBLIB->state = USB_ATTACHED;
+    SetDeviceAddress(0);
+
+}
+
 static void usb_power_down(void) {
     USB_BASE->CNTR = USB_CNTR_FRES;
     USB_BASE->ISTR = 0;
@@ -110,3 +244,24 @@ void usb_generic_disable(void) {
     Device_Property = saved_Device_Property;
     User_Standard_Requests = saved_User_Standard_Requests;    
 }
+
+static RESULT usbDataSetup(uint8 request) {
+    for (unsigned i = 0 ; i < numParts ; i++) {
+        RESULT r = parts[i]->usbDataSetup(parts[i], request);
+        if (USB_UNSUPPORT != r)
+            return r;
+    }
+
+    return USB_UNSUPPORT;
+}
+
+static RESULT usbNoDataSetup(uint8 request) {
+    for (unsigned i = 0 ; i < numParts ; i++) {
+        RESULT r = parts[i]->usbNoDataSetup(parts[i], request);
+        if (USB_UNSUPPORT != r)
+            return r;
+    }
+
+    return USB_UNSUPPORT;
+}
+

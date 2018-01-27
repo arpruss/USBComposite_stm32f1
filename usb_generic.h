@@ -6,7 +6,31 @@
 #include "usb_reg_map.h"
 #include <usb_core.h>
 
+#define MAX_USB_DESCRIPTOR_DATA_SIZE 256
+
 void usb_generic_enable(DEVICE* deviceTable, DEVICE_PROP* deviceProperty, USER_STANDARD_REQUESTS* userStandardRequests,
-    void (**ep_int_in)(void), void (**ep_int_out)(void));
+void (**ep_int_in)(void), void (**ep_int_out)(void));
 void usb_generic_disable(void);
+
+typedef struct USBCompositePart {
+    uint8 numInterfaces;
+    uint8 numEndpoints;
+    uint16 startInterface;
+    uint16 startEndpoint;
+    uint16 descriptorSize;
+    uint8* (*getPartDescriptor)(struct USBCompositePart* part);
+    void (*usbInit)(struct USBCompositePart* part);
+    void (*usbReset)(struct USBCompositePart* part);
+    RESULT (*usbDataSetup)(struct USBCompositePart* part, uint8 request);
+    RESULT (*usbNoDataSetup)(struct USBCompositePart* part, uint8 request);
+    void** (*endpointsIn)(void);
+    void** (*endpointsOut)(void);
+} USBCompositePart;
+
+uint8 usb_generic_setup(USBCompositePart** _parts, uint32 _numParts);
+
+const uint16 USBEndpointAddresses[7] = {
+    
+};
+
 #endif
