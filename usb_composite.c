@@ -297,32 +297,12 @@ static const usb_descriptor_string usbHIDDescriptor_iProduct = {
     .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
 };
 
-#if 0
-static const usb_descriptor_string usbHIDDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(3),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'H', 0, 'I', 0, 'D', 0},
-};
-
-static const usb_descriptor_string usbVcomDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(4),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'V', 0, 'C', 0, 'O', 0, 'M', 0},
-};
-
-static const usb_descriptor_string usbCompositeDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(9),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'C', 0, 'O', 0, 'M', 0, 'P', 0, 'O', 0, 'S', 0, 'I', 0, 'T', 0, 'E', 0},
-};
-#endif
-
 static ONE_DESCRIPTOR Device_Descriptor = {
     (uint8*)&usbCompositeDescriptor_Device,
     sizeof(usb_descriptor_device)
 };
 
-static ONE_DESCRIPTOR Config_Descriptor = {
+ONE_DESCRIPTOR Config_Descriptor = {
     (uint8*)&usbCompositeDescriptor_Config,
     sizeof(usb_descriptor_config)
 };
