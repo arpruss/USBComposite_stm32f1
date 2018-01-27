@@ -20,6 +20,7 @@ void usb_generic_disable(void);
 typedef struct USBEndpointInfo {
     void (*callback)(void);
     uint16 bufferSize;
+    uint16 type; // bulk, interrupt, etc.
     uint8 tx; // 1 if TX, 0 if RX
     uint8 address;    
     uint16 pmaAddress;

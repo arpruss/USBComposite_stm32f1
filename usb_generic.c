@@ -58,6 +58,8 @@ struct {
     uint8 descriptorData[MAX_USB_DESCRIPTOR_DATA_SIZE];
 } __packed usb_descriptor_config;
 
+static usb_descriptor_config usbConfig;
+
 static const usb_descriptor_config_header Base_Header = {
         .bLength              = sizeof(usb_descriptor_config_header),
         .bDescriptorType      = USB_DESCRIPTOR_TYPE_CONFIGURATION,
@@ -68,6 +70,11 @@ static const usb_descriptor_config_header Base_Header = {
         .bmAttributes         = (USB_CONFIG_ATTR_BUSPOWERED |
                                  USB_CONFIG_ATTR_SELF_POWERED),
         .bMaxPower            = MAX_POWER,
+};
+
+static ONE_DESCRIPTOR usbConfig_Descriptor = {
+    (uint8*)&usbConfig,
+    0
 };
 
 static DEVICE my_Device_Table = {
@@ -113,8 +120,6 @@ static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 static void (*ep_int_in[7])(void);
 static void (*ep_int_out[7])(void);
 
-uint16 endpoint_in_
-
 uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
@@ -131,7 +136,7 @@ uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts)
             return 0;
         if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_SIZE) 
             return 0;
-        parts[i]->getPartDescriptor(parts[i], usb_descriptor_config->descriptorData + usbDescriptorSize);
+        parts[i]->getPartDescriptor(parts[i], usbConfig->descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
         EndpointInfo* ep = parts[i]->endpoints;
         for (unsigned j = 0 ; j < numEndpoints ; j++) {
@@ -157,11 +162,12 @@ uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts)
         ep_int_out[i-1] = NOP_Process;
     }
     
-    usb_descriptor_config.Config_Header = Base_Header;    
-    usb_descriptor_config.Config_Header.bNumInterfaces = numInterfaces;
-    usb_descriptor_config.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
+    usbConfig.Config_Header = Base_Header;    
+    usbConfig.Config_Header.bNumInterfaces = numInterfaces;
+    usbConfig.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
+    usbConfig_Descriptor.Descriptor_Size = usbConfig.Config_Header.wTotalLength;
     
-    my_Device_Table.Total_Endpoint = numEndpoints;
+    my_Device_Table.Total_Endpoint = numEndpoints - 1; // EP0 doesn't count
     
     return 1;
 }
@@ -213,8 +219,11 @@ static void usbInit(void) {
     USBLIB->irq_mask = USB_ISR_MSK;
     USB_BASE->CNTR = USBLIB->irq_mask;
 
+    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
+
     for (unsigned i = 0 ; i < numParts ; i++)
-        parts[i]->usbInit(parts[i]);
+        if(parts[i]->usbInit != NULL)
+            parts[i]->usbInit(parts[i]);
 
     USBLIB->state = USB_UNCONNECTED;
 }
@@ -229,8 +238,34 @@ static void usbReset(void) {
 
     USB_BASE->BTABLE = BTABLE_ADDRESS;
 
-    for (unsigned i = 0 ; i < numParts ; i++)
-        parts[i]->usbReset(parts[i]);
+    /* setup control endpoint 0 */
+    usb_set_ep_type(USB_EP0, USB_EP_EP_TYPE_CONTROL);
+    usb_set_ep_tx_stat(USB_EP0, USB_EP_STAT_TX_STALL);
+    usb_set_ep_rx_addr(USB_EP0, USBHID_CDCACM_CTRL_RX_ADDR);
+    usb_set_ep_tx_addr(USB_EP0, USBHID_CDCACM_CTRL_TX_ADDR);
+    usb_clear_status_out(USB_EP0);
+
+    usb_set_ep_rx_count(USB_EP0, pProperty->MaxPacketSize);
+    usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+
+    for (unsigned i = 0 ; i < numParts ; i++) {
+        for (unsigned j = 0 ; j < parts[i].numEndpoints ; j++) {
+            uint8 address = parts[i].endpoints[j].address;
+            usb_set_ep_type(address, parts[i].endpoints[j].type);
+            if (parts[i].endpoints[j].tx) {
+                usb_set_ep_tx_addr(address, parts[i].endpoints[j].pmaAddress);
+                usb_set_ep_tx_stat(USBHID_CDCACM_TX_ENDP, USB_EP_STAT_TX_NAK);
+                usb_set_ep_rx_stat(address, USB_EP_STAT_RX_DISABLED);
+            }
+            else {
+                usb_set_ep_rx_addr(address, parts[i].endpoints[j].pmaAddress);
+                usb_set_ep_rx_count(address, parts[i].endpoints[j].bufferSize);
+                usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
+            }
+        }
+        if (parts[i]->usbReset != NULL)
+            parts[i]->usbReset(parts[i]);
+    }
 
     USBLIB->state = USB_ATTACHED;
     SetDeviceAddress(0);
