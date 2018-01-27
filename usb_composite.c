@@ -1,3 +1,4 @@
+unsigned char info;
 /******************************************************************************
  * The MIT License
  *
@@ -254,7 +255,7 @@ static USBEndpointInfo hidEndpoints[1] = {
     {
         .callback = hidDataTxCb,
         .bufferSize = USB_HID_TX_EPSIZE,
-        .type = USB_ENDPOINT_TYPE_INTERRUPT,
+        .type = USB_EP_EP_TYPE_BULK, // TODO: interrupt???
         .tx = 1,
     }
 };
@@ -316,7 +317,7 @@ static void getSerialPartDescriptor(USBCompositePart* part, uint8* out) {
     OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
 }
 
-USBCompositePart serialPart = {
+static USBCompositePart serialPart = {
     .numInterfaces = 2,
     .numEndpoints = sizeof(serialEndpoints)/sizeof(*serialEndpoints),
     .descriptorSize = sizeof(serial_part_config),
@@ -640,7 +641,6 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
 
     usb_generic_set_parts(hidSerialParts, serial ? 2 : 1);
-    //usb_generic_set_parts(hidSerialParts+1, 1);
     
     usb_generic_enable();
 }
@@ -862,7 +862,9 @@ static void hidDataTxCb(void)
     if ( tx_unsent&1 ) {
         *dst = tmp;
     }
+    info=tx_unsent == 13;
 	hid_tx_tail = tail; // store volatile variable
+    
 flush_hid:
 	// enable Tx endpoint
     usb_set_ep_tx_count(hidPart.endpoints[HID_ENDPOINT_TX].address, tx_unsent);
@@ -976,6 +978,8 @@ static RESULT serialUSBDataSetup(USBCompositePart* part, uint8 request) {
     (*CopyRoutine)(0);
     return USB_SUCCESS;
 }
+
+uint8 info=0;
 
 static RESULT hidUSBDataSetup(USBCompositePart* part, uint8 request) {
     (void)part;

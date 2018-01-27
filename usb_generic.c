@@ -359,9 +359,9 @@ static void usbReset(void) {
     usb_set_ep_tx_addr(USB_EP0, USB_EP0_TX_BUFFER_ADDRESS);
     usb_clear_status_out(USB_EP0);
 
-    usb_set_ep_rx_count(USB_EP0, pProperty->MaxPacketSize);
+    usb_set_ep_rx_count(USB_EP0, USB_EP0_BUFFER_SIZE);
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
-
+    
     for (unsigned i = 0 ; i < numParts ; i++) {
         for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
             USBEndpointInfo* e = &(parts[i]->endpoints[j]);
@@ -381,7 +381,7 @@ static void usbReset(void) {
         if (parts[i]->usbReset != NULL)
             parts[i]->usbReset(parts[i]);
     }
-
+    
     USBLIB->state = USB_ATTACHED;
     SetDeviceAddress(0);
 

@@ -7,10 +7,6 @@
 HIDRaw<TXSIZE,RXSIZE> raw;
 uint8 buf[RXSIZE];
 
-extern "C" {
-  extern uint32 info;
-};
-
 const uint8_t reportDescription[] = {
    HID_RAW_REPORT_DESCRIPTOR(TXSIZE,RXSIZE)
 };
