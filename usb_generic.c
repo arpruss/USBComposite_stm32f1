@@ -113,34 +113,48 @@ static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 static void (*ep_int_in[7])(void);
 static void (*ep_int_out[7])(void);
 
+uint16 endpoint_in_
+
 uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
     unsigned numInterfaces = 0;
-    unsigned numEndpoints = 0;
+    unsigned numEndpoints = 1;
     uint16 usbDescriptorSize = 0;
+    uint16 pmaOffset = USB_EP0_RX_BUFFER_ADDRESS + USB_EP0_BUFFER_SIZE;
     
     usbDescriptorSize = 0;
     for (unsigned i = 0 ; i < _numParts ; i++ ) {
         parts[i]->startInterface = numInterfaces;
-        parts[i]->startEndpoint = numEndpoints;
         numInterfaces += parts[i]->numInterfaces;
-        numEndpoints += parts[i]->numEndpoints;
-        if (numEndpoints > 7)
+        if (numEndpoints + parts[i]->numEndpoints > 8)
             return 0;
         if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_SIZE) 
             return 0;
         parts[i]->getPartDescriptor(parts[i], usb_descriptor_config->descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
+        EndpointInfo* ep = parts[i]->endpoints;
         for (unsigned j = 0 ; j < numEndpoints ; j++) {
-            ep_int_in[parts[i]->startEndpoint + j] = endpointsIn[j];
-            ep_int_out[parts[i]->startEndpoint + j] = endpointsOut[j];
+            if (ep[j].bufferSize + pmaOffset > PMA_MEMORY_SIZE) 
+                return 0;
+            ep[j].pmaAddress = pmaOffset;
+            pmaOffset += ep[j].bufferSize;
+            ep[j].endpoint = numEndpoints;
+            if (ep[j].callback == NULL)
+                ep[j].callback = NOP_Process;
+            if (ep[j].tx) {
+                ep_int_in[numEndpoints - 1] = ep[j].callback;
+            }
+            else {
+                ep_int_out[numEndpoints - 1] = ep[j].callback;
+            }
+            numEndpoints++;
         }
     }
     
-    for (unsigned i = numEndpoints ; i < 7 ; i++) {
-        ep_int_in[i] = NOP_Process;
-        ep_int_out[i] = NOP_Process;
+    for (unsigned i = numEndpoints ; i < 8 ; i++) {
+        ep_int_in[i-1] = NOP_Process;
+        ep_int_out[i-1] = NOP_Process;
     }
     
     usb_descriptor_config.Config_Header = Base_Header;    
