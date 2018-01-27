@@ -116,7 +116,7 @@ static ONE_DESCRIPTOR Device_Descriptor = {
     sizeof(usb_descriptor_device)
 };
 
-static ONE_DESCRIPTOR Config_Descriptor = {
+ONE_DESCRIPTOR Config_Descriptor = {
     (uint8*)&usbConfig,
     0
 };
@@ -245,8 +245,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     usbConfig.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
     Config_Descriptor.Descriptor_Size = usbConfig.Config_Header.wTotalLength;
     
-    my_Device_Table.Total_Endpoint = numEndpoints - 1; // EP0 doesn't count
-    
+    my_Device_Table.Total_Endpoint = numEndpoints;
+        
     return 1;
 }
 
@@ -301,6 +301,7 @@ void usb_generic_enable(void) {
     gpio_set_mode(GPIOA, 12, GPIO_INPUT_FLOATING);
 #endif			
 
+#if 1
     if (BOARD_USB_DISC_DEV != NULL) {
         gpio_set_mode(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, GPIO_OUTPUT_PP);
         gpio_write_bit(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, 0);
@@ -309,13 +310,13 @@ void usb_generic_enable(void) {
     saved_Device_Table = Device_Table;
     saved_Device_Property = Device_Property;
     saved_User_Standard_Requests = User_Standard_Requests;
-
     Device_Table = my_Device_Table;
     Device_Property = my_Device_Property;
     User_Standard_Requests = my_User_Standard_Requests;
     
     /* Initialize the USB peripheral. */
-    usb_init_usblib(USBLIB, ep_int_in, ep_int_out);
+    usb_init_usblib(USBLIB, ep_int_in, ep_int_out); 
+#endif    
 }
 
 static void usbInit(void) {
@@ -342,7 +343,8 @@ static void usbInit(void) {
     USBLIB->state = USB_UNCONNECTED;
 }
 
-#define BTABLE_ADDRESS        0x00
+#define BTABLE_ADDRESS 0x00
+
 static void usbReset(void) {
     pInformation->Current_Configuration = 0;
 

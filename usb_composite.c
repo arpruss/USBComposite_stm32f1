@@ -144,16 +144,16 @@ static const hid_part_config hidPartConfigData = {
 	.HIDDataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX), // PATCH
+        .bEndpointAddress = 0x81, //(USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX), // PATCH
         .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT,
         .wMaxPacketSize   = USB_HID_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
         .bInterval        = 0x0A,
 	}
 };
 
-#define CDCACM_ENDPOINT_MANAGEMENT 0
-#define CDCACM_ENDPOINT_RX         1
-#define CDCACM_ENDPOINT_TX         2
+#define CDCACM_ENDPOINT_MANAGEMENT 1
+#define CDCACM_ENDPOINT_RX         2
+#define CDCACM_ENDPOINT_TX         0
 
 static const serial_part_config serialPartConfigData = {
 	.IAD = {
@@ -251,9 +251,13 @@ static const serial_part_config serialPartConfigData = {
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
+void zzhidDataTxCb() {
+    while(1){}
+}
+
 static USBEndpointInfo hidEndpoints[1] = {
     {
-        .callback = hidDataTxCb,
+        .callback = zzhidDataTxCb,
         .bufferSize = USB_HID_TX_EPSIZE,
         .type = USB_EP_EP_TYPE_BULK, // TODO: interrupt???
         .tx = 1,
@@ -314,7 +318,6 @@ static void getSerialPartDescriptor(USBCompositePart* part, uint8* out) {
     OUT_BYTE(serialPartConfigData, CDC_Functional_CallManagement.Data[1]) += part->startInterface;
     OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[0]) += part->startInterface;
     OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[1]) += part->startInterface;
-    OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
 }
 
 static USBCompositePart serialPart = {
@@ -641,6 +644,7 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
 
     usb_generic_set_parts(hidSerialParts, serial ? 2 : 1);
+    //usb_generic_set_parts(hidSerialParts+1, 1);
     
     usb_generic_enable();
 }
@@ -882,6 +886,8 @@ static void hidUSBReset(USBCompositePart* part) {
     /* Reset the RX/TX state */
 	hid_tx_head = 0;
 	hid_tx_tail = 0;
+
+    currentHIDBuffer = NULL;
 }
 
 static void serialUSBReset(USBCompositePart* part) {
