@@ -83,8 +83,6 @@ extern "C" {
 
 
 #define USBHID_CDCACM_CTRL_ENDP            0
-#define USBHID_CDCACM_CTRL_RX_ADDR         0x40
-#define USBHID_CDCACM_CTRL_TX_ADDR         0x80
 
 typedef struct
 {
@@ -120,19 +118,11 @@ typedef struct
 #define USBHID_CDCACM_CTRL_EPSIZE          0x40
 
 #define USB_HID_TX_EPSIZE            	0x40
-#define USB_HID_TX_ENDP                 1
-#define USB_HID_TX_ADDR                 0xC0
 
-#define USBHID_CDCACM_TX_ENDP              2
-#define USBHID_CDCACM_TX_ADDR              0x100
 #define USBHID_CDCACM_TX_EPSIZE            0x40
 
-#define USBHID_CDCACM_MANAGEMENT_ENDP      3
-#define USBHID_CDCACM_MANAGEMENT_ADDR      0x110
 #define USBHID_CDCACM_MANAGEMENT_EPSIZE    0x40
 
-#define USBHID_CDCACM_RX_ENDP              4
-#define USBHID_CDCACM_RX_ADDR              0x180
 #define USBHID_CDCACM_RX_EPSIZE            0x40
 
 void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, uint8 serialSupport,

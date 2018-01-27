@@ -459,7 +459,7 @@ uint32 composite_cdcacm_rx(uint8* buf, uint32 len)
 	uint32 rx_unread = (vcom_rx_head - tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
     // If buffer was emptied to a pre-set value, re-enable the RX endpoint
     if ( rx_unread <= 64 ) { // experimental value, gives the best performance
-        usb_set_ep_rx_stat(USBHID_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
+        usb_set_ep_rx_stat(serialPart.endpoints[CDCACM_ENDPOINT_RX].address, USB_EP_STAT_RX_VALID);
 	}
     return n_copied;
 }
@@ -562,7 +562,7 @@ static void vcomDataTxCb(void)
         tx_unsent = USBHID_CDCACM_TX_EPSIZE;
     }
 	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usb_pma_ptr(USBHID_CDCACM_TX_ADDR);
+	uint32 *dst = usb_pma_ptr(serialPart.endpoints[CDCACM_ENDPOINT_TX].pmaAddress);
     uint16 tmp = 0;
 	uint16 val;
 	unsigned i;
@@ -581,8 +581,8 @@ static void vcomDataTxCb(void)
 	vcom_tx_tail = tail; // store volatile variable
 flush_vcom:
 	// enable Tx endpoint
-    usb_set_ep_tx_count(USBHID_CDCACM_TX_ENDP, tx_unsent);
-    usb_set_ep_tx_stat(USBHID_CDCACM_TX_ENDP, USB_EP_STAT_TX_VALID);
+    usb_set_ep_tx_count(serialPart.endpoints[CDCACM_ENDPOINT_TX].address, tx_unsent);
+    usb_set_ep_tx_stat(serialPart.endpoints[CDCACM_ENDPOINT_TX].address, USB_EP_STAT_TX_VALID);
 }
 
 
@@ -590,10 +590,10 @@ static void vcomDataRxCb(void)
 {
 	uint32 head = vcom_rx_head; // load volatile variable
 
-	uint32 ep_rx_size = usb_get_ep_rx_count(USBHID_CDCACM_RX_ENDP);
+	uint32 ep_rx_size = usb_get_ep_rx_count(serialPart.endpoints[CDCACM_ENDPOINT_RX].address);
 	// This copy won't overwrite unread bytes as long as there is 
 	// enough room in the USB Rx buffer for next packet
-	uint32 *src = usb_pma_ptr(USBHID_CDCACM_RX_ADDR);
+	uint32 *src = usb_pma_ptr(serialPart.endpoints[CDCACM_ENDPOINT_RX].pmaAddress);
     uint16 tmp = 0;
 	uint8 val;
 	uint32 i;
@@ -612,7 +612,7 @@ static void vcomDataRxCb(void)
 	uint32 rx_unread = (head - vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 	// only enable further Rx if there is enough room to receive one more packet
 	if ( rx_unread < (CDC_SERIAL_RX_BUFFER_SIZE-USBHID_CDCACM_RX_EPSIZE) ) {
-		usb_set_ep_rx_stat(USBHID_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
+		usb_set_ep_rx_stat(serialPart.endpoints[CDCACM_ENDPOINT_RX].address, USB_EP_STAT_RX_VALID);
 	}
 
     if (rx_hook) {
@@ -846,7 +846,7 @@ static void hidDataTxCb(void)
         tx_unsent = USB_HID_TX_EPSIZE;
     }
 	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usb_pma_ptr(USB_HID_TX_ADDR);
+	uint32 *dst = usb_pma_ptr(hidPart.endpoints[HID_ENDPOINT_TX].pmaAddress);
     uint16 tmp = 0;
 	uint16 val;
 	unsigned i;
@@ -865,8 +865,8 @@ static void hidDataTxCb(void)
 	hid_tx_tail = tail; // store volatile variable
 flush_hid:
 	// enable Tx endpoint
-    usb_set_ep_tx_count(USB_HID_TX_ENDP, tx_unsent);
-    usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_VALID);
+    usb_set_ep_tx_count(hidPart.endpoints[HID_ENDPOINT_TX].address, tx_unsent);
+    usb_set_ep_tx_stat(hidPart.endpoints[HID_ENDPOINT_TX].address, USB_EP_STAT_TX_VALID);
 }
 
 
