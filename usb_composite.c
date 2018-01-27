@@ -322,7 +322,7 @@ static ONE_DESCRIPTOR Device_Descriptor = {
     sizeof(usb_descriptor_device)
 };
 
-static ONE_DESCRIPTOR Config_Descriptor = {
+ONE_DESCRIPTOR Config_Descriptor = {
     (uint8*)&usbCompositeDescriptor_Config,
     sizeof(usb_descriptor_config)
 };
@@ -412,7 +412,7 @@ static void (*ep_int_in[7])(void) =
 static void (*ep_int_out[7])(void) = {
      NOP_Process,
      NOP_Process, /*hidDataRxCb*/
-     NOP_Process,
+     NOP_Process, 
      vcomDataRxCb,
      NOP_Process,
      NOP_Process,
@@ -761,6 +761,7 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
         ep_int_out[3] = vcomDataRxCb;
         usbCompositeDescriptor_Config.Config_Header.bNumInterfaces = 3;
         Config_Descriptor.Descriptor_Size = sizeof(usb_descriptor_config);
+        usbCompositeDescriptor_Config.Config_Header.wTotalLength = sizeof(usb_descriptor_config);
         my_Device_Table.Total_Endpoint = 1+NUM_SERIAL_ENDPOINTS+NUM_HID_ENDPOINTS;
     }
     else {
@@ -768,9 +769,11 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
         ep_int_out[3] = NOP_Process;
         usbCompositeDescriptor_Config.Config_Header.bNumInterfaces = 1;
         Config_Descriptor.Descriptor_Size = (uint8*)&(usbCompositeDescriptor_Config.IAD)-(uint8*)&usbCompositeDescriptor_Config;
+        usbCompositeDescriptor_Config.Config_Header.wTotalLength = Config_Descriptor.Descriptor_Size;
         my_Device_Table.Total_Endpoint = 1+NUM_HID_ENDPOINTS;
     }
-    
+
+return;    
     usb_generic_enable(&my_Device_Table, &my_Device_Property, &my_User_Standard_Requests, ep_int_in, ep_int_out);
 }
 
