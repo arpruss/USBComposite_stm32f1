@@ -56,16 +56,13 @@ static uint32 ProtocolValue;
 static volatile int8 transmitting;
 
 static void hidDataTxCb(void);
-static void usbInit(void);
-static void usbReset(void);
-static RESULT usbDataSetup(uint8 request);
-static RESULT usbNoDataSetup(uint8 request);
-static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
-static uint8* usbGetDeviceDescriptor(uint16 length);
-static uint8* usbGetConfigDescriptor(uint16 length);
-static uint8* usbGetStringDescriptor(uint16 length);
-static void usbSetConfiguration(void);
-static void usbSetDeviceAddress(void);
+static void serialUSBReset(USBCompositePart* part);
+static void hidUSBReset(USBCompositePart* part);
+static RESULT hidUSBDataSetup(USBCompositePart* part, uint8 request);
+static RESULT hidUSBNoDataSetup(USBCompositePart* part, uint8 request);
+static RESULT serialUSBDataSetup(USBCompositePart* part, uint8 request);
+static RESULT serialUSBNoDataSetup(USBCompositePart* part, uint8 request);
+//static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
 static uint8* HID_GetReportDescriptor(uint16 Length);
 static uint8* HID_GetProtocolValue(uint16 Length);
 static void vcomDataTxCb(void);
@@ -78,8 +75,8 @@ static volatile HIDBuffer_t* currentHIDBuffer = NULL;
 //#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
 
 #define NUM_SERIAL_ENDPOINTS       3
-#define CCI_INTERFACE_NUMBER 	0x01
-#define DCI_INTERFACE_NUMBER 	0x02
+#define CCI_INTERFACE_NUMBER 	0x00
+#define DCI_INTERFACE_NUMBER 	0x01
 
 #define HID_INTERFACE_NUMBER 	0x00
 #define NUM_HID_ENDPOINTS          1
@@ -90,22 +87,22 @@ static volatile HIDBuffer_t* currentHIDBuffer = NULL;
  */
  
 
-const uint8_t hid_report_descriptor[] = {
+static ONE_DESCRIPTOR HID_Report_Descriptor = {
+    NULL,
+    0
 };
 
-#define LEAFLABS_ID_VENDOR                0x1EAF
-#define MAPLE_ID_PRODUCT                  0x0004 // was 0x0024
-static usb_descriptor_device usbCompositeDescriptor_Device =
-    USB_DECLARE_DEV_DESC(LEAFLABS_ID_VENDOR, MAPLE_ID_PRODUCT);
-	
+
+#define HID_ENDPOINT_TX      0
 
 typedef struct {
-    usb_descriptor_config_header Config_Header;
-
     //HID
     usb_descriptor_interface     	HID_Interface;
 	HIDDescriptor			 	 	HID_Descriptor;
     usb_descriptor_endpoint      	HIDDataInEndpoint;
+} __packed hid_part_config;
+
+typedef struct {
     //CDCACM
 	IADescriptor 					IAD;
     usb_descriptor_interface     	CCI_Interface;
@@ -117,30 +114,16 @@ typedef struct {
     usb_descriptor_interface     	DCI_Interface;
     usb_descriptor_endpoint      	DataOutEndpoint;
     usb_descriptor_endpoint      	DataInEndpoint;
-} __packed usb_descriptor_config;
+} __packed serial_part_config;
 
 
-#define MAX_POWER (100 >> 1)
-static usb_descriptor_config usbCompositeDescriptor_Config = {
-    .Config_Header = {
-        .bLength              = sizeof(usb_descriptor_config_header),
-        .bDescriptorType      = USB_DESCRIPTOR_TYPE_CONFIGURATION,
-        .wTotalLength         = sizeof(usb_descriptor_config),
-        .bNumInterfaces       = 3, // 1 if no serial
-        .bConfigurationValue  = 0x01,
-        .iConfiguration       = 0x00,
-        .bmAttributes         = (USB_CONFIG_ATTR_BUSPOWERED |
-                                 USB_CONFIG_ATTR_SELF_POWERED),
-        .bMaxPower            = MAX_POWER,
-    },
-    //HID
-    
+static const hid_part_config hidPartConfigData = {
 	.HID_Interface = {
 		.bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = HID_INTERFACE_NUMBER,
+        .bInterfaceNumber   = HID_INTERFACE_NUMBER, // PATCH
         .bAlternateSetting  = 0x00,
-        .bNumEndpoints      = NUM_HID_ENDPOINTS,
+        .bNumEndpoints      = NUM_HID_ENDPOINTS,    
         .bInterfaceClass    = USB_INTERFACE_CLASS_HID,
         .bInterfaceSubClass = USB_INTERFACE_SUBCLASS_HID,
         .bInterfaceProtocol = 0x00, /* Common AT Commands */
@@ -154,22 +137,28 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
 		.country			= 0x00,
 		.numDesc			= 0x01,
 		.desctype			= REPORT_DESCRIPTOR,//0x22,
-		.descLenL			= sizeof(hid_report_descriptor),
-		.descLenH			= 0x00,
+		.descLenL			= 0x00, //PATCH
+		.descLenH			= 0x00, //PATCH
 	},
 	.HIDDataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_HID_TX_ENDP),//0x81,//USB_HID_TX_ADDR,
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX), // PATCH
         .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT,
         .wMaxPacketSize   = USB_HID_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
         .bInterval        = 0x0A,
-	},
-    //CDCACM
+	}
+};
+
+#define CDCACM_ENDPOINT_MANAGEMENT 0
+#define CDCACM_ENDPOINT_RX         1
+#define CDCACM_ENDPOINT_TX         2
+
+static const serial_part_config serialPartConfigData = {
 	.IAD = {
 		.bLength			= 0x08,
 		.bDescriptorType	= 0x0B,
-		.bFirstInterface	= CCI_INTERFACE_NUMBER,
+		.bFirstInterface	= CCI_INTERFACE_NUMBER, // PATCH
 		.bInterfaceCount	= 0x02,
 		.bFunctionClass		= 0x02,
 		.bFunctionSubClass	= 0x02,
@@ -180,7 +169,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
     .CCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = CCI_INTERFACE_NUMBER,
+        .bInterfaceNumber   = CCI_INTERFACE_NUMBER, // PATCH
         .bAlternateSetting  = 0x00,
         .bNumEndpoints      = 0x01,
         .bInterfaceClass    = USB_INTERFACE_CLASS_CDC,
@@ -200,7 +189,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .bLength         = CDC_FUNCTIONAL_DESCRIPTOR_SIZE(2),
         .bDescriptorType = 0x24,
         .SubType         = 0x01,
-        .Data            = {0x03, DCI_INTERFACE_NUMBER},
+        .Data            = {0x03, DCI_INTERFACE_NUMBER}, // PATCH
     },
 
     .CDC_Functional_ACM = {
@@ -214,14 +203,14 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .bLength         = CDC_FUNCTIONAL_DESCRIPTOR_SIZE(2),
         .bDescriptorType = 0x24,
         .SubType         = 0x06,
-        .Data            = {CCI_INTERFACE_NUMBER, DCI_INTERFACE_NUMBER},
+        .Data            = {CCI_INTERFACE_NUMBER, DCI_INTERFACE_NUMBER}, // PATCH, PATCH
     },
 
     .ManagementEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN |
-                             USBHID_CDCACM_MANAGEMENT_ENDP),
+                             CDCACM_ENDPOINT_MANAGEMENT), // PATCH
         .bmAttributes     = USB_EP_TYPE_INTERRUPT,
         .wMaxPacketSize   = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .bInterval        = 0xFF,
@@ -230,7 +219,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
     .DCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = DCI_INTERFACE_NUMBER,
+        .bInterfaceNumber   = DCI_INTERFACE_NUMBER, // PATCH
         .bAlternateSetting  = 0x00,
         .bNumEndpoints      = 0x02,
         .bInterfaceClass    = USB_INTERFACE_CLASS_DIC,
@@ -243,7 +232,7 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT |
-                             USBHID_CDCACM_RX_ENDP),
+                             CDCACM_ENDPOINT_RX), // patch
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = USBHID_CDCACM_RX_EPSIZE,
         .bInterval        = 0x00,
@@ -252,106 +241,93 @@ static usb_descriptor_config usbCompositeDescriptor_Config = {
     .DataInEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USBHID_CDCACM_TX_ENDP),
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | CDCACM_ENDPOINT_TX), // PATCH
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = USBHID_CDCACM_TX_EPSIZE,
         .bInterval        = 0x00,
+    }
+};
+
+#define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
+
+static USBEndpointInfo hidEndpoints[1] = {
+    {
+        .callback = hidDataTxCb,
+        .bufferSize = USB_HID_TX_EPSIZE,
+        .type = USB_ENDPOINT_TYPE_INTERRUPT,
+        .tx = 1,
+    }
+};
+
+static void getHIDPartDescriptor(USBCompositePart* part, uint8* out) {
+    memcpy(out, &hidPartConfigData, sizeof(hid_part_config));
+    OUT_BYTE(hidPartConfigData, HID_Interface.bInterfaceNumber) += part->startInterface;
+    OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenL) = (uint8)HID_Report_Descriptor.Descriptor_Size;
+    OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenH) = (uint8)(HID_Report_Descriptor.Descriptor_Size>>8);
+}
+
+static USBCompositePart hidPart = {
+    .numInterfaces = 1,
+    .numEndpoints = sizeof(hidEndpoints)/sizeof(*hidEndpoints),
+    .descriptorSize = sizeof(hid_part_config),
+    .getPartDescriptor = getHIDPartDescriptor,
+    .usbInit = NULL,
+    .usbReset = hidUSBReset,
+    .usbDataSetup = hidUSBDataSetup,
+    .usbNoDataSetup = hidUSBNoDataSetup,
+    .endpoints = hidEndpoints
+};
+
+static USBEndpointInfo serialEndpoints[3] = {
+    {
+        .callback = NULL,
+        .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
+        .type = USB_EP_TYPE_INTERRUPT,
+        .tx = 0,
+    },
+    {
+        .callback = vcomDataRxCb,
+        .bufferSize = USBHID_CDCACM_RX_EPSIZE,
+        .type = USB_EP_TYPE_BULK,
+        .tx = 0,
+    },
+    {
+        .callback = vcomDataTxCb,
+        .bufferSize = USBHID_CDCACM_TX_EPSIZE,
+        .type = USB_EP_TYPE_BULK,
+        .tx = 1,
     },
 };
 
-/*
-  String Descriptors:
+static void getSerialPartDescriptor(USBCompositePart* part, uint8* out) {
+    memcpy(out, &serialPartConfigData, sizeof(serial_part_config));
+    OUT_BYTE(serialPartConfigData, IAD.bFirstInterface) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, CCI_Interface.bInterfaceNumber) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, CDC_Functional_CallManagement.Data[1]) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[0]) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[1]) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
 
-  we may choose to specify any or none of the following string
-  identifiers:
+    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
+}
 
-  iManufacturer:    LeafLabs
-  iProduct:         Maple
-  iSerialNumber:    NONE
-  iConfiguration:   NONE
-  iInterface(CCI):  NONE
-  iInterface(DCI):  NONE
-
-*/
-
-/* Unicode language identifier: 0x0409 is US English */
-/* FIXME move to Wirish */
-static const usb_descriptor_string usbHIDDescriptor_LangID = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(1),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {0x09, 0x04},
+USBCompositePart serialPart = {
+    .numInterfaces = 3,
+    .numEndpoints = sizeof(serialEndpoints)/sizeof(*serialEndpoints),
+    .descriptorSize = sizeof(serial_part_config),
+    .getPartDescriptor = getSerialPartDescriptor,
+    .usbInit = NULL,
+    .usbReset = serialUSBReset,
+    .usbDataSetup = serialUSBDataSetup,
+    .usbNoDataSetup = serialUSBNoDataSetup,
+    .endpoints = serialEndpoints
 };
 
-#define default_iManufacturer_length 8
-static const usb_descriptor_string usbHIDDescriptor_iManufacturer = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0,
-                'L', 0, 'a', 0, 'b', 0, 's', 0},
-};
-
-#define default_iProduct_length 5
-static const usb_descriptor_string usbHIDDescriptor_iProduct = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iProduct_length),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
-};
-
-#if 0
-static const usb_descriptor_string usbHIDDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(3),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'H', 0, 'I', 0, 'D', 0},
-};
-
-static const usb_descriptor_string usbVcomDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(4),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'V', 0, 'C', 0, 'O', 0, 'M', 0},
-};
-
-static const usb_descriptor_string usbCompositeDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(9),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'C', 0, 'O', 0, 'M', 0, 'P', 0, 'O', 0, 'S', 0, 'I', 0, 'T', 0, 'E', 0},
-};
-#endif
-
-static ONE_DESCRIPTOR Device_Descriptor = {
-    (uint8*)&usbCompositeDescriptor_Device,
-    sizeof(usb_descriptor_device)
-};
-
-static ONE_DESCRIPTOR Config_Descriptor = {
-    (uint8*)&usbCompositeDescriptor_Config,
-    sizeof(usb_descriptor_config)
-};
-
-static ONE_DESCRIPTOR HID_Report_Descriptor = {
-    (uint8*)&hid_report_descriptor,
-    sizeof(hid_report_descriptor)
-};
-
-static uint8 numStringDescriptors = 3;
-
-#define MAX_STRING_DESCRIPTORS 4
-static ONE_DESCRIPTOR String_Descriptor[MAX_STRING_DESCRIPTORS] = {
-    {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
-    {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
-    {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
-    {NULL,                                            0},
-#if 0    
-    {(uint8*)&usbVcomDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(4)},
-    {(uint8*)&usbHIDDescriptor_iInterface,              USB_DESCRIPTOR_STRING_LEN(3)}
-#endif    
-};
-
-
-/*
- * Etc.
- */
-
-/* I/O state */
+static USBCompositePart* hidSerialParts[2] = { &hidPart, &serialPart };
 
 #define HID_TX_BUFFER_SIZE	256 // must be power of 2
 #define HID_TX_BUFFER_SIZE_MASK (HID_TX_BUFFER_SIZE-1)
@@ -382,7 +358,6 @@ static volatile uint32 vcom_tx_head;
 static volatile uint32 vcom_tx_tail;
 
 
-
 /* Other state (line coding, DTR/RTS) */
 
 static volatile composite_cdcacm_line_coding line_coding = {
@@ -397,65 +372,9 @@ static volatile composite_cdcacm_line_coding line_coding = {
 static volatile uint8 line_dtr_rts = 0;
 
 /*
- * Endpoint callbacks
- */
-
-static void (*ep_int_in[7])(void) =
-    {hidDataTxCb,
-     vcomDataTxCb,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process};
-
-static void (*ep_int_out[7])(void) = {
-     NOP_Process,
-     NOP_Process, /*hidDataRxCb*/
-     NOP_Process,
-     vcomDataRxCb,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process};
-
-/*
  * Globals required by usb_lib/
  */
  
-#define NUM_ENDPTS                (1+NUM_SERIAL_ENDPOINTS+NUM_HID_ENDPOINTS)
-    
-static DEVICE my_Device_Table = {
-    .Total_Endpoint      = NUM_ENDPTS,
-    .Total_Configuration = 1
-};
-
-#define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
-static DEVICE_PROP my_Device_Property = {
-    .Init                        = usbInit,
-    .Reset                       = usbReset,
-    .Process_Status_IN           = NOP_Process, //hidStatusIn,
-    .Process_Status_OUT          = NOP_Process,
-    .Class_Data_Setup            = usbDataSetup,
-    .Class_NoData_Setup          = usbNoDataSetup,
-    .Class_Get_Interface_Setting = usbGetInterfaceSetting,
-    .GetDeviceDescriptor         = usbGetDeviceDescriptor,
-    .GetConfigDescriptor         = usbGetConfigDescriptor,
-    .GetStringDescriptor         = usbGetStringDescriptor,
-    .RxEP_buffer                 = NULL,
-    .MaxPacketSize               = MAX_PACKET_SIZE
-};
-
-static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
-    .User_GetConfiguration   = NOP_Process,
-    .User_SetConfiguration   = usbSetConfiguration,
-    .User_GetInterface       = NOP_Process,
-    .User_SetInterface       = NOP_Process,
-    .User_GetStatus          = NOP_Process,
-    .User_ClearFeature       = NOP_Process,
-    .User_SetEndPointFeature = NOP_Process,
-    .User_SetDeviceFeature   = NOP_Process,
-    .User_SetDeviceAddress   = usbSetDeviceAddress
-};
 
 uint8 usb_is_transmitting(void) {
     return transmitting;
@@ -714,64 +633,14 @@ static uint8* vcomGetSetLineCoding(uint16 length) {
 void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, const uint8 serial,
     uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber
     ) {
+    usb_generic_set_info(idVendor, idProduct, iManufacturer, iProduct, iSerialNumber);    
+        
     HID_Report_Descriptor.Descriptor = (uint8*)report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
-    usbCompositeDescriptor_Config.HID_Descriptor.descLenL = (uint8_t)report_descriptor_length;
-    usbCompositeDescriptor_Config.HID_Descriptor.descLenH = (uint8_t)(report_descriptor_length>>8);
-        
-    if (idVendor != 0)
-        usbCompositeDescriptor_Device.idVendor = idVendor;
-    else
-        usbCompositeDescriptor_Device.idVendor = LEAFLABS_ID_VENDOR;
-     
-    if (idProduct != 0)
-        usbCompositeDescriptor_Device.idProduct = idProduct;
-    else
-        usbCompositeDescriptor_Device.idProduct = MAPLE_ID_PRODUCT;
-    
-    if (iManufacturer == NULL) {
-        iManufacturer = (uint8*)&usbHIDDescriptor_iManufacturer;
-    }
-           
-    String_Descriptor[1].Descriptor = (uint8*)iManufacturer;
-    String_Descriptor[1].Descriptor_Size = iManufacturer[0];
-     
-    if (iProduct == NULL) {
-        iProduct = (uint8*)&usbHIDDescriptor_iProduct;
-    }
-           
-    String_Descriptor[2].Descriptor = (uint8*)iProduct;
-    String_Descriptor[2].Descriptor_Size = iProduct[0];
-    
-    if (iSerialNumber == NULL) {
-        numStringDescriptors = 3;
-        usbCompositeDescriptor_Device.iSerialNumber = 0;
-    }
-    else {
-        String_Descriptor[3].Descriptor = (uint8*)iSerialNumber;
-        String_Descriptor[3].Descriptor_Size = iSerialNumber[0];
-        numStringDescriptors = 4;
-        usbCompositeDescriptor_Device.iSerialNumber = 3;
-    }
-    
-    haveSerial = serial;
 
-    if (serial) {
-        ep_int_in[1] = vcomDataTxCb;
-        ep_int_out[3] = vcomDataRxCb;
-        usbCompositeDescriptor_Config.Config_Header.bNumInterfaces = 3;
-        Config_Descriptor.Descriptor_Size = sizeof(usb_descriptor_config);
-        my_Device_Table.Total_Endpoint = 1+NUM_SERIAL_ENDPOINTS+NUM_HID_ENDPOINTS;
-    }
-    else {
-        ep_int_in[1] = NOP_Process;
-        ep_int_out[3] = NOP_Process;
-        usbCompositeDescriptor_Config.Config_Header.bNumInterfaces = 1;
-        Config_Descriptor.Descriptor_Size = (uint8*)&(usbCompositeDescriptor_Config.IAD)-(uint8*)&usbCompositeDescriptor_Config;
-        my_Device_Table.Total_Endpoint = 1+NUM_HID_ENDPOINTS;
-    }
+    usb_generic_set_parts(hidSerialParts, serial ? 2 : 0);
     
-    usb_generic_enable(&my_Device_Table, &my_Device_Property, &my_User_Standard_Requests, ep_int_in, ep_int_out);
+    usb_generic_enable();
 }
 
 void usb_composite_disable(void) {
@@ -803,8 +672,8 @@ static void hidStatusIn() {
 }
     */
 
-static volatile HIDBuffer_t* usb_hid_find_buffer(uint8_t type, uint8_t reportID) {
-    uint8_t typeTest = type == HID_REPORT_TYPE_OUTPUT ? HID_BUFFER_MODE_OUTPUT : 0;
+static volatile HIDBuffer_t* usb_hid_find_buffer(uint8 type, uint8 reportID) {
+    uint8 typeTest = type == HID_REPORT_TYPE_OUTPUT ? HID_BUFFER_MODE_OUTPUT : 0;
     for (int i=0; i<MAX_HID_BUFFERS; i++) {
         if ( hidBuffers[i].buffer != NULL &&
              ( hidBuffers[i].mode & HID_BUFFER_MODE_OUTPUT ) == typeTest && 
@@ -815,12 +684,12 @@ static volatile HIDBuffer_t* usb_hid_find_buffer(uint8_t type, uint8_t reportID)
     return NULL;
 }
 
-void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
+void usb_hid_set_feature(uint8 reportID, uint8* data) {
     volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, reportID);
     if (buffer != NULL) {
         usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
         unsigned delta = reportID != 0;
-        memcpy((uint8_t*)buffer->buffer+delta, data, buffer->bufferSize-delta);
+        memcpy((uint8*)buffer->buffer+delta, data, buffer->bufferSize-delta);
         if (reportID)
             buffer->buffer[0] = reportID;
         buffer->currentDataSize = buffer->bufferSize;
@@ -830,7 +699,7 @@ void usb_hid_set_feature(uint8_t reportID, uint8_t* data) {
     }
 }
 
-static uint8_t have_unread_data_in_hid_buffer() {
+static uint8 have_unread_data_in_hid_buffer() {
     for (int i=0;i<MAX_HID_BUFFERS; i++) {
         if (hidBuffers[i].buffer != NULL && hidBuffers[i].state == HID_BUFFER_UNREAD)
             return 1;
@@ -838,7 +707,7 @@ static uint8_t have_unread_data_in_hid_buffer() {
     return 0;
 }
 
-uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll) {
+uint16_t usb_hid_get_data(uint8 type, uint8 reportID, uint8* out, uint8 poll) {
     volatile HIDBuffer_t* buffer;
     unsigned ret = 0;
     
@@ -876,8 +745,8 @@ uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t 
     return ret;
 }
 
-void usb_hid_clear_buffers(uint8_t type) {
-    uint8_t typeTest = type == HID_REPORT_TYPE_OUTPUT ? HID_BUFFER_MODE_OUTPUT : 0;
+void usb_hid_clear_buffers(uint8 type) {
+    uint8 typeTest = type == HID_REPORT_TYPE_OUTPUT ? HID_BUFFER_MODE_OUTPUT : 0;
     for (int i=0; i<MAX_HID_BUFFERS; i++) {
         if (( hidBuffers[i].mode & HID_BUFFER_MODE_OUTPUT ) == typeTest) {
             hidBuffers[i].buffer = NULL;
@@ -885,7 +754,7 @@ void usb_hid_clear_buffers(uint8_t type) {
     }
 }
 
-uint8_t usb_hid_add_buffer(uint8_t type, volatile HIDBuffer_t* buf) {
+uint8 usb_hid_add_buffer(uint8 type, volatile HIDBuffer_t* buf) {
     if (type == HID_BUFFER_MODE_OUTPUT) 
         buf->mode |= HID_BUFFER_MODE_OUTPUT;
     else
@@ -910,8 +779,8 @@ uint8_t usb_hid_add_buffer(uint8_t type, volatile HIDBuffer_t* buf) {
     }
 }
 
-void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* bufs, int n) {
-    uint8_t typeMask = type == HID_REPORT_TYPE_OUTPUT ? HID_BUFFER_MODE_OUTPUT : 0;
+void usb_hid_set_buffers(uint8 type, volatile HIDBuffer_t* bufs, int n) {
+    uint8 typeMask = type == HID_REPORT_TYPE_OUTPUT ? HID_BUFFER_MODE_OUTPUT : 0;
     usb_hid_clear_buffers(type);
     for (int i=0; i<n; i++) {
         bufs[i].mode &= ~HID_REPORT_TYPE_OUTPUT;
@@ -1000,85 +869,8 @@ flush_hid:
 
 
 
-static void usbInit(void) {
-    pInformation->Current_Configuration = 0;
-
-    USB_BASE->CNTR = USB_CNTR_FRES;
-
-    USBLIB->irq_mask = 0;
-    USB_BASE->CNTR = USBLIB->irq_mask;
-    USB_BASE->ISTR = 0;
-    USBLIB->irq_mask = USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM;
-    USB_BASE->CNTR = USBLIB->irq_mask;
-
-    USB_BASE->ISTR = 0;
-    USBLIB->irq_mask = USB_ISR_MSK;
-    USB_BASE->CNTR = USBLIB->irq_mask;
-
-    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
-    USBLIB->state = USB_UNCONNECTED;
-    
-    currentHIDBuffer = NULL;
-}
-
-#define BTABLE_ADDRESS        0x00
-static void usbReset(void) {
-    pInformation->Current_Configuration = 0;
-
-    /* current feature is current bmAttributes */
-    pInformation->Current_Feature = (USB_CONFIG_ATTR_BUSPOWERED |
-                                     USB_CONFIG_ATTR_SELF_POWERED);
-
-    USB_BASE->BTABLE = BTABLE_ADDRESS;
-
-    /* setup control endpoint 0 */
-    usb_set_ep_type(USB_EP0, USB_EP_EP_TYPE_CONTROL);
-    usb_set_ep_tx_stat(USB_EP0, USB_EP_STAT_TX_STALL);
-    usb_set_ep_rx_addr(USB_EP0, USBHID_CDCACM_CTRL_RX_ADDR);
-    usb_set_ep_tx_addr(USB_EP0, USBHID_CDCACM_CTRL_TX_ADDR);
-    usb_clear_status_out(USB_EP0);
-
-    usb_set_ep_rx_count(USB_EP0, pProperty->MaxPacketSize);
-    usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
-
-    /* set up hid endpoint IN (TX)  */
-    usb_set_ep_type(USB_HID_TX_ENDP, USB_EP_EP_TYPE_BULK);
-    usb_set_ep_tx_addr(USB_HID_TX_ENDP, USB_HID_TX_ADDR);
-    usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_NAK);
-    usb_set_ep_rx_stat(USB_HID_TX_ENDP, USB_EP_STAT_RX_DISABLED);
-    
-    if (haveSerial) {
-        /* setup management endpoint 1  */
-        usb_set_ep_type(USBHID_CDCACM_MANAGEMENT_ENDP, USB_EP_EP_TYPE_INTERRUPT);
-        usb_set_ep_tx_addr(USBHID_CDCACM_MANAGEMENT_ENDP,
-                           USBHID_CDCACM_MANAGEMENT_ADDR);
-        usb_set_ep_tx_stat(USBHID_CDCACM_MANAGEMENT_ENDP, USB_EP_STAT_TX_NAK);
-        usb_set_ep_rx_stat(USBHID_CDCACM_MANAGEMENT_ENDP, USB_EP_STAT_RX_DISABLED);
-
-        /* TODO figure out differences in style between RX/TX EP setup */
-
-        /* set up data endpoint OUT (RX) */
-        usb_set_ep_type(USBHID_CDCACM_RX_ENDP, USB_EP_EP_TYPE_BULK);
-        usb_set_ep_rx_addr(USBHID_CDCACM_RX_ENDP, USBHID_CDCACM_RX_ADDR);
-        usb_set_ep_rx_count(USBHID_CDCACM_RX_ENDP, USBHID_CDCACM_RX_EPSIZE);
-        usb_set_ep_rx_stat(USBHID_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
-
-        /* set up data endpoint IN (TX)  */
-        usb_set_ep_type(USBHID_CDCACM_TX_ENDP, USB_EP_EP_TYPE_BULK);
-        usb_set_ep_tx_addr(USBHID_CDCACM_TX_ENDP, USBHID_CDCACM_TX_ADDR);
-        usb_set_ep_tx_stat(USBHID_CDCACM_TX_ENDP, USB_EP_STAT_TX_NAK);
-        usb_set_ep_rx_stat(USBHID_CDCACM_TX_ENDP, USB_EP_STAT_RX_DISABLED);
-        
-        //VCOM
-        vcom_rx_head = 0;
-        vcom_rx_tail = 0;
-        vcom_tx_head = 0;
-        vcom_tx_tail = 0;
-    }
-
-    USBLIB->state = USB_ATTACHED;
-    SetDeviceAddress(0);
-
+static void hidUSBReset(USBCompositePart* part) {
+    (void)part;
     /* Reset the RX/TX state */
 
 	transmitting = -1;
@@ -1086,6 +878,15 @@ static void usbReset(void) {
     /* Reset the RX/TX state */
 	hid_tx_head = 0;
 	hid_tx_tail = 0;
+}
+
+static void serialUSBReset(USBCompositePart* part) {
+    (void)part;
+    //VCOM
+    vcom_rx_head = 0;
+    vcom_rx_tail = 0;
+    vcom_tx_head = 0;
+    vcom_tx_tail = 0;
 }
 
 static uint8* HID_Set(uint16 length) {
@@ -1140,7 +941,8 @@ static uint8* HID_GetFeature(uint16 length) {
     return (uint8*)currentHIDBuffer->buffer + wOffset;
 }
 
-static RESULT usbDataSetup(uint8 request) {
+static RESULT serialUSBDataSetup(USBCompositePart* part, uint8 request) {
+    (void)part;
     uint8* (*CopyRoutine)(uint16) = 0;
     
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
@@ -1153,6 +955,32 @@ static RESULT usbDataSetup(uint8 request) {
             if (haveSerial)
                 CopyRoutine = vcomGetSetLineCoding;
             break;
+        default:
+            break;
+        }
+        /* Call the user hook. */
+        if (iface_setup_hook) {
+            uint8 req_copy = request;
+            iface_setup_hook(USBHID_CDCACM_HOOK_IFACE_SETUP, &req_copy);
+        }
+    }
+	
+	if (CopyRoutine == NULL){
+		return USB_UNSUPPORT;
+	}
+    
+    pInformation->Ctrl_Info.CopyData = CopyRoutine;
+    pInformation->Ctrl_Info.Usb_wOffset = 0;
+    (*CopyRoutine)(0);
+    return USB_SUCCESS;
+}
+
+static RESULT hidUSBDataSetup(USBCompositePart* part, uint8 request) {
+    (void)part;
+    uint8* (*CopyRoutine)(uint16) = 0;
+    
+    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
+        switch (request) {
         case SET_REPORT:
             if (pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){                
                 if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
@@ -1205,11 +1033,6 @@ static RESULT usbDataSetup(uint8 request) {
         default:
             break;
         }
-        /* Call the user hook. */
-        if (iface_setup_hook) {
-            uint8 req_copy = request;
-            iface_setup_hook(USBHID_CDCACM_HOOK_IFACE_SETUP, &req_copy);
-        }
     }
 	
 	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
@@ -1218,9 +1041,7 @@ static RESULT usbDataSetup(uint8 request) {
     			if(pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){						
 					if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
 						CopyRoutine = HID_GetReportDescriptor;
-					} else if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
-						CopyRoutine = usbGetConfigDescriptor;
-					}					
+					} 					
 				}
     			break;
     		case GET_PROTOCOL:
@@ -1239,7 +1060,8 @@ static RESULT usbDataSetup(uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT usbNoDataSetup(uint8 request) {
+static RESULT serialUSBNoDataSetup(USBCompositePart* part, uint8 request) {
+    (void)part;
     RESULT ret = USB_UNSUPPORT;
     
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
@@ -1258,20 +1080,32 @@ static RESULT usbNoDataSetup(uint8 request) {
                     ret = USB_SUCCESS;
                 }
 	            break;
-            case SET_PROTOCOL:
-                ProtocolValue = pInformation->USBwValue0;
-                ret = USB_SUCCESS;
-                break;
         }
     }
     /* Call the user hook. */
-    if (haveSerial && iface_setup_hook) {
+    if (iface_setup_hook) {
         uint8 req_copy = request;
         iface_setup_hook(USBHID_CDCACM_HOOK_IFACE_SETUP, &req_copy);
     }
     return ret;
 }
 
+static RESULT hidUSBNoDataSetup(USBCompositePart* part, uint8 request) {
+    (void)part;
+    RESULT ret = USB_UNSUPPORT;
+    
+	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
+        switch(request) {
+            case SET_PROTOCOL:
+                ProtocolValue = pInformation->USBwValue0;
+                ret = USB_SUCCESS;
+                break;
+        }
+    }
+    return ret;
+}
+
+/*
 static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
     if (alt_setting > 0) {
         return USB_UNSUPPORT;
@@ -1281,23 +1115,8 @@ static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
 
     return USB_SUCCESS;
 }
+*/
 
-static uint8* usbGetDeviceDescriptor(uint16 length) {
-    return Standard_GetDescriptorData(length, &Device_Descriptor);
-}
-
-static uint8* usbGetConfigDescriptor(uint16 length) {
-    return Standard_GetDescriptorData(length, &Config_Descriptor);
-}
-
-static uint8* usbGetStringDescriptor(uint16 length) {    
-    uint8 wValue0 = pInformation->USBwValue0;
-    
-    if (wValue0 > numStringDescriptors) {
-        return NULL;
-    }
-    return Standard_GetDescriptorData(length, &String_Descriptor[wValue0]);
-}
 
 /*
 static RESULT HID_SetProtocol(void){
@@ -1319,12 +1138,3 @@ static uint8* HID_GetReportDescriptor(uint16 Length){
   return Standard_GetDescriptorData(Length, &HID_Report_Descriptor);
 }
 
-static void usbSetConfiguration(void) {
-    if (pInformation->Current_Configuration != 0) {
-        USBLIB->state = USB_CONFIGURED;
-    }
-}
-
-static void usbSetDeviceAddress(void) {
-    USBLIB->state = USB_ADDRESSED;
-}

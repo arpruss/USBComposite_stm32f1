@@ -235,8 +235,7 @@ typedef enum _HID_REQUESTS
  
 #define HID_ENDPOINT_INT 				1
  
-#define HID_DESCRIPTOR_TYPE             0x21
- 
+#define HID_DESCRIPTOR_TYPE             0x21 
 #define REPORT_DESCRIPTOR               0x22
 
 

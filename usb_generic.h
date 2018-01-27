@@ -9,10 +9,6 @@
 #define PMA_MEMORY_SIZE 512
 #define MAX_USB_DESCRIPTOR_DATA_SIZE 256
 
-void usb_generic_enable(DEVICE* deviceTable, DEVICE_PROP* deviceProperty, USER_STANDARD_REQUESTS* userStandardRequests,
-void (**ep_int_in)(void), void (**ep_int_out)(void));
-void usb_generic_disable(void);
-
 #define USB_EP0_BUFFER_SIZE       0x40
 #define USB_EP0_TX_BUFFER_ADDRESS 0x40
 #define USB_EP0_RX_BUFFER_ADDRESS (USB_EP0_TX_BUFFER_ADDRESS+USB_EP0_BUFFER_SIZE) 
@@ -29,9 +25,10 @@ typedef struct USBEndpointInfo {
 typedef struct USBCompositePart {
     uint8 numInterfaces;
     uint8 numEndpoints;
-    uint16 startInterface;
+    uint8 startInterface;
+    uint8 startEndpoint;
     uint16 descriptorSize;
-    uint8* (*getPartDescriptor)(struct USBCompositePart* part);
+    void (*getPartDescriptor)(struct USBCompositePart* part, uint8* out);
     void (*usbInit)(struct USBCompositePart* part);
     void (*usbReset)(struct USBCompositePart* part);
     RESULT (*usbDataSetup)(struct USBCompositePart* part, uint8 request);
@@ -39,10 +36,10 @@ typedef struct USBCompositePart {
     USBEndpointInfo* endpoints;
 } USBCompositePart;
 
-uint8 usb_generic_setup(USBCompositePart** _parts, uint32 _numParts);
+void usb_generic_set_info( uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
+uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
+void usb_generic_disable(void);
+void usb_generic_enable(void);
 
-const uint16 USBEndpointAddresses[7] = {
-    
-};
 
 #endif

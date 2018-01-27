@@ -53,13 +53,26 @@
 
 #include <board/board.h>
 
+static uint8* usbGetConfigDescriptor(uint16 length);
+static void usbInit(void);
+static void usbReset(void);
+static RESULT usbDataSetup(uint8 request);
+static RESULT usbNoDataSetup(uint8 request);
+static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
+static uint8* usbGetStringDescriptor(uint16 length);
+static uint8* usbGetConfigDescriptor(uint16 length);
+static uint8* usbGetDeviceDescriptor(uint16 length);
+static void usbSetConfiguration(void);
+static void usbSetDeviceAddress(void);
+
 #define LEAFLABS_ID_VENDOR                0x1EAF
 #define MAPLE_ID_PRODUCT                  0x0004 // was 0x0024
 #define USB_DEVICE_CLASS              	  0x00
 #define USB_DEVICE_SUBCLASS	           	  0x00
 #define DEVICE_PROTOCOL					  0x01
+#define USB_DESCRIPTOR_TYPE               0x21
 
-static usb_descriptor_device usbGenericDescriptor_Device
+static usb_descriptor_device usbGenericDescriptor_Device =
   {                                                                     
       .bLength            = sizeof(usb_descriptor_device),              
       .bDescriptorType    = USB_DESCRIPTOR_TYPE_DEVICE,                 
@@ -77,12 +90,14 @@ static usb_descriptor_device usbGenericDescriptor_Device
       .bNumConfigurations = 0x01,                                       
 };
 
-struct {
+typedef struct {
     usb_descriptor_config_header Config_Header;
     uint8 descriptorData[MAX_USB_DESCRIPTOR_DATA_SIZE];
 } __packed usb_descriptor_config;
 
 static usb_descriptor_config usbConfig;
+
+#define MAX_POWER (100 >> 1)
 
 static const usb_descriptor_config_header Base_Header = {
         .bLength              = sizeof(usb_descriptor_config_header),
@@ -96,18 +111,46 @@ static const usb_descriptor_config_header Base_Header = {
         .bMaxPower            = MAX_POWER,
 };
 
-static ONE_DESCRIPTOR usbConfig_Descriptor = {
+static ONE_DESCRIPTOR Device_Descriptor = {
+    (uint8*)&usbGenericDescriptor_Device,
+    sizeof(usb_descriptor_device)
+};
+
+static ONE_DESCRIPTOR Config_Descriptor = {
     (uint8*)&usbConfig,
     0
 };
 
 static DEVICE my_Device_Table = {
-    .Total_Endpoint      = NUM_ENDPTS,
+    .Total_Endpoint      = 0,
     .Total_Configuration = 1
 };
 
+/* Unicode language identifier: 0x0409 is US English */
+/* FIXME move to Wirish */
+static const usb_descriptor_string usbHIDDescriptor_LangID = {
+    .bLength         = USB_DESCRIPTOR_STRING_LEN(1),
+    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
+    .bString         = {0x09, 0x04},
+};
+
+#define default_iManufacturer_length 8
+static const usb_descriptor_string usbHIDDescriptor_iManufacturer = {
+    .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length),
+    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
+    .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0, 'L', 0, 'a', 0, 'b', 0, 's', 0},
+};
+
+#define default_iProduct_length 5
+static const usb_descriptor_string usbHIDDescriptor_iProduct = {
+    .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iProduct_length),
+    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
+    .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
+};
+
+
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
-static DEVICE_PROP my_Device_Property = {
+static const DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
     .Process_Status_IN           = NOP_Process, 
@@ -122,7 +165,7 @@ static DEVICE_PROP my_Device_Property = {
     .MaxPacketSize               = MAX_PACKET_SIZE
 };
 
-static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
+static const USER_STANDARD_REQUESTS my_User_Standard_Requests = {
     .User_GetConfiguration   = NOP_Process,
     .User_SetConfiguration   = usbSetConfiguration,
     .User_GetInterface       = NOP_Process,
@@ -134,8 +177,18 @@ static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
     .User_SetDeviceAddress   = usbSetDeviceAddress
 };
 
+static uint8 numStringDescriptors = 3;
 
-static USBCompositePart* parts;
+
+#define MAX_STRING_DESCRIPTORS 4
+static ONE_DESCRIPTOR String_Descriptor[MAX_STRING_DESCRIPTORS] = {
+    {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
+    {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
+    {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
+    {NULL,                                            0},
+};
+
+static USBCompositePart** parts;
 static uint32 numParts;
 static DEVICE saved_Device_Table;
 static DEVICE_PROP saved_Device_Property;
@@ -144,7 +197,7 @@ static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 static void (*ep_int_in[7])(void);
 static void (*ep_int_out[7])(void);
 
-uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts) {
+uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
     unsigned numInterfaces = 0;
@@ -152,23 +205,29 @@ uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts)
     uint16 usbDescriptorSize = 0;
     uint16 pmaOffset = USB_EP0_RX_BUFFER_ADDRESS + USB_EP0_BUFFER_SIZE;
     
+    for (unsigned i = 0 ; i < 7 ; i++) {
+        ep_int_in[i] = NOP_Process;
+        ep_int_out[i] = NOP_Process;
+    }
+    
     usbDescriptorSize = 0;
     for (unsigned i = 0 ; i < _numParts ; i++ ) {
         parts[i]->startInterface = numInterfaces;
+        parts[i]->startEndpoint = numEndpoints;
         numInterfaces += parts[i]->numInterfaces;
         if (numEndpoints + parts[i]->numEndpoints > 8)
             return 0;
-        if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_SIZE) 
+        if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) 
             return 0;
-        parts[i]->getPartDescriptor(parts[i], usbConfig->descriptorData + usbDescriptorSize);
+        parts[i]->getPartDescriptor(parts[i], usbConfig.descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
-        EndpointInfo* ep = parts[i]->endpoints;
+        USBEndpointInfo* ep = parts[i]->endpoints;
         for (unsigned j = 0 ; j < numEndpoints ; j++) {
             if (ep[j].bufferSize + pmaOffset > PMA_MEMORY_SIZE) 
                 return 0;
             ep[j].pmaAddress = pmaOffset;
             pmaOffset += ep[j].bufferSize;
-            ep[j].endpoint = numEndpoints;
+            ep[j].address = numEndpoints;
             if (ep[j].callback == NULL)
                 ep[j].callback = NOP_Process;
             if (ep[j].tx) {
@@ -181,23 +240,54 @@ uint8 usb_generic_composite_setup(USBCompositePart** _parts, unsigned _numParts)
         }
     }
     
-    for (unsigned i = numEndpoints ; i < 8 ; i++) {
-        ep_int_in[i-1] = NOP_Process;
-        ep_int_out[i-1] = NOP_Process;
-    }
-    
     usbConfig.Config_Header = Base_Header;    
     usbConfig.Config_Header.bNumInterfaces = numInterfaces;
     usbConfig.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
-    usbConfig_Descriptor.Descriptor_Size = usbConfig.Config_Header.wTotalLength;
+    Config_Descriptor.Descriptor_Size = usbConfig.Config_Header.wTotalLength;
     
     my_Device_Table.Total_Endpoint = numEndpoints - 1; // EP0 doesn't count
     
     return 1;
 }
+
+void usb_generic_set_info( uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber) {
+    if (idVendor != 0)
+        usbGenericDescriptor_Device.idVendor = idVendor;
+    else
+        usbGenericDescriptor_Device.idVendor = LEAFLABS_ID_VENDOR;
+     
+    if (idProduct != 0)
+        usbGenericDescriptor_Device.idProduct = idProduct;
+    else
+        usbGenericDescriptor_Device.idProduct = MAPLE_ID_PRODUCT;
+    
+    if (iManufacturer == NULL) {
+        iManufacturer = (uint8*)&usbHIDDescriptor_iManufacturer;
+    }
+           
+    String_Descriptor[1].Descriptor = (uint8*)iManufacturer;
+    String_Descriptor[1].Descriptor_Size = iManufacturer[0];
+     
+    if (iProduct == NULL) {
+        iProduct = (uint8*)&usbHIDDescriptor_iProduct;
+    }
+           
+    String_Descriptor[2].Descriptor = (uint8*)iProduct;
+    String_Descriptor[2].Descriptor_Size = iProduct[0];
+    
+    if (iSerialNumber == NULL) {
+        numStringDescriptors = 3;
+        usbGenericDescriptor_Device.iSerialNumber = 0;
+    }
+    else {
+        String_Descriptor[3].Descriptor = (uint8*)iSerialNumber;
+        String_Descriptor[3].Descriptor_Size = iSerialNumber[0];
+        numStringDescriptors = 4;
+        usbGenericDescriptor_Device.iSerialNumber = 3;
+    }    
+}
  
-void usb_generic_enable(DEVICE* deviceTable, DEVICE_PROP* deviceProperty, USER_STANDARD_REQUESTS* userStandardRequests,
-    void (**ep_int_in)(void), void (**ep_int_out)(void)) {
+void usb_generic_enable(void) {
     /* Present ourselves to the host. Writing 0 to "disc" pin must
      * pull USB_DP pin up while leaving USB_DM pulled down by the
      * transceiver. See USB 2.0 spec, section 7.1.7.3. */
@@ -206,9 +296,9 @@ void usb_generic_enable(DEVICE* deviceTable, DEVICE_PROP* deviceProperty, USER_S
     saved_Device_Property = Device_Property;
     saved_User_Standard_Requests = User_Standard_Requests;
 
-    Device_Table = *deviceTable;
-    Device_Property = *deviceProperty;
-    User_Standard_Requests = *userStandardRequests;
+    Device_Table = my_Device_Table;
+    Device_Property = my_Device_Property;
+    User_Standard_Requests = my_User_Standard_Requests;
     
 #ifdef GENERIC_BOOTLOADER			
     //Reset the USB interface on generic boards - developed by Victor PV
@@ -265,25 +355,26 @@ static void usbReset(void) {
     /* setup control endpoint 0 */
     usb_set_ep_type(USB_EP0, USB_EP_EP_TYPE_CONTROL);
     usb_set_ep_tx_stat(USB_EP0, USB_EP_STAT_TX_STALL);
-    usb_set_ep_rx_addr(USB_EP0, USBHID_CDCACM_CTRL_RX_ADDR);
-    usb_set_ep_tx_addr(USB_EP0, USBHID_CDCACM_CTRL_TX_ADDR);
+    usb_set_ep_rx_addr(USB_EP0, USB_EP0_RX_BUFFER_ADDRESS);
+    usb_set_ep_tx_addr(USB_EP0, USB_EP0_TX_BUFFER_ADDRESS);
     usb_clear_status_out(USB_EP0);
 
     usb_set_ep_rx_count(USB_EP0, pProperty->MaxPacketSize);
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
 
     for (unsigned i = 0 ; i < numParts ; i++) {
-        for (unsigned j = 0 ; j < parts[i].numEndpoints ; j++) {
-            uint8 address = parts[i].endpoints[j].address;
-            usb_set_ep_type(address, parts[i].endpoints[j].type);
-            if (parts[i].endpoints[j].tx) {
-                usb_set_ep_tx_addr(address, parts[i].endpoints[j].pmaAddress);
-                usb_set_ep_tx_stat(USBHID_CDCACM_TX_ENDP, USB_EP_STAT_TX_NAK);
+        for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
+            USBEndpointInfo* e = &(parts[i]->endpoints[j]);
+            uint8 address = e->address;
+            usb_set_ep_type(address, e->type);
+            if (parts[i]->endpoints[j].tx) {
+                usb_set_ep_tx_addr(address, e->pmaAddress);
+                usb_set_ep_tx_stat(address, USB_EP_STAT_TX_NAK);
                 usb_set_ep_rx_stat(address, USB_EP_STAT_RX_DISABLED);
             }
             else {
-                usb_set_ep_rx_addr(address, parts[i].endpoints[j].pmaAddress);
-                usb_set_ep_rx_count(address, parts[i].endpoints[j].bufferSize);
+                usb_set_ep_rx_addr(address, e->pmaAddress);
+                usb_set_ep_rx_count(address, e->bufferSize);
                 usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
             }
         }
@@ -319,13 +410,26 @@ void usb_generic_disable(void) {
 }
 
 static RESULT usbDataSetup(uint8 request) {
-    for (unsigned i = 0 ; i < numParts ; i++) {
-        RESULT r = parts[i]->usbDataSetup(parts[i], request);
-        if (USB_UNSUPPORT != r)
-            return r;
+    uint8* (*CopyRoutine)(uint16) = 0;
+    
+	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT) && request == GET_DESCRIPTOR &&
+        pInformation->USBwValue1 == USB_DESCRIPTOR_TYPE){
+            CopyRoutine = usbGetConfigDescriptor;
     }
 
-    return USB_UNSUPPORT;
+	if (CopyRoutine == NULL){
+        for (unsigned i = 0 ; i < numParts ; i++) {
+            RESULT r = parts[i]->usbDataSetup(parts[i], request);
+            if (USB_UNSUPPORT != r)
+                return r;
+        }
+        return USB_UNSUPPORT;
+    }
+    
+    pInformation->Ctrl_Info.CopyData = CopyRoutine;
+    pInformation->Ctrl_Info.Usb_wOffset = 0;
+    (*CopyRoutine)(0);
+    return USB_SUCCESS;
 }
 
 static RESULT usbNoDataSetup(uint8 request) {
@@ -338,3 +442,40 @@ static RESULT usbNoDataSetup(uint8 request) {
     return USB_UNSUPPORT;
 }
 
+static void usbSetConfiguration(void) {
+    if (pInformation->Current_Configuration != 0) {
+        USBLIB->state = USB_CONFIGURED;
+    }
+}
+
+static void usbSetDeviceAddress(void) {
+    USBLIB->state = USB_ADDRESSED;
+}
+
+static uint8* usbGetDeviceDescriptor(uint16 length) {
+    return Standard_GetDescriptorData(length, &Device_Descriptor);
+}
+
+static uint8* usbGetConfigDescriptor(uint16 length) {
+    return Standard_GetDescriptorData(length, &Config_Descriptor);
+}
+
+static uint8* usbGetStringDescriptor(uint16 length) {    
+    uint8 wValue0 = pInformation->USBwValue0;
+    
+    if (wValue0 >= numStringDescriptors) {
+        return NULL;
+    }
+    return Standard_GetDescriptorData(length, &String_Descriptor[wValue0]);
+}
+
+
+static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
+    if (alt_setting > 0) {
+        return USB_UNSUPPORT;
+    } else if (interface > 1) {
+        return USB_UNSUPPORT;
+    }
+
+    return USB_SUCCESS;
+}
