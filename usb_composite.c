@@ -322,7 +322,7 @@ static ONE_DESCRIPTOR Device_Descriptor = {
     sizeof(usb_descriptor_device)
 };
 
-ONE_DESCRIPTOR Config_Descriptor = {
+static ONE_DESCRIPTOR Config_Descriptor = {
     (uint8*)&usbCompositeDescriptor_Config,
     sizeof(usb_descriptor_config)
 };
@@ -773,7 +773,6 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
         my_Device_Table.Total_Endpoint = 1+NUM_HID_ENDPOINTS;
     }
 
-return;    
     usb_generic_enable(&my_Device_Table, &my_Device_Property, &my_User_Standard_Requests, ep_int_in, ep_int_out);
 }
 
