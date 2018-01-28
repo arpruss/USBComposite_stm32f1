@@ -42,7 +42,7 @@
 #include <boards.h>
 #include <usb_serial.h>
 
-#if 0
+#if 1
 namespace wirish {
     namespace priv {
 
