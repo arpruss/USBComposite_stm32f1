@@ -302,7 +302,7 @@ static ONE_DESCRIPTOR Device_Descriptor = {
     sizeof(usb_descriptor_device)
 };
 
-ONE_DESCRIPTOR Config_Descriptor = {
+static ONE_DESCRIPTOR Config_Descriptor = {
     (uint8*)&usbCompositeDescriptor_Config,
     sizeof(usb_descriptor_config)
 };
