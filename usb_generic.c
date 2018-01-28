@@ -1,4 +1,3 @@
-unsigned char info = 0;
 /******************************************************************************
  * The MIT License
  *
@@ -34,16 +33,17 @@ unsigned char info = 0;
  * the result made cleaner.
  */
 
-#include "usb_generic.h"
-
 #include <string.h>
 #include <libmaple/libmaple_types.h>
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 #include <libmaple/gpio.h>
-#include "usb_lib_globals.h"
-#include "usb_reg_map.h"
+//#include <usb_lib_globals.h>
+#include <usb_reg_map.h>
+//#include <usb_core.h>
+#include <board/board.h>
+
 
 //uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 
@@ -52,7 +52,10 @@ unsigned char info = 0;
 #include "usb_core.h"
 #include "usb_def.h"
 
-#include <board/board.h>
+#include "usb_generic.h"
+
+// Are we currently sending an IN packet?
+volatile int8 usbGenericTransmitting = -1;
 
 static uint8* usbGetConfigDescriptor(uint16 length);
 static void usbInit(void);
@@ -197,8 +200,6 @@ static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 
 static void (*ep_int_in[7])(void);
 static void (*ep_int_out[7])(void);
-
-static void setInfo(void) { nvic_sys_reset(); }
 
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
@@ -384,6 +385,8 @@ static void usbReset(void) {
         if (parts[i]->usbReset != NULL)
             parts[i]->usbReset(parts[i]);
     }
+    
+    usbGenericTransmitting = -1;
     
     USBLIB->state = USB_ATTACHED;
     SetDeviceAddress(0);

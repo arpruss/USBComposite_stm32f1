@@ -31,39 +31,18 @@
  * IMPORTANT: this API is unstable, and may change without notice.
  */
 
-#ifndef _USB_COMPOSITE_H_
-#define _USB_COMPOSITE_H_
+#ifndef _USB_SERIAL_H_
+#define _USB_SERIAL_H_
 
 #include <libmaple/libmaple_types.h>
 #include <libmaple/usb.h>
-
-#define MAX_HID_BUFFERS 12
-#define HID_BUFFER_SIZE(n,reportID) ((n)+((reportID)!=0))
-#define HID_BUFFER_ALLOCATE_SIZE(n,reportID) ((HID_BUFFER_SIZE((n),(reportID))+1)/2*2)
-
-#define HID_BUFFER_MODE_NO_WAIT 1
-#define HID_BUFFER_MODE_OUTPUT  2
-
-typedef struct HIDBuffer_t {
-    volatile uint8_t* buffer; // use HID_BUFFER_ALLOCATE_SIZE() to calculate amount of memory to allocate                            
-    uint16_t bufferSize; // this should match HID_BUFFER_SIZE
-    uint8_t  reportID;
-    uint8_t  mode;
-    uint16_t currentDataSize;
-    uint8_t  state;
-#ifdef __cplusplus
-    inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferSize=0, uint8_t _reportID=0, uint8_t _mode=0) {
-        reportID = _reportID;
-        buffer = _buffer;
-        bufferSize = _bufferSize;
-        mode = _mode;
-    }
-#endif
-} HIDBuffer_t;
+#include "usb_generic.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern USBCompositePart usbSerialPart;
 
 /*
  * CDC ACM Requests
@@ -76,6 +55,9 @@ extern "C" {
 #define USBHID_CDCACM_CONTROL_LINE_DTR       (0x01)
 #define USBHID_CDCACM_CONTROL_LINE_RTS       (0x02)
 
+#define USBHID_CDCACM_MANAGEMENT_EPSIZE      0x10
+#define USBHID_CDCACM_RX_EPSIZE              0x40
+#define USBHID_CDCACM_TX_EPSIZE              0x40
 /*
  * Descriptors, etc.
  */
@@ -110,29 +92,6 @@ typedef struct
 #define USB_INTERFACE_CLASS_CDC           0x02
 #define USB_INTERFACE_SUBCLASS_CDC_ACM    0x02
 #define USB_INTERFACE_CLASS_DIC           0x0A
-
-/*
- * Endpoint configuration
- */
-
-#define USBHID_CDCACM_CTRL_EPSIZE          0x40
-
-#define USB_HID_TX_EPSIZE            	0x40
-
-#define USBHID_CDCACM_TX_EPSIZE            0x40
-
-#define USBHID_CDCACM_MANAGEMENT_EPSIZE    0x40
-
-#define USBHID_CDCACM_RX_EPSIZE            0x40
-
-void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, uint8 serialSupport,
-    uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
-void usb_hid_clear_buffers(uint8_t type);
-uint8_t usb_hid_add_buffer(uint8_t type, volatile HIDBuffer_t* buf);
-void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
-uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
-void usb_composite_disable(void);
-void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 
 /*
  * CDC ACM interface
@@ -190,105 +149,6 @@ void composite_cdcacm_set_hooks(unsigned hook_flags, void (*hook)(unsigned, void
 static inline __always_inline void composite_cdcacm_remove_hooks(unsigned hook_flags) {
     composite_cdcacm_set_hooks(hook_flags, 0);
 }
-
- 
-#define HID_BUFFER_EMPTY    0
-#define HID_BUFFER_UNREAD   1
-#define HID_BUFFER_READ     2
-
-
-/*
- * HID Requests
- */
-
-typedef enum _HID_REQUESTS
-{
- 
-  GET_REPORT = 1,
-  GET_IDLE,
-  GET_PROTOCOL,
- 
-  SET_REPORT = 9,
-  SET_IDLE,
-  SET_PROTOCOL
- 
-} HID_REQUESTS;
- 
-#define HID_REPORT_TYPE_INPUT         0x01
-#define HID_REPORT_TYPE_OUTPUT        0x02
-#define HID_REPORT_TYPE_FEATURE       0x03 
- 
-
-/*
- * HID Descriptors, etc.
- */
- 
-#define HID_ENDPOINT_INT 				1
- 
-#define HID_DESCRIPTOR_TYPE             0x21 
-#define REPORT_DESCRIPTOR               0x22
-
-
-typedef struct
-{
-	uint8_t len;			// 9
-	uint8_t dtype;			// 0x21
-	uint8_t	versionL;		// 0x101
-	uint8_t	versionH;		// 0x101
-	uint8_t	country;
-	uint8_t	numDesc;
-	uint8_t	desctype;		// 0x22 report
-	uint8_t	descLenL;
-	uint8_t	descLenH;
-} HIDDescriptor;
-
-
-#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
-
-#define USB_INTERFACE_CLASS_HID           0x03
-#define USB_INTERFACE_SUBCLASS_HID		  0x01
-
-/*
- * Endpoint configuration
- */
-
-
- /*
- * HID interface
- */
-
-void   usb_hid_putc(char ch);
-uint32 usb_hid_tx(const uint8* buf, uint32 len);
-uint32 usb_hid_tx_mod(const uint8* buf, uint32 len);
-
-uint32 usb_hid_data_available(void); /* in RX buffer */
-uint16 usb_hid_get_pending(void);
-
-
-
-#define USB_DEVICE_CLASS              	  0x00
-#define USB_DEVICE_SUBCLASS	           	  0x00
-#define DEVICE_PROTOCOL					  0x01
-
-#ifndef __cplusplus
-#define USB_DECLARE_DEV_DESC(vid, pid)                           \
-  {                                                                     \
-      .bLength            = sizeof(usb_descriptor_device),              \
-      .bDescriptorType    = USB_DESCRIPTOR_TYPE_DEVICE,                 \
-      .bcdUSB             = 0x0200,                                     \
-      .bDeviceClass       = USB_DEVICE_CLASS,                       	\
-      .bDeviceSubClass    = USB_DEVICE_SUBCLASS,                    	\
-      .bDeviceProtocol    = DEVICE_PROTOCOL,                            \
-      .bMaxPacketSize0    = 0x40,                                       \
-      .idVendor           = vid,                                        \
-      .idProduct          = pid,                                        \
-      .bcdDevice          = 0x0200,                                     \
-      .iManufacturer      = 0x01,                                       \
-      .iProduct           = 0x02,                                       \
-      .iSerialNumber      = 0x00,                                       \
-      .bNumConfigurations = 0x01,                                       \
- }
-#endif
 
 #ifdef __cplusplus
 }

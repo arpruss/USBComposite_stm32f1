@@ -23,7 +23,8 @@
 #include <Print.h>
 #include <boards.h>
 #include "Stream.h"
-#include "usb_composite.h"
+#include "usb_hid.h"
+#include "usb_serial.h"
 
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
@@ -293,6 +294,8 @@ typedef struct {
 // and hence burning it for cryptographic purposes.
 const char* getDeviceIDString();
 
+#define USB_COMPOSITE_MAX_PARTS 4
+
 class USBHIDDevice{
 private:
 	bool enabled = false;
@@ -300,6 +303,8 @@ private:
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
     uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_NUMBER_LENGTH)];    
+    USBCompositePart* parts[USB_COMPOSITE_MAX_PARTS];
+    uint32 numParts;
 public:
 	USBHIDDevice(void);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.

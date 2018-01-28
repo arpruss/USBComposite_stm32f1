@@ -23,22 +23,14 @@
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
-#include "usb_composite.h"
 #include <libmaple/usb.h>
 #include <string.h>
 #include <libmaple/iwdg.h>
 
 #include <wirish.h>
-
-/*
- * USB HID interface
- */
+#include "usb_serial.h"
 
 #define USB_TIMEOUT 50
-
-/*
- * USBSerial interface
- */
 
 USBCompositeSerial::USBCompositeSerial(void) {
 #if !BOARD_HAVE_SERIALUSB

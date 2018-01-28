@@ -19,7 +19,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
-#include "usb_composite.h"
+#include "usb_hid.h"
+#include "usb_serial.h"
+#include "usb_generic.h"
 #include <libmaple/usb.h>
 #include <string.h>
 #include <libmaple/iwdg.h>
@@ -115,9 +117,21 @@ void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descr
         else {
             serialNumberDescriptor = NULL;
         }
-        
-		usb_composite_enable(report_descriptor, report_descriptor_length, serialSupport,
-            idVendor, idProduct, manufacturerDescriptor, productDescriptor, serialNumberDescriptor);
+
+        usb_generic_set_info(idVendor, idProduct, manufacturerDescriptor, productDescriptor, 
+            serialNumberDescriptor);
+        usb_hid_set_report_descriptor(report_descriptor, report_descriptor_length);
+        if (serialSupport) {
+            numParts = 2;
+            parts[0] = &usbHIDPart;
+            parts[1] = &usbSerialPart;            
+        }
+        else {
+            numParts = 1;
+            parts[0] = &usbHIDPart;
+        }
+        usb_generic_set_parts(parts, numParts);
+        usb_generic_enable();        
             
 #if defined(SERIAL_USB)
         if (serialSupport) {
@@ -149,9 +163,7 @@ bool USBHIDDevice::addBuffer(uint8_t type, volatile HIDBuffer_t* buffer) {
 
 void USBHIDDevice::end(void){
 	if(enabled){
-	    usb_composite_disable();
-        usb_hid_clear_buffers(HID_REPORT_TYPE_FEATURE);
-        usb_hid_clear_buffers(HID_REPORT_TYPE_OUTPUT);
+        usb_generic_disable();
 		enabled = false;
 	}
 }
