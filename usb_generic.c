@@ -447,6 +447,7 @@ static RESULT usbNoDataSetup(uint8 request) {
 
 static void usbSetConfiguration(void) {
     if (pInformation->Current_Configuration != 0) {
+        info = 1;
         USBLIB->state = USB_CONFIGURED;
     }
 }
