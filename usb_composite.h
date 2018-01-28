@@ -121,7 +121,7 @@ typedef struct
 
 #define USBHID_CDCACM_TX_EPSIZE            0x40
 
-#define USBHID_CDCACM_MANAGEMENT_EPSIZE    0x10
+#define USBHID_CDCACM_MANAGEMENT_EPSIZE    0x40
 
 #define USBHID_CDCACM_RX_EPSIZE            0x40
 

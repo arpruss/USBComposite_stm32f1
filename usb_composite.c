@@ -142,7 +142,7 @@ static const hid_part_config hidPartConfigData = {
 	.HIDDataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = 0x81, //(USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX), // PATCH
+        .bEndpointAddress = USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX, // PATCH
         .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT,
         .wMaxPacketSize   = USB_HID_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
         .bInterval        = 0x0A,
@@ -627,6 +627,7 @@ static uint8* vcomGetSetLineCoding(uint16 length) {
 
 /*
  * HID interface
+ 
  */
 
 void usb_composite_enable(const uint8* report_descriptor, uint16 report_descriptor_length, const uint8 serial,
@@ -637,8 +638,10 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
     HID_Report_Descriptor.Descriptor = (uint8*)report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
 
-    //usb_generic_set_parts(hidSerialParts, serial ? 2 : 1);
-    usb_generic_set_parts(hidSerialParts+1, 1);
+    if (serial)
+        usb_generic_set_parts(hidSerialParts, 2);
+    else
+        usb_generic_set_parts(&hidPart, 1);
     
     usb_generic_enable();
 }
