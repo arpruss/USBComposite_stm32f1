@@ -1,4 +1,4 @@
-unsigned char info;
+unsigned char info = 0;
 /******************************************************************************
  * The MIT License
  *
@@ -198,6 +198,8 @@ static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 static void (*ep_int_in[7])(void);
 static void (*ep_int_out[7])(void);
 
+static void setInfo(void) { nvic_sys_reset(); }
+
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
@@ -248,6 +250,12 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     
     my_Device_Table.Total_Endpoint = numEndpoints;
         
+    for (unsigned i = 0 ; i < 7 ; i++) {
+//        ep_int_in[i] = setInfo;
+//        ep_int_out[2] = setInfo;
+    }
+//    ep_int_in[0] = setInfo;
+    
     return 1;
 }
 
@@ -313,9 +321,21 @@ void usb_generic_enable(void) {
     saved_User_Standard_Requests = User_Standard_Requests;
     Device_Table = my_Device_Table;
     Device_Property = my_Device_Property;
+    //Device_Property.Init = saved_Device_Property.Init;
+    //Device_Property.Reset = saved_Device_Property.Reset;
+    //Device_Property.Class_Data_Setup = saved_Device_Property.Class_Data_Setup;
+    //Device_Property.Class_NoData_Setup = saved_Device_Property.Class_NoData_Setup;
+    //Device_Property.Class_Get_Interface_Setting = saved_Device_Property.Class_Get_Interface_Setting;
+    //Device_Property.GetDeviceDescriptor = saved_Device_Property.GetDeviceDescriptor;
+    //Device_Property.GetConfigDescriptor = saved_Device_Property.GetConfigDescriptor;
+    //Device_Property.GetStringDescriptor = saved_Device_Property.GetStringDescriptor;
+
+    //    Device_Property.Class_Data_Setup = usbDataSetup;
+//    Device_Property.Class_NoData_Setup = usbNoDataSetup;
     User_Standard_Requests = my_User_Standard_Requests;
     
     /* Initialize the USB peripheral. */
+    //USBLIB->ep_int_in[0] = NOP_Process;
     usb_init_usblib(USBLIB, ep_int_in, ep_int_out); 
 #endif    
 }
@@ -447,7 +467,6 @@ static RESULT usbNoDataSetup(uint8 request) {
 
 static void usbSetConfiguration(void) {
     if (pInformation->Current_Configuration != 0) {
-        info = 1;
         USBLIB->state = USB_CONFIGURED;
     }
 }

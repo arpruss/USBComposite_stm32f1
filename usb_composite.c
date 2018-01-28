@@ -51,9 +51,9 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 #include "usb_core.h"
 #include "usb_def.h"
 
-static uint32 ProtocolValue;
+static uint32 ProtocolValue = 0;
 // Are we currently sending an IN packet?
-static volatile int8 transmitting;
+static volatile int8 transmitting = -1;
 
 static void hidDataTxCb(void);
 static void serialUSBReset(USBCompositePart* part);
@@ -282,19 +282,19 @@ static USBEndpointInfo serialEndpoints[3] = {
     {
         .callback = vcomDataTxCb,
         .bufferSize = USBHID_CDCACM_TX_EPSIZE,
-        .type = USB_EP_TYPE_BULK,
+        .type = USB_EP_EP_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
         .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
-        .type = USB_EP_TYPE_INTERRUPT,
+        .type = USB_EP_EP_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb,
         .bufferSize = USBHID_CDCACM_RX_EPSIZE,
-        .type = USB_EP_TYPE_BULK,
+        .type = USB_EP_EP_TYPE_BULK,
         .tx = 0,
     },
 };
@@ -333,9 +333,9 @@ static USBCompositePart* hidSerialParts[2] = { &hidPart, &serialPart };
 // Tx data
 static volatile uint8 hidBufferTx[HID_TX_BUFFER_SIZE];
 // Write index to hidBufferTx
-static volatile uint32 hid_tx_head;
+static volatile uint32 hid_tx_head = 0;
 // Read index from hidBufferTx
-static volatile uint32 hid_tx_tail;
+static volatile uint32 hid_tx_tail = 0;
 
 #define CDC_SERIAL_RX_BUFFER_SIZE	256 // must be power of 2
 #define CDC_SERIAL_RX_BUFFER_SIZE_MASK (CDC_SERIAL_RX_BUFFER_SIZE-1)
@@ -637,8 +637,8 @@ void usb_composite_enable(const uint8* report_descriptor, uint16 report_descript
     HID_Report_Descriptor.Descriptor = (uint8*)report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
 
-    usb_generic_set_parts(hidSerialParts, serial ? 2 : 1);
-    //usb_generic_set_parts(hidSerialParts+1, 1);
+    //usb_generic_set_parts(hidSerialParts, serial ? 2 : 1);
+    usb_generic_set_parts(hidSerialParts+1, 1);
     
     usb_generic_enable();
 }
