@@ -1,4 +1,3 @@
-unsigned char info;
 /******************************************************************************
  * The MIT License
  *
@@ -70,7 +69,6 @@ static void vcomDataTxCb(void);
 static void vcomDataRxCb(void);
 
 static volatile HIDBuffer_t hidBuffers[MAX_HID_BUFFERS] = {{ 0 }};
-static uint8 haveSerial = 0;
 static volatile HIDBuffer_t* currentHIDBuffer = NULL;
 
 //#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
@@ -151,9 +149,9 @@ static const hid_part_config hidPartConfigData = {
 	}
 };
 
+#define CDCACM_ENDPOINT_TX         0
 #define CDCACM_ENDPOINT_MANAGEMENT 1
 #define CDCACM_ENDPOINT_RX         2
-#define CDCACM_ENDPOINT_TX         0
 
 static const serial_part_config serialPartConfigData = {
 	.IAD = {
@@ -165,7 +163,7 @@ static const serial_part_config serialPartConfigData = {
 		.bFunctionSubClass	= 0x02,
 		.bFunctionProtocol	= 0x01,
 		.iFunction			= 0x02,
-	},
+	}, 
 
     .CCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
@@ -249,20 +247,16 @@ static const serial_part_config serialPartConfigData = {
     }
 };
 
-#define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
-
-void zzhidDataTxCb() {
-    while(1){}
-}
-
 static USBEndpointInfo hidEndpoints[1] = {
     {
-        .callback = zzhidDataTxCb,
+        .callback = hidDataTxCb,
         .bufferSize = USB_HID_TX_EPSIZE,
         .type = USB_EP_EP_TYPE_BULK, // TODO: interrupt???
         .tx = 1,
     }
 };
+
+#define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
 static void getHIDPartDescriptor(USBCompositePart* part, uint8* out) {
     memcpy(out, &hidPartConfigData, sizeof(hid_part_config));
@@ -286,22 +280,22 @@ static USBCompositePart hidPart = {
 
 static USBEndpointInfo serialEndpoints[3] = {
     {
+        .callback = vcomDataTxCb,
+        .bufferSize = USBHID_CDCACM_TX_EPSIZE,
+        .type = USB_EP_TYPE_BULK,
+        .tx = 1,
+    },
+    {
         .callback = NULL,
         .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .type = USB_EP_TYPE_INTERRUPT,
-        .tx = 0,
+        .tx = 1,
     },
     {
         .callback = vcomDataRxCb,
         .bufferSize = USBHID_CDCACM_RX_EPSIZE,
         .type = USB_EP_TYPE_BULK,
         .tx = 0,
-    },
-    {
-        .callback = vcomDataTxCb,
-        .bufferSize = USBHID_CDCACM_TX_EPSIZE,
-        .type = USB_EP_TYPE_BULK,
-        .tx = 1,
     },
 };
 
@@ -866,7 +860,6 @@ static void hidDataTxCb(void)
     if ( tx_unsent&1 ) {
         *dst = tmp;
     }
-    info=tx_unsent == 13;
 	hid_tx_tail = tail; // store volatile variable
     
 flush_hid:
@@ -958,12 +951,10 @@ static RESULT serialUSBDataSetup(USBCompositePart* part, uint8 request) {
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
-            if (haveSerial)
-                CopyRoutine = vcomGetSetLineCoding;
+            CopyRoutine = vcomGetSetLineCoding;
             break;
         case USBHID_CDCACM_SET_LINE_CODING:
-            if (haveSerial)
-                CopyRoutine = vcomGetSetLineCoding;
+            CopyRoutine = vcomGetSetLineCoding;
             break;
         default:
             break;
@@ -984,8 +975,6 @@ static RESULT serialUSBDataSetup(USBCompositePart* part, uint8 request) {
     (*CopyRoutine)(0);
     return USB_SUCCESS;
 }
-
-uint8 info=0;
 
 static RESULT hidUSBDataSetup(USBCompositePart* part, uint8 request) {
     (void)part;
@@ -1080,17 +1069,14 @@ static RESULT serialUSBNoDataSetup(USBCompositePart* part, uint8 request) {
         switch(request) {
             case USBHID_CDCACM_SET_COMM_FEATURE:
 	            /* We support set comm. feature, but don't handle it. */
-	            if (haveSerial)
-                    ret = USB_SUCCESS;
+                ret = USB_SUCCESS;
 	            break;
 	        case USBHID_CDCACM_SET_CONTROL_LINE_STATE:
 	            /* Track changes to DTR and RTS. */
-	            if (haveSerial) {
-                    line_dtr_rts = (pInformation->USBwValues.bw.bb0 &
+                line_dtr_rts = (pInformation->USBwValues.bw.bb0 &
                                     (USBHID_CDCACM_CONTROL_LINE_DTR |
                                      USBHID_CDCACM_CONTROL_LINE_RTS));
-                    ret = USB_SUCCESS;
-                }
+                ret = USB_SUCCESS;
 	            break;
         }
     }
@@ -1116,19 +1102,6 @@ static RESULT hidUSBNoDataSetup(USBCompositePart* part, uint8 request) {
     }
     return ret;
 }
-
-/*
-static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
-    if (alt_setting > 0) {
-        return USB_UNSUPPORT;
-    } else if (interface > 1) {
-        return USB_UNSUPPORT;
-    }
-
-    return USB_SUCCESS;
-}
-*/
-
 
 /*
 static RESULT HID_SetProtocol(void){

@@ -82,11 +82,12 @@ size_t n = 0;
 
 size_t USBCompositeSerial::write(const uint8 *buf, uint32 len)
 {
-size_t n = 0;
+    size_t n = 0;
+
     if (!this->isConnected() || !buf) {
         return 0;
     }
-
+    
     uint32 txed = 0;
     while (txed < len) {
         txed += composite_cdcacm_tx((const uint8*)buf + txed, len - txed);

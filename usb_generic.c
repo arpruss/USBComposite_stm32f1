@@ -1,3 +1,4 @@
+unsigned char info;
 /******************************************************************************
  * The MIT License
  *
@@ -292,6 +293,7 @@ void usb_generic_enable(void) {
      * pull USB_DP pin up while leaving USB_DM pulled down by the
      * transceiver. See USB 2.0 spec, section 7.1.7.3. */
      
+#if 1
 #ifdef GENERIC_BOOTLOADER			
     //Reset the USB interface on generic boards - developed by Victor PV
     gpio_set_mode(GPIOA, 12, GPIO_OUTPUT_PP);
@@ -301,7 +303,6 @@ void usb_generic_enable(void) {
     gpio_set_mode(GPIOA, 12, GPIO_INPUT_FLOATING);
 #endif			
 
-#if 1
     if (BOARD_USB_DISC_DEV != NULL) {
         gpio_set_mode(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, GPIO_OUTPUT_PP);
         gpio_write_bit(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, 0);
@@ -475,7 +476,7 @@ static uint8* usbGetStringDescriptor(uint16 length) {
 static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
     if (alt_setting > 0) {
         return USB_UNSUPPORT;
-    } else if (interface > 1) {
+    } else if (interface >= usbConfig.Config_Header.bNumInterfaces) {
         return USB_UNSUPPORT;
     }
 
