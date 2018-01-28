@@ -260,6 +260,7 @@ static USBEndpointInfo hidEndpoints[1] = {
 
 static void getHIDPartDescriptor(USBCompositePart* part, uint8* out) {
     memcpy(out, &hidPartConfigData, sizeof(hid_part_config));
+    // patch to reflect where the part goes in the descriptor
     OUT_BYTE(hidPartConfigData, HID_Interface.bInterfaceNumber) += part->startInterface;
     OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += part->startEndpoint;
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenL) = (uint8)HID_Report_Descriptor.Descriptor_Size;
@@ -302,6 +303,7 @@ static USBEndpointInfo serialEndpoints[3] = {
 static void getSerialPartDescriptor(USBCompositePart* part, uint8* out) {
     memcpy(out, &serialPartConfigData, sizeof(serial_part_config));
 
+    // patch to reflect where the part goes in the descriptor
     OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += part->startEndpoint;
     OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
     OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += part->startEndpoint;

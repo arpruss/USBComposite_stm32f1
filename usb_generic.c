@@ -250,12 +250,6 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     
     my_Device_Table.Total_Endpoint = numEndpoints;
         
-    for (unsigned i = 0 ; i < 7 ; i++) {
-//        ep_int_in[i] = setInfo;
-//        ep_int_out[2] = setInfo;
-    }
-//    ep_int_in[0] = setInfo;
-    
     return 1;
 }
 
@@ -301,7 +295,6 @@ void usb_generic_enable(void) {
      * pull USB_DP pin up while leaving USB_DM pulled down by the
      * transceiver. See USB 2.0 spec, section 7.1.7.3. */
      
-#if 1
 #ifdef GENERIC_BOOTLOADER			
     //Reset the USB interface on generic boards - developed by Victor PV
     gpio_set_mode(GPIOA, 12, GPIO_OUTPUT_PP);
@@ -321,23 +314,10 @@ void usb_generic_enable(void) {
     saved_User_Standard_Requests = User_Standard_Requests;
     Device_Table = my_Device_Table;
     Device_Property = my_Device_Property;
-    //Device_Property.Init = saved_Device_Property.Init;
-    //Device_Property.Reset = saved_Device_Property.Reset;
-    //Device_Property.Class_Data_Setup = saved_Device_Property.Class_Data_Setup;
-    //Device_Property.Class_NoData_Setup = saved_Device_Property.Class_NoData_Setup;
-    //Device_Property.Class_Get_Interface_Setting = saved_Device_Property.Class_Get_Interface_Setting;
-    //Device_Property.GetDeviceDescriptor = saved_Device_Property.GetDeviceDescriptor;
-    //Device_Property.GetConfigDescriptor = saved_Device_Property.GetConfigDescriptor;
-    //Device_Property.GetStringDescriptor = saved_Device_Property.GetStringDescriptor;
-
-    //    Device_Property.Class_Data_Setup = usbDataSetup;
-//    Device_Property.Class_NoData_Setup = usbNoDataSetup;
     User_Standard_Requests = my_User_Standard_Requests;
     
     /* Initialize the USB peripheral. */
-    //USBLIB->ep_int_in[0] = NOP_Process;
     usb_init_usblib(USBLIB, ep_int_in, ep_int_out); 
-#endif    
 }
 
 static void usbInit(void) {
