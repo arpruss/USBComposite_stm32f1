@@ -57,14 +57,22 @@ HIDXBox360::HIDXBox360(void){
 
 void HIDXBox360::begin(void){
 	if(!enabled){
-		x360_enable();
+        parts[0] = &usbX360Part;
+        //parts[1] = &usbSerialPart; // TODO: support compositing with serial
+    
+        numParts = 1;
+        usb_generic_set_info(0x045e, 0x028e, NULL, NULL, NULL);
+        usb_generic_set_parts(parts, 1);
+        usb_generic_enable();
+
 		enabled = true;
 	}
 }
 
 void HIDXBox360::end(void){
 	if(enabled){
-	    x360_disable();
+	    setRumbleCallback(NULL);
+        setLEDCallback(NULL);
 		enabled = false;
 	}
 }

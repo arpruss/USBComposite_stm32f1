@@ -33,6 +33,7 @@
 #include "usb_generic.h"
 #include "usb_x360.h"
 
+#include <string.h>
 
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
@@ -82,6 +83,12 @@ typedef struct
 	uint8_t	descLenH;
 } HIDDescriptor;
 
+#define X360_ENDPOINT_TX 0
+#define X360_ENDPOINT_RX 1
+#define USB_X360_RX_ADDR x360Endpoints[X360_ENDPOINT_RX].pmaAddress
+#define USB_X360_TX_ADDR x360Endpoints[X360_ENDPOINT_TX].pmaAddress
+#define USB_X360_RX_ENDP x360Endpoints[X360_ENDPOINT_RX].address
+#define USB_X360_TX_ENDP x360Endpoints[X360_ENDPOINT_TX].address
 
 u16 GetEPTxAddr(u8 bEpNum);
 
@@ -92,10 +99,9 @@ static void x360DataRxCb(void);
 static void (*x360_rumble_callback)(uint8 left, uint8 right);
 static void (*x360_led_callback)(uint8 pattern);
 
-static void usbInit(void);
-static void usbReset(void);
-static RESULT x360DataSetup(uint8 request);
-static RESULT x360NoDataSetup(uint8 request);
+static void x360Reset(const USBCompositePart* part);
+static RESULT x360DataSetup(const USBCompositePart* part, uint8 request);
+static RESULT x360NoDataSetup(const USBCompositePart* part, uint8 request);
 static uint8 *HID_GetProtocolValue(uint16 Length);
 
 /*
@@ -210,7 +216,7 @@ typedef struct {
 
 
 #define MAX_POWER (100 >> 1)
-static const usb_descriptor_config usbHIDDescriptor_Config =
+static const usb_descriptor_config X360Descriptor_Config =
 {
 #if 0    
 	.Config_Header = {
@@ -245,8 +251,8 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
 	.DataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_X360_TX_ENDP),//PATCH
-        .bmAttributes     = 3, 
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | X360_ENDPOINT_TX),//PATCH
+        .bmAttributes     = USB_EP_TYPE_INTERRUPT, 
         .wMaxPacketSize   = 0x20, 
         .bInterval        = 4, 
 	},
@@ -254,11 +260,48 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
     .DataOutEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_X360_RX_ENDP),//PATCH
-        .bmAttributes     = 3, 
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | X360_ENDPOINT_RX),//PATCH
+        .bmAttributes     = USB_EP_TYPE_INTERRUPT, 
         .wMaxPacketSize   = 0x20, 
         .bInterval        = 8, 
     },
+};
+
+static USBEndpointInfo x360Endpoints[2] = {
+    {
+        .callback = x360DataTxCb,
+        .bufferSize = 0x20,
+        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .tx = 1
+    },
+    {
+        .callback = x360DataRxCb,
+        .bufferSize = 0x20,
+        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .tx = 0,
+    }
+};
+
+#define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
+
+static void getX360PartDescriptor(const USBCompositePart* part, uint8* out) {
+    memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
+    // patch to reflect where the part goes in the descriptor
+    OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += part->startInterface;
+    OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
+}
+
+USBCompositePart usbX360Part = {
+    .numInterfaces = 1,
+    .numEndpoints = sizeof(x360Endpoints)/sizeof(*x360Endpoints),
+    .descriptorSize = sizeof(X360Descriptor_Config),
+    .getPartDescriptor = getX360PartDescriptor,
+    .usbInit = NULL,
+    .usbReset = x360Reset,
+    .usbDataSetup = x360DataSetup,
+    .usbNoDataSetup = x360NoDataSetup,
+    .endpoints = x360Endpoints
 };
 
 
@@ -277,41 +320,6 @@ static volatile uint32 n_unsent_bytes = 0;
 /* Are we currently sending an IN packet? */
 static volatile uint8 transmitting = 0;
 
-/*
- * Endpoint callbacks
- */
-
-static void (*ep_int_in[7])(void) =
-    {x360DataTxCb,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process};
-
-static void (*ep_int_out[7])(void) =
-    {NOP_Process,
-     x360DataRxCb,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process,
-     NOP_Process};
-
-/*
- * Globals required by usb_lib/
- *
- * Override weak definitions in the core.
- */
-
-#define NUM_ENDPTS                0x03
-static DEVICE my_Device_Table = {
-    .Total_Endpoint      = NUM_ENDPTS,
-    .Total_Configuration = 1
-};
-
-#define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
 
 /*
  * HID interface
@@ -325,11 +333,11 @@ void x360_set_led_callback(void (*callback)(uint8 pattern)) {
     x360_led_callback = callback;
 }
 
-void x360_disable(void) {
+/*void x360_disable(void) {
     x360_set_rumble_callback(NULL);
     x360_set_led_callback(NULL);
     usb_generic_disable();
-}
+}*/
 
 void x360_putc(char ch) {
     while (!x360_tx((uint8*)&ch, 1))
@@ -431,21 +439,22 @@ static RESULT x360DataSetup(const USBCompositePart* part, uint8 request) {
     (void)part;
     uint8* (*CopyRoutine)(uint16) = 0;
 	
+#if 0			
 	if ((request == GET_DESCRIPTOR)
 		&& (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
 		&& (pInformation->USBwIndex0 == 0)){
-#if 0			
 		if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
 			CopyRoutine = HID_GetReportDescriptor;
 		} else 
-#endif            
         if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
 			CopyRoutine = HID_GetHIDDescriptor;
 		}
 		
 	} /* End of GET_DESCRIPTOR */
 	  /*** GET_PROTOCOL ***/
-	else if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))//){
+	else 
+#endif            
+        if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 			 && request == GET_PROTOCOL){
 		CopyRoutine = HID_GetProtocolValue;
 	}
@@ -470,4 +479,11 @@ static RESULT x360NoDataSetup(const USBCompositePart* part, uint8 request) {
 	}else{
 		return USB_UNSUPPORT;
 	}
+}
+
+static void x360Reset(const USBCompositePart* part) {
+    (void)part;
+      /* Reset the RX/TX state */
+    n_unsent_bytes = 0;
+    transmitting = 0;
 }
