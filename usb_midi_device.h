@@ -133,17 +133,8 @@ typedef struct {
  * Endpoint configuration
  */
 
-#define USB_MIDI_CTRL_ENDP            0
-#define USB_MIDI_CTRL_RX_ADDR         0x40
-#define USB_MIDI_CTRL_TX_ADDR         0x80
-#define USB_MIDI_CTRL_EPSIZE          0x40
-
-#define USB_MIDI_TX_ENDP              1
-#define USB_MIDI_TX_ADDR              0xC0
 #define USB_MIDI_TX_EPSIZE            0x40
 
-#define USB_MIDI_RX_ENDP              2
-#define USB_MIDI_RX_ADDR              0x100
 #define USB_MIDI_RX_EPSIZE            0x40
 
 #ifndef __cplusplus

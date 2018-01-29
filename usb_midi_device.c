@@ -34,6 +34,7 @@
  * the result made cleaner.
  */
 
+#include <string.h>
 #include "usb_generic.h"
 #include "usb_midi_device.h"
 #include <MidiSpecs.h>
@@ -55,13 +56,16 @@
 static void midiDataTxCb(void);
 static void midiDataRxCb(void);
 
-static void usbMIDIInit(const USBCompositePart* part);
 static void usbMIDIReset(const USBCompositePart* part);
 static RESULT usbMIDIDataSetup(const USBCompositePart* part, uint8 request);
 static RESULT usbMIDINoDataSetup(const USBCompositePart* part, uint8 request);
 
 #define MIDI_ENDPOINT_RX 0
 #define MIDI_ENDPOINT_TX 1
+#define USB_MIDI_RX_ENDP (midiEndpoints[MIDI_ENDPOINT_RX].address)
+#define USB_MIDI_TX_ENDP (midiEndpoints[MIDI_ENDPOINT_TX].address)
+#define USB_MIDI_RX_ADDR (midiEndpoints[MIDI_ENDPOINT_RX].pmaAddress)
+#define USB_MIDI_TX_ADDR (midiEndpoints[MIDI_ENDPOINT_TX].pmaAddress)
 
 /*
  * Descriptors
@@ -268,7 +272,7 @@ volatile uint8 myMidiID[] = { LEAFLABS_MMA_VENDOR_1,LEAFLABS_MMA_VENDOR_2,LEAFLA
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
 static void getMIDIPartDescriptor(const USBCompositePart* part, uint8* out) {
-    memcpy(out, &hidPartConfigData, sizeof(hid_part_config));
+    memcpy(out, &usbMIDIDescriptor_Config, sizeof(usbMIDIDescriptor_Config));
     // patch to reflect where the part goes in the descriptor
     OUT_BYTE(usbMIDIDescriptor_Config, AC_Interface.bInterfaceNumber) += part->startInterface;
     OUT_BYTE(usbMIDIDescriptor_Config, MS_Interface.bInterfaceNumber) += part->startInterface;
@@ -279,22 +283,22 @@ static void getMIDIPartDescriptor(const USBCompositePart* part, uint8* out) {
 static USBEndpointInfo midiEndpoints[2] = {
     {
         .callback = midiDataRxCb,
-        .bufferSize = USB_HID_TX_EPSIZE,
+        .bufferSize = USB_MIDI_RX_EPSIZE,
         .type = USB_EP_EP_TYPE_BULK, 
         .tx = 0
     },
     {
-        .callback = midiDataRxCb,
-        .bufferSize = USB_HID_TX_EPSIZE,
+        .callback = midiDataTxCb,
+        .bufferSize = USB_MIDI_TX_EPSIZE,
         .type = USB_EP_EP_TYPE_BULK, 
-        .tx = 0,
+        .tx = 1,
     }
 };
 
 USBCompositePart usbMIDIPart = {
     .numInterfaces = 2,
-    .numEndpoints = sizeof(hidEndpoints)/sizeof(*hidEndpoints),
-    .descriptorSize = sizeof(hid_part_config),
+    .numEndpoints = sizeof(midiEndpoints)/sizeof(*midiEndpoints),
+    .descriptorSize = sizeof(usbMIDIDescriptor_Config),
     .getPartDescriptor = getMIDIPartDescriptor,
     .usbInit = NULL,
     .usbReset = usbMIDIReset,
@@ -303,13 +307,14 @@ USBCompositePart usbMIDIPart = {
     .endpoints = midiEndpoints
 };
 
+static USBCompositePart* usbMIDIPart_ptr = &usbMIDIPart;
 
 /*
  * MIDI interface
  */
 
 void usb_midi_enable(void) {
-    usb_generic_set_parts(&usbMIDIPart, 1);
+    usb_generic_set_parts(&usbMIDIPart_ptr, 1);
     usb_generic_enable();
 }
 
@@ -465,6 +470,7 @@ static void midiDataRxCb(void) {
 }
 
 static void usbMIDIReset(const USBCompositePart* part) {
+    (void)part;
 
     /* Reset the RX/TX state */
     n_unread_packets = 0;
@@ -472,8 +478,10 @@ static void usbMIDIReset(const USBCompositePart* part) {
     rx_offset = 0;
 }
 
-static RESULT usbDataSetup(const USBCompositePart* part, uint8 request) {
+static RESULT usbMIDIDataSetup(const USBCompositePart* part, uint8 request) {
     (void)request;//unused
+    (void)part;
+#if 0
     uint8* (*CopyRoutine)(uint16) = 0;
 
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
@@ -487,18 +495,23 @@ static RESULT usbDataSetup(const USBCompositePart* part, uint8 request) {
     pInformation->Ctrl_Info.Usb_wOffset = 0;
     (*CopyRoutine)(0);
     return USB_SUCCESS;
+#endif
+    return USB_UNSUPPORT;
 }
 
-static RESULT usbNoDataSetup(const USBCompositePart* part, uint8 request) {
+static RESULT usbMIDINoDataSetup(const USBCompositePart* part, uint8 request) {
     (void)request;//unused
+    (void)part;//unused
+#if 0    
     RESULT ret = USB_UNSUPPORT;
 
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
     }
     return ret;
+#endif    
+    return USB_UNSUPPORT;
 }
 
-static RESULT usbGetInterfaceSetting(uint8 interface,
 // .............THIS IS NOT WORKING YET................
 // send debugging information to 
 static uint8_t sysexbuffer[80]={CIN_SYSEX,0xF0,0x7D,0x33,CIN_SYSEX,0x33,0x00,0xf7}; // !!!bad hardcoded number foo !!!
