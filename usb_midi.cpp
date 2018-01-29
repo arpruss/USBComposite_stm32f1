@@ -60,10 +60,12 @@
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
+#include <wirish.h>
 #include "usb_midi_device.h"
 #include <libmaple/usb.h>
+#include "usb_serial.h"
+#include "usb_generic.h"
 
-#include <wirish.h>
 
 /*
  * USBMidi interface
@@ -79,7 +81,13 @@ USBMidi::USBMidi(void) {
 //  take over serial port yet)
 
 void USBMidi::begin(unsigned int channel) {
-    usb_midi_enable();
+    parts[0] = &usbMIDIPart;
+    //parts[1] = &usbSerialPart; // TODO: support compositing with serial
+    numParts = 1;
+    usb_generic_set_parts(parts, 1);
+    usb_generic_enable();
+
+
     /* Not in proprietary stream */
     recvMode_ = 0;
     /* No bytes recevied */
@@ -98,7 +106,7 @@ void USBMidi::begin(unsigned int channel) {
 }
 
 void USBMidi::end(void) {
-    usb_midi_disable();
+    usb_generic_disable();
 }
 
 void USBMidi::writePacket(uint32 p) {

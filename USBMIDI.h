@@ -32,8 +32,9 @@
 #ifndef _WIRISH_USB_MIDI_H_
 #define _WIRISH_USB_MIDI_H_
 
-#include <Print.h>
+//#include <Print.h>
 #include <boards.h>
+#include "usb_generic.h"
 
 /*
  * This is the Midi class.  If you are just sending Midi data, you only need to make an
@@ -95,6 +96,8 @@
 
 class USBMidi {
 private:
+    USBCompositePart* parts[4];
+    unsigned numParts;
     // The serial port used by this Midi instance (it takes complete control over the port)
     
     /* Private Receive Parameters */

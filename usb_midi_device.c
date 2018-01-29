@@ -307,20 +307,9 @@ USBCompositePart usbMIDIPart = {
     .endpoints = midiEndpoints
 };
 
-static USBCompositePart* usbMIDIPart_ptr = &usbMIDIPart;
-
 /*
  * MIDI interface
  */
-
-void usb_midi_enable(void) {
-    usb_generic_set_parts(&usbMIDIPart_ptr, 1);
-    usb_generic_enable();
-}
-
-void usb_midi_disable(void) {
-    usb_generic_disable();
-}
 
  /* TODO these could use some improvement; they're fairly
  * straightforward ports of the analogous ST code.  The PMA blit

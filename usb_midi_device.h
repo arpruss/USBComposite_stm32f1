@@ -36,10 +36,13 @@
 #include <libmaple/gpio.h>
 #include <libmaple/usb.h>
 #include <MinSysex.h>
+#include "usb_generic.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern USBCompositePart usbMIDIPart;
 
 typedef union {
 	uint8  byte[4];
@@ -168,9 +171,6 @@ typedef struct {
  * MIDI interface
  */
 
-    void usb_midi_enable();
-    void usb_midi_disable();
-    
     void usb_midi_putc(char ch);
     uint32 usb_midi_tx(const uint32* buf, uint32 len);
     uint32 usb_midi_rx(uint32* buf, uint32 len);
