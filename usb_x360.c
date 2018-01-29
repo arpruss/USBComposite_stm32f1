@@ -87,25 +87,16 @@ u16 GetEPTxAddr(u8 bEpNum);
 
 static uint32 ProtocolValue;
 
-static void hidDataTxCb(void);
+static void x360DataTxCb(void);
 static void x360DataRxCb(void);
 static void (*x360_rumble_callback)(uint8 left, uint8 right);
 static void (*x360_led_callback)(uint8 pattern);
 
 static void usbInit(void);
 static void usbReset(void);
-static RESULT usbDataSetup(uint8 request);
-static RESULT usbNoDataSetup(uint8 request);
-static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
-static uint8* usbGetDeviceDescriptor(uint16 length);
-static uint8* usbGetConfigDescriptor(uint16 length);
-static uint8* usbGetStringDescriptor(uint16 length);
-static void usbSetConfiguration(void);
-static void usbSetDeviceAddress(void);
-//static RESULT HID_SetProtocol(void);
+static RESULT x360DataSetup(uint8 request);
+static RESULT x360NoDataSetup(uint8 request);
 static uint8 *HID_GetProtocolValue(uint16 Length);
-//static uint8 *HID_GetReportDescriptor(uint16 Length);
-static uint8 *HID_GetHIDDescriptor(uint16 Length);
 
 /*
  * Descriptors
@@ -209,11 +200,8 @@ const uint8_t hid_report_descriptor[] = {
 };
 #endif
 
-static const usb_descriptor_device usbHIDDescriptor_Device =
-USB_X360_DECLARE_DEV_DESC(0x045e, 0x028e);
-
 typedef struct {
-    usb_descriptor_config_header Config_Header;
+//    usb_descriptor_config_header Config_Header;
     usb_descriptor_interface     HID_Interface;
     uint8                        unknown_descriptor1[17];
     usb_descriptor_endpoint      DataInEndpoint;
@@ -224,6 +212,7 @@ typedef struct {
 #define MAX_POWER (100 >> 1)
 static const usb_descriptor_config usbHIDDescriptor_Config =
 {
+#if 0    
 	.Config_Header = {
 		.bLength 			  = sizeof(usb_descriptor_config_header),
         .bDescriptorType      = USB_DESCRIPTOR_TYPE_CONFIGURATION,
@@ -235,13 +224,14 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
                                  USB_CONFIG_ATTR_SELF_POWERED),
         .bMaxPower            = MAX_POWER,
 	},
+#endif    
 	
 	.HID_Interface = {
 		.bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = 0x00,
+        .bInterfaceNumber   = 0x00,  // PATCH
         .bAlternateSetting  = 0x00,
-        .bNumEndpoints      = 0x02,
+        .bNumEndpoints      = 0x02,  
         .bInterfaceClass    = 0xFF, 
         .bInterfaceSubClass = 0x5D,
         .bInterfaceProtocol = 0x01, 
@@ -255,7 +245,7 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
 	.DataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_X360_TX_ENDP),//0x81,//USB_X360_TX_ADDR,
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | USB_X360_TX_ENDP),//PATCH
         .bmAttributes     = 3, 
         .wMaxPacketSize   = 0x20, 
         .bInterval        = 4, 
@@ -264,78 +254,13 @@ static const usb_descriptor_config usbHIDDescriptor_Config =
     .DataOutEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_X360_RX_ENDP),
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | USB_X360_RX_ENDP),//PATCH
         .bmAttributes     = 3, 
         .wMaxPacketSize   = 0x20, 
         .bInterval        = 8, 
     },
 };
 
-/*
-  String Descriptors:
-
-  we may choose to specify any or none of the following string
-  identifiers:
-
-  iManufacturer:    LeafLabs
-  iProduct:         Maple
-  iSerialNumber:    NONE
-  iConfiguration:   NONE
-  iInterface(CCI):  NONE
-  iInterface(DCI):  NONE
-
-*/
-
-/* Unicode language identifier: 0x0409 is US English */
-static const usb_descriptor_string usbHIDDescriptor_LangID = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(1),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {0x09, 0x04},
-};
-
-static const usb_descriptor_string usbHIDDescriptor_iManufacturer = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(8),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0,
-                'L', 0, 'a', 0, 'b', 0, 's', 0},
-};
-
-static const usb_descriptor_string usbHIDDescriptor_iProduct = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(5),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
-};
-
-static const usb_descriptor_string usbHIDDescriptor_iInterface = {
-    .bLength = USB_DESCRIPTOR_STRING_LEN(3),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString = {'H', 0, 'I', 0, 'D', 0},
-};
-
-static ONE_DESCRIPTOR usbHIDDevice_Descriptor = {
-    (uint8*)&usbHIDDescriptor_Device,
-    sizeof(usb_descriptor_device)
-};
-
-static ONE_DESCRIPTOR usbHIDConfig_Descriptor = {
-    (uint8*)&usbHIDDescriptor_Config,
-    sizeof(usbHIDDescriptor_Config)
-};
-
-#if 0 
-static ONE_DESCRIPTOR HID_Report_Descriptor = {
-    (uint8*)&hid_report_descriptor,
-    sizeof(hid_report_descriptor)
-};
-#endif
-
-#define N_STRING_DESCRIPTORS 4
-static ONE_DESCRIPTOR usbHIDString_Descriptor[N_STRING_DESCRIPTORS] = {
-    {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
-    {(uint8*)&usbHIDDescriptor_iManufacturer,USB_DESCRIPTOR_STRING_LEN(8)},
-    {(uint8*)&usbHIDDescriptor_iProduct,     USB_DESCRIPTOR_STRING_LEN(5)},
-    {(uint8*)&usbHIDDescriptor_iInterface,     USB_DESCRIPTOR_STRING_LEN(3)}
-};
 
 /*
  * Etc.
@@ -357,7 +282,7 @@ static volatile uint8 transmitting = 0;
  */
 
 static void (*ep_int_in[7])(void) =
-    {hidDataTxCb,
+    {x360DataTxCb,
      NOP_Process,
      NOP_Process,
      NOP_Process,
@@ -387,32 +312,6 @@ static DEVICE my_Device_Table = {
 };
 
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
-static DEVICE_PROP my_Device_Property = {
-    .Init                        = usbInit,
-    .Reset                       = usbReset,
-    .Process_Status_IN           = NOP_Process,
-    .Process_Status_OUT          = NOP_Process,
-    .Class_Data_Setup            = usbDataSetup,
-    .Class_NoData_Setup          = usbNoDataSetup,
-    .Class_Get_Interface_Setting = usbGetInterfaceSetting,
-    .GetDeviceDescriptor         = usbGetDeviceDescriptor,
-    .GetConfigDescriptor         = usbGetConfigDescriptor,
-    .GetStringDescriptor         = usbGetStringDescriptor,
-    .RxEP_buffer                 = NULL,
-    .MaxPacketSize               = MAX_PACKET_SIZE
-};
-
-static USER_STANDARD_REQUESTS my_User_Standard_Requests = {
-    .User_GetConfiguration   = NOP_Process,
-    .User_SetConfiguration   = usbSetConfiguration,
-    .User_GetInterface       = NOP_Process,
-    .User_SetInterface       = NOP_Process,
-    .User_GetStatus          = NOP_Process,
-    .User_ClearFeature       = NOP_Process,
-    .User_SetEndPointFeature = NOP_Process,
-    .User_SetDeviceFeature   = NOP_Process,
-    .User_SetDeviceAddress   = usbSetDeviceAddress
-};
 
 /*
  * HID interface
@@ -424,10 +323,6 @@ void x360_set_rumble_callback(void (*callback)(uint8 left, uint8 right)) {
 
 void x360_set_led_callback(void (*callback)(uint8 pattern)) {
     x360_led_callback = callback;
-}
-
-void x360_enable(void) {
-    usb_generic_enable(&my_Device_Table, &my_Device_Property, &my_User_Standard_Requests, ep_int_in, ep_int_out);
 }
 
 void x360_disable(void) {
@@ -527,73 +422,13 @@ static void x360DataRxCb(void)
  * Callbacks
  */
 
-static void hidDataTxCb(void) {
+static void x360DataTxCb(void) {
     n_unsent_bytes = 0;
     transmitting = 0;
 }
 
-static void usbInit(void) {
-    pInformation->Current_Configuration = 0;
-
-    USB_BASE->CNTR = USB_CNTR_FRES;
-
-    USBLIB->irq_mask = 0;
-    USB_BASE->CNTR = USBLIB->irq_mask;
-    USB_BASE->ISTR = 0;
-    USBLIB->irq_mask = USB_CNTR_RESETM | USB_CNTR_SUSPM | USB_CNTR_WKUPM;
-    USB_BASE->CNTR = USBLIB->irq_mask;
-
-    USB_BASE->ISTR = 0;
-    USBLIB->irq_mask = USB_ISR_MSK;
-    USB_BASE->CNTR = USBLIB->irq_mask;
-
-    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
-    USBLIB->state = USB_UNCONNECTED;
-}
-
-#define BTABLE_ADDRESS        0x00
-static void usbReset(void) {
-    pInformation->Current_Configuration = 0;
-
-    /* current feature is current bmAttributes */
-    pInformation->Current_Feature = (USB_CONFIG_ATTR_BUSPOWERED |
-                                     USB_CONFIG_ATTR_SELF_POWERED);
-
-    USB_BASE->BTABLE = BTABLE_ADDRESS;
-
-    /* setup control endpoint 0 */
-    usb_set_ep_type(USB_EP0, USB_EP_EP_TYPE_CONTROL);
-    usb_set_ep_tx_stat(USB_EP0, USB_EP_STAT_TX_STALL);
-    usb_set_ep_rx_addr(USB_EP0, USB_X360_CTRL_RX_ADDR);
-    usb_set_ep_tx_addr(USB_EP0, USB_X360_CTRL_TX_ADDR);
-    usb_clear_status_out(USB_EP0);
-
-    usb_set_ep_rx_count(USB_EP0, pProperty->MaxPacketSize);
-    usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
-
-    /* TODO figure out differences in style between RX/TX EP setup */
-#if 1
-    /* set up data endpoint OUT (RX) */
-    usb_set_ep_type(USB_X360_RX_ENDP, USB_EP_EP_TYPE_BULK);
-    usb_set_ep_rx_addr(USB_X360_RX_ENDP, USB_X360_RX_ADDR);
-    usb_set_ep_rx_count(USB_X360_RX_ENDP, USB_X360_RX_EPSIZE);
-    usb_set_ep_rx_stat(USB_X360_RX_ENDP, USB_EP_STAT_RX_VALID);
-#endif
-    /* set up data endpoint IN (TX)  */
-    usb_set_ep_type(USB_X360_TX_ENDP, USB_EP_EP_TYPE_BULK);
-    usb_set_ep_tx_addr(USB_X360_TX_ENDP, USB_X360_TX_ADDR);
-    usb_set_ep_tx_stat(USB_X360_TX_ENDP, USB_EP_STAT_TX_NAK);
-    usb_set_ep_rx_stat(USB_X360_TX_ENDP, USB_EP_STAT_RX_DISABLED);
-
-    USBLIB->state = USB_ATTACHED;
-    SetDeviceAddress(0);
-
-    /* Reset the RX/TX state */
-    n_unsent_bytes = 0;
-    transmitting = 0;
-}
-
-static RESULT usbDataSetup(uint8 request) {
+static RESULT x360DataSetup(const USBCompositePart* part, uint8 request) {
+    (void)part;
     uint8* (*CopyRoutine)(uint16) = 0;
 	
 	if ((request == GET_DESCRIPTOR)
@@ -625,78 +460,14 @@ static RESULT usbDataSetup(uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT usbNoDataSetup(uint8 request) {
+static RESULT x360NoDataSetup(const USBCompositePart* part, uint8 request) {
+    (void)part;
 	if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 		&& (request == SET_PROTOCOL)){
 		uint8 wValue0 = pInformation->USBwValue0;
 		ProtocolValue = wValue0;
 		return USB_SUCCESS;
-		//return HID_SetProtocol();
 	}else{
 		return USB_UNSUPPORT;
 	}
-}
-
-static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
-    if (alt_setting > 0) {
-        return USB_UNSUPPORT;
-    } else if (interface > 1) {
-        return USB_UNSUPPORT;
-    }
-
-    return USB_SUCCESS;
-}
-
-static uint8* usbGetDeviceDescriptor(uint16 length) {
-    return Standard_GetDescriptorData(length, &usbHIDDevice_Descriptor);
-}
-
-static uint8* usbGetConfigDescriptor(uint16 length) {
-    return Standard_GetDescriptorData(length, &usbHIDConfig_Descriptor);
-}
-
-static uint8* usbGetStringDescriptor(uint16 length) {
-    uint8 wValue0 = pInformation->USBwValue0;
-
-    if (wValue0 >= N_STRING_DESCRIPTORS) {
-        return NULL;
-    }
-    return Standard_GetDescriptorData(length, &usbHIDString_Descriptor[wValue0]);
-}
-
-/*
-static RESULT HID_SetProtocol(void){
-	uint8 wValue0 = pInformation->USBwValue0;
-	ProtocolValue = wValue0;
-	return USB_SUCCESS;
-}
-*/
-static uint8* HID_GetProtocolValue(uint16 Length){
-	if (Length == 0){
-		pInformation->Ctrl_Info.Usb_wLength = 1;
-		return NULL;
-	} else {
-		return (uint8 *)(&ProtocolValue);
-	}
-}
-
-#if 0
-static uint8* HID_GetReportDescriptor(uint16 Length){
-  return Standard_GetDescriptorData(Length, &HID_Report_Descriptor);
-}
-#endif
-
-static uint8* HID_GetHIDDescriptor(uint16 Length)
-{
-  return Standard_GetDescriptorData(Length, &usbHIDConfig_Descriptor);
-}
-
-static void usbSetConfiguration(void) {
-    if (pInformation->Current_Configuration != 0) {
-        USBLIB->state = USB_CONFIGURED;
-    }
-}
-
-static void usbSetDeviceAddress(void) {
-    USBLIB->state = USB_ADDRESSED;
 }

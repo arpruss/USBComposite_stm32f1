@@ -97,7 +97,6 @@ static const serial_part_config serialPartConfigData = {
 		.bFunctionProtocol	= 0x01,
 		.iFunction			= 0x02,
 	}, 
-
     .CCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
