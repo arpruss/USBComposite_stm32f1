@@ -481,6 +481,15 @@ static RESULT x360NoDataSetup(const USBCompositePart* part, uint8 request) {
 	}
 }
 
+static uint8* HID_GetProtocolValue(uint16 Length){
+	if (Length == 0){
+		pInformation->Ctrl_Info.Usb_wLength = 1;
+		return NULL;
+	} else {
+		return (uint8 *)(&ProtocolValue);
+	}
+}
+
 static void x360Reset(const USBCompositePart* part) {
     (void)part;
       /* Reset the RX/TX state */
