@@ -119,6 +119,7 @@ private:
     //  (Midi can just send a single command byte and then stream events without
     //  sending the command each time)
     bool sendFullCommands_;
+    bool supportSerial;
     
     /* Internal functions */
     

@@ -83,10 +83,10 @@ USBMidi::USBMidi(void) {
 void USBMidi::begin(unsigned int channel) {
     parts[0] = &usbMIDIPart;
     //parts[1] = &usbSerialPart; // TODO: support compositing with serial
+    
     numParts = 1;
     usb_generic_set_parts(parts, 1);
     usb_generic_enable();
-
 
     /* Not in proprietary stream */
     recvMode_ = 0;
