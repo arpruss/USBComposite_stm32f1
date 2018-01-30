@@ -6,7 +6,7 @@
 #include <usb_lib_globals.h>
 
 #define PMA_MEMORY_SIZE 512
-#define MAX_USB_DESCRIPTOR_DATA_SIZE 320
+#define MAX_USB_DESCRIPTOR_DATA_SIZE 200
 
 #define USB_EP0_BUFFER_SIZE       0x40
 #define USB_EP0_TX_BUFFER_ADDRESS 0x40

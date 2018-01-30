@@ -65,9 +65,9 @@ static volatile HIDBuffer_t* currentHIDBuffer = NULL;
 
 //#define DUMMY_BUFFER_SIZE 0x40 // at least as big as a buffer size
 
-#define HID_INTERFACE_NUMBER 	0x00
+#define HID_INTERFACE_OFFSET 	0x00
 #define NUM_HID_ENDPOINTS          1
-
+#define HID_INTERFACE_NUMBER (HID_INTERFACE_OFFSET+usbHIDPart.startInterface)
 
 /*
  * Descriptors
@@ -92,7 +92,7 @@ static const hid_part_config hidPartConfigData = {
 	.HID_Interface = {
 		.bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = HID_INTERFACE_NUMBER, // PATCH
+        .bInterfaceNumber   = HID_INTERFACE_OFFSET, // PATCH
         .bAlternateSetting  = 0x00,
         .bNumEndpoints      = NUM_HID_ENDPOINTS,    
         .bInterfaceClass    = USB_INTERFACE_CLASS_HID,
@@ -523,7 +523,7 @@ static RESULT hidUSBDataSetup(const USBCompositePart* part, uint8 request) {
 	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
     	switch (request){
     		case GET_DESCRIPTOR:
-    			if(pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){						
+    			if(pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){
 					if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
 						CopyRoutine = HID_GetReportDescriptor;
 					} 					

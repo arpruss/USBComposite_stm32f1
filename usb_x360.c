@@ -83,6 +83,8 @@ typedef struct
 	uint8_t	descLenH;
 } HIDDescriptor;
 
+#define X360_INTERFACE_OFFSET 0
+#define X360_INTERFACE_NUMBER (X360_INTERFACE_OFFSET+usbX360Part.startInterface)
 #define X360_ENDPOINT_TX 0
 #define X360_ENDPOINT_RX 1
 #define USB_X360_RX_ADDR x360Endpoints[X360_ENDPOINT_RX].pmaAddress
@@ -235,7 +237,7 @@ static const usb_descriptor_config X360Descriptor_Config =
 	.HID_Interface = {
 		.bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = 0x00,  // PATCH
+        .bInterfaceNumber   = X360_INTERFACE_OFFSET,  // PATCH
         .bAlternateSetting  = 0x00,
         .bNumEndpoints      = 0x02,  
         .bInterfaceClass    = 0xFF, 
@@ -440,7 +442,8 @@ static RESULT x360DataSetup(const USBCompositePart* part, uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
 	
 #if 0			
-	if ((request == GET_DESCRIPTOR)
+	if (request == GET_DESCRIPTOR
+        && pInformation->USBwIndex0 == X360_INTERFACE_NUMBER && 
 		&& (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
 		&& (pInformation->USBwIndex0 == 0)){
 		if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
@@ -454,7 +457,8 @@ static RESULT x360DataSetup(const USBCompositePart* part, uint8 request) {
 	  /*** GET_PROTOCOL ***/
 	else 
 #endif            
-        if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
+        if(pInformation->USBwIndex0 == X360_INTERFACE_NUMBER && 
+            (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 			 && request == GET_PROTOCOL){
 		CopyRoutine = HID_GetProtocolValue;
 	}
