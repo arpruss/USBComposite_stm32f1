@@ -4,6 +4,7 @@
 //#include <usb_type.h>
 //#include <usb_core.h>
 #include <usb_lib_globals.h>
+#include <usb.h>
 
 #define PMA_MEMORY_SIZE 512
 #define MAX_USB_DESCRIPTOR_DATA_SIZE 200
@@ -15,6 +16,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern usb_descriptor_string usb_generic_default_iManufacturer;
+extern usb_descriptor_string usb_generic_default_iProduct;
 
 typedef struct USBEndpointInfo {
     void (*callback)(void);

@@ -139,14 +139,14 @@ static const usb_descriptor_string usbHIDDescriptor_LangID = {
 };
 
 #define default_iManufacturer_length 8
-static const usb_descriptor_string usbHIDDescriptor_iManufacturer = {
+static const usb_descriptor_string usb_generic_default_iManufacturer = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0, 'L', 0, 'a', 0, 'b', 0, 's', 0},
 };
 
 #define default_iProduct_length 5
-static const usb_descriptor_string usbHIDDescriptor_iProduct = {
+static const usb_descriptor_string usb_generic_default_iProduct = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iProduct_length),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
@@ -187,8 +187,8 @@ static uint8 numStringDescriptors = 3;
 #define MAX_STRING_DESCRIPTORS 4
 static ONE_DESCRIPTOR String_Descriptor[MAX_STRING_DESCRIPTORS] = {
     {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
-    {(uint8*)&usbHIDDescriptor_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
-    {(uint8*)&usbHIDDescriptor_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
+    {(uint8*)&usb_generic_default_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
+    {(uint8*)&usb_generic_default_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
     {NULL,                                            0},
 };
 
@@ -266,14 +266,14 @@ void usb_generic_set_info( uint16 idVendor, uint16 idProduct, const uint8* iManu
         usbGenericDescriptor_Device.idProduct = MAPLE_ID_PRODUCT;
     
     if (iManufacturer == NULL) {
-        iManufacturer = (uint8*)&usbHIDDescriptor_iManufacturer;
+        iManufacturer = (uint8*)&usb_generic_default_iManufacturer;
     }
            
     String_Descriptor[1].Descriptor = (uint8*)iManufacturer;
     String_Descriptor[1].Descriptor_Size = iManufacturer[0];
      
     if (iProduct == NULL) {
-        iProduct = (uint8*)&usbHIDDescriptor_iProduct;
+        iProduct = (uint8*)&usb_generic_default_iProduct;
     }
            
     String_Descriptor[2].Descriptor = (uint8*)iProduct;
