@@ -139,14 +139,14 @@ static const usb_descriptor_string usbHIDDescriptor_LangID = {
 };
 
 #define default_iManufacturer_length 8
-static const usb_descriptor_string usb_generic_default_iManufacturer = {
+const usb_descriptor_string usb_generic_default_iManufacturer = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0, 'L', 0, 'a', 0, 'b', 0, 's', 0},
 };
 
 #define default_iProduct_length 5
-static const usb_descriptor_string usb_generic_default_iProduct = {
+const usb_descriptor_string usb_generic_default_iProduct = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iProduct_length),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
