@@ -311,38 +311,6 @@ USBCompositePart usbMIDIPart = {
  * MIDI interface
  */
 
- /* TODO these could use some improvement; they're fairly
- * straightforward ports of the analogous ST code.  The PMA blit
- * routines in particular are obvious targets for performance
- * measurement and tuning. */
-
-static void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
-    uint16 *dst = (uint16*)usb_pma_ptr(pma_offset);
-    uint16 n = len >> 1;
-    uint16 i;
-    for (i = 0; i < n; i++) {
-        *dst = (uint16)(*buf) | *(buf + 1) << 8;
-        buf += 2;
-        dst += 2;
-    }
-    if (len & 1) {
-        *dst = *buf;
-    }
-}
-
-static void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
-    uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
-    uint16 *dst = (uint16*)buf;
-    uint16 n = len >> 1;
-    uint16 i;
-    for (i = 0; i < n; i++) {
-        *dst++ = *src++;
-    }
-    if (len & 1) {
-        *dst = *src & 0xFF;
-    }
-}
-
 /* This function is non-blocking.
  *
  * It copies data from a usercode buffer into the USB peripheral TX

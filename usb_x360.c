@@ -346,19 +346,6 @@ void x360_putc(char ch) {
         ;
 }
 
-static void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
-    uint16 *dst = (uint16*)usb_pma_ptr(pma_offset);
-    uint16 n = len >> 1;
-    uint16 i;
-    for (i = 0; i < n; i++) {
-        *dst = (uint16)(*buf) | *(buf + 1) << 8;
-        buf += 2;
-        dst += 2;
-    }
-    if (len & 1) {
-        *dst = *buf;
-    }
-}
 
 /* This function is non-blocking.
  *

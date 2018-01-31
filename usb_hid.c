@@ -125,7 +125,7 @@ static USBEndpointInfo hidEndpoints[1] = {
     {
         .callback = hidDataTxCb,
         .bufferSize = USB_HID_TX_EPSIZE,
-        .type = USB_EP_EP_TYPE_BULK, // TODO: interrupt???
+        .type = USB_EP_EP_TYPE_INTERRUPT, // TODO: interrupt???
         .tx = 1,
     }
 };
@@ -150,6 +150,8 @@ USBCompositePart usbHIDPart = {
     .usbReset = hidUSBReset,
     .usbDataSetup = hidUSBDataSetup,
     .usbNoDataSetup = hidUSBNoDataSetup,
+    .usbClearFeature = NULL,
+    .usbSetConfiguration = NULL,
     .endpoints = hidEndpoints
 };
 

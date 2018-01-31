@@ -73,6 +73,7 @@ void HIDXBox360::end(void){
 	    setRumbleCallback(NULL);
         setLEDCallback(NULL);
 		enabled = false;
+        usb_generic_disable();
 	}
 }
 

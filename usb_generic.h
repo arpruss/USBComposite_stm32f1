@@ -38,6 +38,8 @@ typedef struct USBCompositePart {
     void (*getPartDescriptor)(const struct USBCompositePart* part, uint8* out);
     void (*usbInit)(const struct USBCompositePart* part);
     void (*usbReset)(const struct USBCompositePart* part);
+    void (*usbSetConfiguration)(const struct USBCompositePart* part);
+    void (*usbClearFeature)(const struct USBCompositePart* part);
     RESULT (*usbDataSetup)(const struct USBCompositePart* part, uint8 request);
     RESULT (*usbNoDataSetup)(const struct USBCompositePart* part, uint8 request);
     USBEndpointInfo* endpoints;
@@ -48,6 +50,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
 void usb_generic_disable(void);
 void usb_generic_enable(void);
 extern volatile int8 usbGenericTransmitting;
+void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset);
+void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset);
 
 #ifdef __cplusplus
 }

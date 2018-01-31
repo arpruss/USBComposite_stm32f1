@@ -60,6 +60,8 @@ volatile int8 usbGenericTransmitting = -1;
 static uint8* usbGetConfigDescriptor(uint16 length);
 static void usbInit(void);
 static void usbReset(void);
+static void usbClearFeature(void);
+static void usbSetConfiguration(void);
 static RESULT usbDataSetup(uint8 request);
 static RESULT usbNoDataSetup(uint8 request);
 static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
@@ -175,7 +177,7 @@ static const USER_STANDARD_REQUESTS my_User_Standard_Requests = {
     .User_GetInterface       = NOP_Process,
     .User_SetInterface       = NOP_Process,
     .User_GetStatus          = NOP_Process,
-    .User_ClearFeature       = NOP_Process,
+    .User_ClearFeature       = usbClearFeature,
     .User_SetEndPointFeature = NOP_Process,
     .User_SetDeviceFeature   = NOP_Process,
     .User_SetDeviceAddress   = usbSetDeviceAddress
@@ -452,6 +454,17 @@ static void usbSetConfiguration(void) {
     if (pInformation->Current_Configuration != 0) {
         USBLIB->state = USB_CONFIGURED;
     }
+    for (unsigned i = 0 ; i < numParts ; i++) {
+        if (parts[i]->usbSetConfiguration != NULL)
+            parts[i]->usbSetConfiguration(parts[i]);
+    }
+}
+
+static void usbClearFeature(void) {
+    for (unsigned i = 0 ; i < numParts ; i++) {
+        if (parts[i]->usbClearFeature != NULL)
+            parts[i]->usbClearFeature(parts[i]);
+    }
 }
 
 static void usbSetDeviceAddress(void) {
@@ -485,3 +498,31 @@ static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
 
     return USB_SUCCESS;
 }
+
+void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
+    uint16 *dst = (uint16*)usb_pma_ptr(pma_offset);
+    uint16 n = len >> 1;
+    uint16 i;
+    for (i = 0; i < n; i++) {
+        *dst = (uint16)(*buf) | *(buf + 1) << 8;
+        buf += 2;
+        dst += 2;
+    }
+    if (len & 1) {
+        *dst = *buf;
+    }
+}
+
+void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
+    uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
+    uint16 *dst = (uint16*)buf;
+    uint16 n = len >> 1;
+    uint16 i;
+    for (i = 0; i < n; i++) {
+        *dst++ = *src++;
+    }
+    if (len & 1) {
+        *dst = *src & 0xFF;
+    }
+}
+
