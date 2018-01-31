@@ -3,6 +3,7 @@
 #include "usb_generic.h"
 #include "usb_mass.h"
 #include "usb_scsi.h"
+#include "usb_mass_internal.h"
 
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
@@ -28,18 +29,12 @@ static void usb_mass_reset(const USBCompositePart* part);
 static uint8_t* usb_mass_get_max_lun(uint16_t Length);
 static void usb_mass_in(void);
 static void usb_mass_out(void);
-uint32_t usb_mass_sil_write(uint8_t bEpAddr, uint8_t* pBufferPointer, uint32_t wBufferSize);
-uint32_t usb_mass_sil_read(uint8_t bEpAddr, uint8_t* pBufferPointer);
+uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize);
+uint32_t usb_mass_sil_read(uint8_t* pBufferPointer);
 
 #define MASS_INTERFACE_OFFSET 	0x00
 #define MASS_INTERFACE_NUMBER (MASS_INTERFACE_OFFSET+usbMassPart.startInterface)
 
-#define MASS_ENDPOINT_TX 0
-#define MASS_ENDPOINT_RX 0
-#define USB_MASS_RX_ENDP (massEndpoints[MASS_ENDPOINT_RX].address)
-#define USB_MASS_TX_ENDP (massEndpoints[MASS_ENDPOINT_TX].address)
-#define USB_MASS_RX_ADDR (massEndpoints[MASS_ENDPOINT_RX].pmaAddress)
-#define USB_MASS_TX_ADDR (massEndpoints[MASS_ENDPOINT_TX].pmaAddress)
 
 #define LUN_DATA_LENGTH            1
 
@@ -109,17 +104,17 @@ const mass_descriptor_config usbMassConfigDescriptor = {
   }
 };
 
-static USBEndpointInfo massEndpoints[2] = {
+USBEndpointInfo usbMassEndpoints[2] = {
     {
         .callback = usb_mass_in,
         .bufferSize = MAX_BULK_PACKET_SIZE,
-        .type = USB_EP_EP_TYPE_BULK, // TODO: interrupt???
+        .type = USB_EP_EP_TYPE_BULK, 
         .tx = 1,
     },
     {
         .callback = usb_mass_out,
         .bufferSize = MAX_BULK_PACKET_SIZE,
-        .type = USB_EP_EP_TYPE_BULK, // TODO: interrupt???
+        .type = USB_EP_EP_TYPE_BULK, 
         .tx = 0,
     },
 };
@@ -138,7 +133,7 @@ static void getMassPartDescriptor(const USBCompositePart* part, uint8* out) {
 
 USBCompositePart usbMassPart = {
     .numInterfaces = 1,
-    .numEndpoints = sizeof(massEndpoints)/sizeof(*massEndpoints),
+    .numEndpoints = sizeof(usbMassEndpoints)/sizeof(*usbMassEndpoints),
     .descriptorSize = sizeof(mass_descriptor_config),
     .getPartDescriptor = getMassPartDescriptor,
     .usbInit = NULL,
@@ -147,7 +142,7 @@ USBCompositePart usbMassPart = {
     .usbNoDataSetup = usb_mass_no_data_setup,
     .usbClearFeature = usb_mass_clear_feature,
     .usbSetConfiguration = usb_mass_set_configuration,
-    .endpoints = massEndpoints
+    .endpoints = usbMassEndpoints
 };
 
 static void usb_mass_reset(const USBCompositePart* part) {
@@ -304,7 +299,7 @@ static void usb_mass_in(void) {
  *  OUT
  */
 static void usb_mass_out(void) {
-  dataLength = usb_mass_sil_read(USB_MASS_RX_ENDP, bulkDataBuff);
+  dataLength = usb_mass_sil_read(bulkDataBuff);
   outRequestPending = 1;
 }
 
@@ -429,7 +424,7 @@ void usb_mass_bot_abort(uint8_t direction) {
 }
 
 void usb_mass_transfer_data_request(uint8_t* dataPointer, uint16_t dataLen) {
-  usb_mass_sil_write(USB_MASS_TX_ENDP, dataPointer, dataLen);
+  usb_mass_sil_write(dataPointer, dataLen);
 
   SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
   botState = BOT_STATE_DATA_IN_LAST;
@@ -441,7 +436,7 @@ void usb_mass_bot_set_csw(uint8_t status, uint8_t sendPermission) {
   CSW.dSignature = BOT_CSW_SIGNATURE;
   CSW.bStatus = status;
 
-  usb_mass_sil_write(USB_MASS_TX_ENDP, ((uint8_t *) & CSW), BOT_CSW_DATA_LENGTH);
+  usb_mass_sil_write(((uint8_t *) & CSW), BOT_CSW_DATA_LENGTH);
 
   botState = BOT_STATE_ERROR;
   if (sendPermission) {
@@ -450,25 +445,24 @@ void usb_mass_bot_set_csw(uint8_t status, uint8_t sendPermission) {
   }
 }
 
-uint32_t usb_mass_sil_write(uint8_t bEpAddr, uint8_t* pBufferPointer, uint32_t wBufferSize) {
+uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize) {
   /* Use the memory interface function to write to the selected endpoint */
-  
-  usb_copy_to_pma(pBufferPointer, wBufferSize, GetEPTxAddr(bEpAddr & 0x7F));
+  usb_copy_to_pma(pBufferPointer, wBufferSize, USB_MASS_TX_ADDR);
 
   /* Update the data length in the control register */
-  SetEPTxCount((bEpAddr & 0x7F), wBufferSize);
+  SetEPTxCount(USB_MASS_TX_ENDP, wBufferSize);
 
   return 0;
 }
 
-uint32_t usb_mass_sil_read(uint8_t bEpAddr, uint8_t* pBufferPointer) {
+uint32_t usb_mass_sil_read(uint8_t* pBufferPointer) {
   uint32_t dataLength = 0;
 
   /* Get the number of received data on the selected Endpoint */
-  dataLength = GetEPRxCount(bEpAddr & 0x7F);
+  dataLength = GetEPRxCount(USB_MASS_RX_ENDP);
 
   /* Use the memory interface function to write to the selected endpoint */
-  usb_copy_from_pma(pBufferPointer, dataLength, GetEPRxAddr(bEpAddr & 0x7F));
+  usb_copy_from_pma(pBufferPointer, dataLength, USB_MASS_RX_ADDR);
 
   /* Return the number of received data */
   return dataLength;

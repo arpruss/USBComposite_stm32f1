@@ -2,6 +2,7 @@
 #include "usb_scsi.h"
 #include "usb_mass.h"
 #include "usb_mass_mal.h"
+#include "usb_mass_internal.h"
 
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
@@ -129,7 +130,7 @@ void scsi_read_capacity10_cmd(uint8_t lun) {
     usb_mass_bot_abort(BOT_DIR_IN);
     return;
   }
-
+  
   SCSI_readFormatCapacity10Data[0] = (uint8_t) ((MAL_massBlockCount[lun] - 1) >> 24);
   SCSI_readFormatCapacity10Data[1] = (uint8_t) ((MAL_massBlockCount[lun] - 1) >> 16);
   SCSI_readFormatCapacity10Data[2] = (uint8_t) ((MAL_massBlockCount[lun] - 1) >> 8);
@@ -170,7 +171,7 @@ void scsi_write10_cmd(uint8_t lun, uint32_t lba, uint32_t blockNbr) {
 
     if ((CBW.bmFlags & 0x80) == 0) {
       botState = BOT_STATE_DATA_OUT;
-      SetEPRxStatus(USB_EP2, USB_EP_ST_RX_VAL);
+      SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL);
     } else {
       usb_mass_bot_abort(BOT_DIR_IN);
       scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
@@ -272,12 +273,12 @@ void scsi_read_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLengt
     if (SCSI_blockReadCount == 0) {
       usb_mass_mal_read_memory(lun, offset, SCSI_dataBuffer, MAL_massBlockSize[lun]);
 
-      usb_mass_sil_write(USB_EP1_IN, SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
+      usb_mass_sil_write(USB_MASS_TX_ENDP, SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
 
       SCSI_blockReadCount = MAL_massBlockSize[lun] - MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset = MAX_BULK_PACKET_SIZE;
     } else {
-      usb_mass_sil_write(USB_EP1_IN, SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
+      usb_mass_sil_write(USB_MASS_TX_ENDP, SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
 
       SCSI_blockReadCount -= MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset += MAX_BULK_PACKET_SIZE;
@@ -329,7 +330,7 @@ void scsi_write_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLeng
     }
 
     CSW.dDataResidue -= dataLength;
-    SetEPRxStatus(USB_EP2, USB_EP_ST_RX_VAL); /* enable the next transaction*/
+    SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL); /* enable the next transaction*/
 
     // TODO: Led_RW_ON();
   }
