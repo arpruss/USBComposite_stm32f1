@@ -1,7 +1,7 @@
 #ifndef _COMPOSITE_SERIAL_H_
 #define _COMPOSITE_SERIAL_H_
 
-#include "USBDevice.h"
+#include "USBComposite.h"
 #include "usb_serial.h"
 
 class USBCompositeSerial : public USBPlugin, public Stream {

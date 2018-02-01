@@ -34,6 +34,7 @@
 
 //#include <Print.h>
 #include <boards.h>
+#include <USBComposite.h>
 #include "usb_generic.h"
 
 /*
@@ -94,10 +95,9 @@
  *   This causes the Midi class to read data from the serial port and process it.
  */
 
-class USBMidi {
+class USBMidi : public USBPlugin {
 private:
-    USBCompositePart* parts[4];
-    unsigned numParts;
+    bool enabled;
     // The serial port used by this Midi instance (it takes complete control over the port)
     
     /* Private Receive Parameters */
@@ -119,7 +119,6 @@ private:
     //  (Midi can just send a single command byte and then stream events without
     //  sending the command each time)
     bool sendFullCommands_;
-    bool supportSerial;
     
     /* Internal functions */
     
@@ -141,8 +140,8 @@ public:
     static const unsigned int PARAM_CHANNEL_IN         = 0x1001;
     
     
-    // Constructor -- generally just use e.g. "Midi midi(Serial);"
-    USBMidi();
+    // Constructor
+	USBHIDDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
     
     // Call to start the serial port, at given baud.  For many applications
     //  the default parameters are just fine (which will cause messages for all

@@ -1,4 +1,4 @@
-#include "USBDevice.h"
+#include "USBComposite.h"
 
 #define DEFAULT_VENDOR_ID  0x1EAF
 #define DEFAULT_PRODUCT_ID 0x0004
