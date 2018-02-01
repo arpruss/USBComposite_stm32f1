@@ -294,17 +294,19 @@ typedef struct {
 // and hence burning it for cryptographic purposes.
 const char* getDeviceIDString();
 
-class USBHIDDevice{
+class USBHIDDevice : public USBPlugin {
 private:
 	bool enabled = false;
     uint8_t serialSupport = true;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
     uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_NUMBER_LENGTH)];    
-    USBCompositePart* parts[2];
-    uint32 numParts;
 public:
-	USBHIDDevice(void);
+	USBHIDDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
+	bool init();
+	bool registerParts();
+	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
+	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
     void begin(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
         const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");

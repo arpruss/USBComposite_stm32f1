@@ -10,6 +10,7 @@
 /* Private headers */
 #include "usb_lib_globals.h"
 #include "usb_reg_map.h"
+#include "usb_regs.h"
 
 /* usb_lib headers */
 #include "usb_type.h"
@@ -279,7 +280,7 @@ void scsi_read_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLengt
       SCSI_blockOffset += MAX_BULK_PACKET_SIZE;
     }
 
-    SetEPTxStatus(USB_EP1, USB_EP_ST_TX_VAL);
+    SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
 
     offset += MAX_BULK_PACKET_SIZE;
     length -= MAX_BULK_PACKET_SIZE;

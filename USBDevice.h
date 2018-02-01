@@ -13,10 +13,6 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/**
- * @brief USB HID port (HID USB).
- */
-
 #ifndef _USB_DEVICE_H_
 #define _USB_DEVICE_H_
 

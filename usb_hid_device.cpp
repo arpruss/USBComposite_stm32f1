@@ -32,102 +32,40 @@
  * USB HID interface
  */
 
-USBHIDDevice::USBHIDDevice(void) {
+bool USBHIDDevice::registerParts() {
+	return device->add(usbHIDPart);
 }
 
-static void generateUSBDescriptor(uint8* out, int maxLength, const char* in) {
-    int length = strlen(in);
-    if (length > maxLength)
-        length = maxLength;
-    int outLength = USB_DESCRIPTOR_STRING_LEN(length);
-    
-    out[0] = outLength;
-    out[1] = USB_DESCRIPTOR_TYPE_STRING;
-    
-    for (int i=0; i<length; i++) {
-        out[2+2*i] = in[i];
-        out[3+2*i] = 0;
-    }    
+void USBHIDDevice::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
+	usb_hid_set_report_descriptor(report_descriptor, report_descriptor_length);
 }
 
-static char* putSerialNumber(char* out, int nibbles, uint32 id) {
-    for (int i=0; i<nibbles; i++, id >>= 4) {
-        uint8 nibble = id & 0xF;
-        if (nibble <= 9)
-            *out++ = nibble + '0';
-        else
-            *out++ = nibble - 10 + 'a';
-    }
-    return out;
-}
-
-const char* getDeviceIDString() {
-    static char string[80/4+1];
-    char* p = string;
-    
-    uint32 id = (uint32) *(uint16*) (0x1FFFF7E8+0x02);
-    p = putSerialNumber(p, 4, id);
-    
-    id = *(uint32*) (0x1FFFF7E8+0x04);
-    p = putSerialNumber(p, 8, id);
-    
-    id = *(uint32*) (0x1FFFF7E8+0x08);
-    p = putSerialNumber(p, 8, id);
-    
-    *p = 0;
-    
-    return string;
+void USBHIDDevice::setReportDescriptor(const HIDReportDescriptor* report) {
+    setReportDescriptor(report->descriptor, report->length);
 }
 
 void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length, uint16_t idVendor, uint16_t idProduct,
         const char* manufacturer, const char* product, const char* serialNumber) {
             
-    uint8_t* manufacturerDescriptor;
-    uint8_t* productDescriptor;
-    uint8_t* serialNumberDescriptor;
-    
-	if(!enabled) {        
-        if (manufacturer != NULL) {
-            generateUSBDescriptor(iManufacturer, USB_HID_MAX_MANUFACTURER_LENGTH, manufacturer);
-            manufacturerDescriptor = iManufacturer;
-        }
-        else {
-            manufacturerDescriptor = NULL;
-        }
+	if (enabled)
+		return;
+	
+	setReportDescriptor(report_descriptor, report_descriptor_length);
+	
+	device->clear();
+	device->setVendorId(idVendor);
+	device->setProductId(idProduct);
+	device->setManufacturerString(manufacturer);
+	device->setProductString(product);
+	device->setSerialString(serialNumber);
+	device->add(usbHIDPart);
 
-        if (product != NULL) {
-            generateUSBDescriptor(iProduct, USB_HID_MAX_PRODUCT_LENGTH, product);
-            productDescriptor = iProduct;
-        }
-        else {
-            productDescriptor = NULL;
-        }
-        
-        if (serialNumber != NULL) {
-            generateUSBDescriptor(iSerialNumber, USB_HID_MAX_SERIAL_NUMBER_LENGTH, serialNumber);
-            serialNumberDescriptor = iSerialNumber;
-        }
-        else {
-            serialNumberDescriptor = NULL;
-        }
-
-        usb_generic_set_info(idVendor, idProduct, manufacturerDescriptor, productDescriptor, 
-            serialNumberDescriptor);
-        usb_hid_set_report_descriptor(report_descriptor, report_descriptor_length);
-        if (serialSupport) {
-            numParts = 2;
-            parts[0] = &usbHIDPart;
-            parts[1] = &usbSerialPart;            
-        }
-        else {
-            numParts = 1;
-            parts[0] = &usbHIDPart;
-        }
-        usb_generic_set_parts(parts, numParts);
-        usb_generic_enable();        
+	if (serialSupport)
+		device->add(CompositeSerial);
             
-		enabled = true;
-	}
+	device->begin();
+
+	enabled = true;
 }
 
 void USBHIDDevice::setSerial(uint8 _serialSupport) {
@@ -149,7 +87,7 @@ bool USBHIDDevice::addBuffer(uint8_t type, volatile HIDBuffer_t* buffer) {
 
 void USBHIDDevice::end(void){
 	if(enabled){
-        usb_generic_disable();
+		device->end();
 		enabled = false;
 	}
 }

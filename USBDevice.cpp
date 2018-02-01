@@ -3,6 +3,35 @@
 #define DEFAULT_VENDOR_ID  0x1EAF
 #define DEFAULT_PRODUCT_ID 0x0004
 
+static char* putSerialNumber(char* out, int nibbles, uint32 id) {
+    for (int i=0; i<nibbles; i++, id >>= 4) {
+        uint8 nibble = id & 0xF;
+        if (nibble <= 9)
+            *out++ = nibble + '0';
+        else
+            *out++ = nibble - 10 + 'a';
+    }
+    return out;
+}
+
+const char* getDeviceIDString() {
+    static char string[80/4+1];
+    char* p = string;
+    
+    uint32 id = (uint32) *(uint16*) (0x1FFFF7E8+0x02);
+    p = putSerialNumber(p, 4, id);
+    
+    id = *(uint32*) (0x1FFFF7E8+0x04);
+    p = putSerialNumber(p, 8, id);
+    
+    id = *(uint32*) (0x1FFFF7E8+0x08);
+    p = putSerialNumber(p, 8, id);
+    
+    *p = 0;
+    
+    return string;
+}
+
 USBCompositeDevice::USBCompositeDevice(void) {
         vendorId = 0;
         productId = 0;
