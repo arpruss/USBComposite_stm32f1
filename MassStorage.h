@@ -1,4 +1,3 @@
-
 #ifndef USBMASSSTORAGE_H
 #define	USBMASSSTORAGE_H
 
