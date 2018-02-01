@@ -32,8 +32,6 @@
  * USB HID interface
  */
 
-#define USB_TIMEOUT 50
-
 USBHIDDevice::USBHIDDevice(void) {
 }
 
