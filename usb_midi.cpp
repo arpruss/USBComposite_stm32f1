@@ -175,7 +175,7 @@ uint8 USBMidi::isConnected(void) {
 }
 
 
-USBMidi MidiUSB;
+USBMidi USBMIDI;
 
 
 

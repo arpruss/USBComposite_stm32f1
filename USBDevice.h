@@ -40,13 +40,13 @@ const char* getDeviceIDString();
 class USBCompositeDevice;
 
 class USBPlugin {
-private:
+protected:
     USBCompositeDevice* device;
 public:
     virtual bool init() {return true;}
     virtual void stop() {}
     virtual bool registerParts() = 0;
-    USBPlugin(USBCompositeDevice* _device) { device = _device; }
+    USBPlugin(USBCompositeDevice& _device) { device = &_device; }
 };
 
 #define DEFAULT_SERIAL_STRING "00000000000000000001"
@@ -74,9 +74,13 @@ public:
     bool begin(void);
     void end(void);
     void clear();
-    bool add(USBPlugin* plugin);
-    bool add(USBCompositePart* part);
+    bool add(USBPlugin* pluginPtr);
+    bool add(USBPlugin& plugin) {
+		return add(&plugin);
+	}
+    bool add(USBCompositePart& part);
 };
 
+extern USBCompositeDevice USBComposite;
 #endif
         

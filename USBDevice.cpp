@@ -98,17 +98,18 @@ void USBCompositeDevice::clear() {
     numPlugins = 0;
 }
 
-bool USBCompositeDevice::add(USBPlugin* plugin) {
+bool USBCompositeDevice::add(USBPlugin* pluginPtr) {
     if (numPlugins >= USB_COMPOSITE_MAX_PLUGINS)
         return false;
-    plugins[numPlugins++] = plugin;
-    return plugin->registerParts();
+    plugins[numPlugins++] = pluginPtr;
+    return pluginPtr->registerParts();
 }
 
-bool USBCompositeDevice::add(USBCompositePart* part) {
+bool USBCompositeDevice::add(USBCompositePart& part) {
     if (numParts >= USB_COMPOSITE_MAX_PARTS)
         return false;
-    parts[numParts++] = part;
+    parts[numParts++] = &part;
     return true;
 }
 
+USBCompositeDevice USBComposite;

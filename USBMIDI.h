@@ -214,7 +214,7 @@ public:
     virtual void handleReset(void);
 };
 
-extern USBMidi MidiUSB;
+extern USBMidi USBMIDI;
 
 
 #endif

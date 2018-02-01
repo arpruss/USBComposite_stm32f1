@@ -1,25 +1,51 @@
 #include "MassStorage.h"
 #include "usb_mass.h"
+#include "usb_mass_mal.h"
 #include "usb_serial.h"
+#include <string.h>
 
-void USBMassStorageDriver::begin() {
-	if(!enabled){
-        parts[1] = &usbSerialPart;
-        parts[0] = &usbMassPart;
-        numParts = 2;
-        
-        usb_generic_set_parts(parts, numParts);
-        usb_generic_enable();
+void USBMassStorageDevice::begin() {
+	if(!enabled) {
+		device->clear();
+		device->add(this);
+		device->begin();
 
 		enabled = true;
 	}
 }
 
-void USBMassStorageDriver::end() {
+void USBMassStorageDevice::end() {
+	device->end();
 }
 
-void USBMassStorageDriver::loop() {
-  usb_mass_loop();
+void USBMassStorageDevice::loop() {
+	usb_mass_loop();
 }
 
-USBMassStorageDriver USBMassStorage;
+bool USBMassStorageDevice::registerParts() {
+	return device->add(usbMassPart);
+}
+
+void USBMassStorageDevice::setDrive(uint32 driveNumber, uint32 blockCount, uint32 blockSize, MassStorageReader reader,
+	MassStorageWriter writer, MassStorageStatuser statuser, MassStorageInitializer initializer) {
+	if (driveNumber >= USB_MASS_MAX_DRIVES)
+		return;
+	usb_mass_drives[driveNumber].blockCount = blockCount;
+	usb_mass_drives[driveNumber].blockSize = blockSize;
+	usb_mass_drives[driveNumber].read = reader;
+	usb_mass_drives[driveNumber].write = writer;
+	usb_mass_drives[driveNumber].status = statuser;
+	usb_mass_drives[driveNumber].init = initializer;
+	usb_mass_drives[driveNumber].format = initializer;
+}
+
+void USBMassStorageDevice::setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,
+	MassStorageWriter writer, MassStorageStatuser statuser, MassStorageInitializer initializer) {
+	setDrive(driveNumber, byteSize / 512, 512, reader, writer, statuser, initializer);
+}
+
+void USBMassStorageDevice::clearDrives() {
+	memset(usb_mass_drives, 0, sizeof(usb_mass_drives));
+}
+
+USBMassStorageDevice USBMassStorage;

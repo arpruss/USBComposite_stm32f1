@@ -2,23 +2,27 @@
 #define	USBMASSSTORAGE_H
 
 #include <boards.h>
+#include "USBDevice.h"
 #include "usb_generic.h"
+#include "usb_mass_mal.h"
 
-#define USB_MASS_MAL_FAIL    1
-#define USB_MASS_MAL_SUCCESS 0
-
-class USBMassStorageDriver {
+class USBMassStorageDevice : public USBPlugin {
 private:
-  USBCompositePart* parts[4];
-  uint16 numParts = 0;
   bool enabled = false;
 public:
   void begin();
   void end();
   void loop();
+  void clearDrives(void);
+  bool registerParts();
+  void setDrive(uint32 driveNumber, uint32 blockCount, uint32 blockSize, MassStorageReader reader,
+	MassStorageWriter writer = NULL, MassStorageStatuser = NULL, MassStorageInitializer = NULL);
+  void setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,
+	MassStorageWriter writer = NULL, MassStorageStatuser = NULL, MassStorageInitializer = NULL);
+  USBMassStorageDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 };
 
-extern USBMassStorageDriver USBMassStorage;
+extern USBMassStorageDevice USBMassStorage;
 
 #endif	/* USBMASSSTORAGE_H */
 
