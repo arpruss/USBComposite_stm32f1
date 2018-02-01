@@ -32,7 +32,7 @@ extern uint8_t botState;
 extern uint8_t bulkDataBuff[MAX_BULK_PACKET_SIZE];
 extern uint16_t dataLength;
 
-extern uint32_t usb_mass_sil_write(uint8_t bEpAddr, uint8_t* pBufferPointer, uint32_t wBufferSize);
+extern uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize);
 
 /* See usb_mass_mal.c */
 extern uint32_t MAL_massBlockCount[2];
@@ -273,12 +273,12 @@ void scsi_read_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLengt
     if (SCSI_blockReadCount == 0) {
       usb_mass_mal_read_memory(lun, offset, SCSI_dataBuffer, MAL_massBlockSize[lun]);
 
-      usb_mass_sil_write(USB_MASS_TX_ENDP, SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
+      usb_mass_sil_write(SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
 
       SCSI_blockReadCount = MAL_massBlockSize[lun] - MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset = MAX_BULK_PACKET_SIZE;
     } else {
-      usb_mass_sil_write(USB_MASS_TX_ENDP, SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
+      usb_mass_sil_write(SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
 
       SCSI_blockReadCount -= MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset += MAX_BULK_PACKET_SIZE;
