@@ -27,12 +27,6 @@
 
 #include <wirish.h>
 
-/*
- * USB HID interface
- */
-
-#define USB_TIMEOUT 50
-
 void HIDXBox360::sendReport(void){
 	x360_tx(xbox360_Report, sizeof(xbox360_Report));
 	
