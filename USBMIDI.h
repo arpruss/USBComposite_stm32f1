@@ -139,6 +139,12 @@ public:
     //  to.  0 means "all channels".
     static const unsigned int PARAM_CHANNEL_IN         = 0x1001;
     
+	bool init();
+	bool registerParts();
+	void setChannel(unsigned channel=0);
+	unsigned getChannel() {
+		return channelIn_;
+	}
     
     // Constructor
 	USBHIDDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}

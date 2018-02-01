@@ -110,7 +110,8 @@ void USBMidi::begin(unsigned channel) {
 	
 	if (enabled)
 		return;
-	
+
+	device->clear();
 	device->add(this);
 	device->begin();
 	
@@ -190,7 +191,7 @@ uint8 USBMidi::isConnected(void) {
 }
 
 
-USBMidi USBMIDI;
+USBMidi USBMIDI(USBComposite);
 
 
 

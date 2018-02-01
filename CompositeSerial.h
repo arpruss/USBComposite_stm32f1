@@ -8,6 +8,8 @@ class USBCompositeSerial : public USBPlugin, public Stream {
 public:
 	USBCompositeSerial(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 
+	void begin();
+	void end();
 	bool init();
 	bool registerParts();
 

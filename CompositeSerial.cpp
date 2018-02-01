@@ -45,6 +45,22 @@ bool USBCompositeSerial::init() {
 	return true;
 }
 
+void USBCompositeSerial::begin() {
+	if (!enabled) {
+		device->clear();
+		device->add(this);
+		device->begin();
+		enabled = true;
+	}
+}
+
+void USBCompositeSerial::end() {
+	if (enabled) {
+		device->end();
+		enabled = false;
+	}
+}
+
 size_t USBCompositeSerial::write(uint8 ch) {
 size_t n = 0;
     this->write(&ch, 1);

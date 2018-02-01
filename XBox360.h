@@ -22,9 +22,10 @@
 
 #include <Print.h>
 #include <boards.h>
+#include "USBComposite.h"
 #include "usb_generic.h"
 
-class HIDXBox360{
+class HIDXBox360 : public USBPlugin{
 private:
     USBCompositePart* parts[4];
     unsigned numParts;
@@ -34,10 +35,12 @@ private:
 	void safeSendReport(void);
 	void sendReport(void);
 public:
+	HIDXBox360(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 	void send(void);
+	bool init();
+	bool registerParts();
     void setManualReportMode(bool manualReport);
     bool getManualReportMode();
-	HIDXBox360(void);
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);
