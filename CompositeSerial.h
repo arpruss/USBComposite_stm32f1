@@ -37,4 +37,6 @@ public:
     uint8 isConnected();
     uint8 pending();
 };
+
+extern USBCompositeSerial CompositeSerial;
 #endif

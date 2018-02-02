@@ -72,7 +72,7 @@ void setString(uint8* out, const usb_descriptor_string* defaultDescriptor, const
         uint32 n = strlen(s);
         if (n > maxLength)
             n = maxLength;
-        out[0] = (uint8)n;
+        out[0] = (uint8)USB_DESCRIPTOR_STRING_LEN(n);
         out[1] = USB_DESCRIPTOR_TYPE_STRING;
         for (uint32 i=0; i<n; i++) {
             out[2 + 2*i] = (uint8)s[i];
@@ -99,13 +99,14 @@ void USBCompositeDevice::setSerialString(const char* s) {
 }
 
 bool USBCompositeDevice::begin() {
-    if (enabled)
+   if (enabled)
         return true;
-    usb_generic_set_info(vendorId, productId, iManufacturer, iProduct, 
+	usb_generic_set_info(vendorId, productId, iManufacturer[0] ? iManufacturer : NULL, iProduct[0] ? iProduct : NULL, 
         haveSerialNumber ? iSerialNumber : NULL);
-    for (uint32 i = 0 ; i < numPlugins ; i++)
+    for (uint32 i = 0 ; i < numPlugins ; i++) {
         if (!plugins[i]->init())
             return false;
+	}
     if (! usb_generic_set_parts(parts, numParts))
         return false;
     usb_generic_enable();
@@ -131,7 +132,7 @@ bool USBCompositeDevice::add(USBPlugin* pluginPtr) {
     if (numPlugins >= USB_COMPOSITE_MAX_PLUGINS)
         return false;
     plugins[numPlugins++] = pluginPtr;
-    return pluginPtr->registerParts();
+	return pluginPtr->registerParts();
 }
 
 bool USBCompositeDevice::add(USBCompositePart& part) {

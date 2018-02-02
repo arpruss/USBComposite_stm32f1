@@ -303,7 +303,7 @@ private:
     uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_NUMBER_LENGTH)];    
 public:
 	USBHIDDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
-	bool init();
+//	bool init();
 	bool registerParts();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
 	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
@@ -315,6 +315,8 @@ public:
     void setSerial(uint8 serialSupport=true);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
     bool addBuffer(uint8_t type, volatile HIDBuffer_t* buffer);
+	void clearBuffers(uint8_t type);
+	void clearBuffers();
     inline bool addFeatureBuffer(volatile HIDBuffer_t* buffer) {
         return addBuffer(HID_REPORT_TYPE_FEATURE, buffer);
     }

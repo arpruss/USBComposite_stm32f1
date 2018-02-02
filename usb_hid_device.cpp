@@ -36,6 +36,10 @@ bool USBHIDDevice::registerParts() {
 	return device->add(usbHIDPart);
 }
 
+//bool USBHIDDevice::init() {
+//	return true;
+//}
+
 void USBHIDDevice::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
 	usb_hid_set_report_descriptor(report_descriptor, report_descriptor_length);
 }
@@ -83,6 +87,15 @@ void USBHIDDevice::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count)
 
 bool USBHIDDevice::addBuffer(uint8_t type, volatile HIDBuffer_t* buffer) {
     return 0 != usb_hid_add_buffer(type, buffer);
+}
+
+void USBHIDDevice::clearBuffers(uint8_t type) {
+	usb_hid_clear_buffers(type);
+}
+
+void USBHIDDevice::clearBuffers() {
+	clearBuffers(HID_REPORT_TYPE_OUTPUT);
+	clearBuffers(HID_REPORT_TYPE_FEATURE);
 }
 
 void USBHIDDevice::end(void){

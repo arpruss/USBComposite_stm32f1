@@ -97,7 +97,7 @@
 
 class USBMidi : public USBPlugin {
 private:
-    bool enabled;
+    bool enabled = false;
     // The serial port used by this Midi instance (it takes complete control over the port)
     
     /* Private Receive Parameters */

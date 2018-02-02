@@ -204,7 +204,7 @@ static volatile HIDBuffer_t* usb_hid_find_buffer(uint8 type, uint8 reportID) {
     for (int i=0; i<MAX_HID_BUFFERS; i++) {
         if ( hidBuffers[i].buffer != NULL &&
              ( hidBuffers[i].mode & HID_BUFFER_MODE_OUTPUT ) == typeTest && 
-             hidBuffers[i].reportID == reportID ) {
+             hidBuffers[i].reportID == reportID) {
             return hidBuffers+i;
         }
     }
@@ -405,9 +405,6 @@ static void hidUSBReset(const USBCompositePart* part) {
 	hid_tx_tail = 0;
 
     currentHIDBuffer = NULL;
-
-    usb_hid_clear_buffers(HID_REPORT_TYPE_FEATURE);
-    usb_hid_clear_buffers(HID_REPORT_TYPE_OUTPUT);
 }
 
 static uint8* HID_Set(uint16 length) {
