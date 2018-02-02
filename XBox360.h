@@ -27,8 +27,6 @@
 
 class HIDXBox360 : public USBPlugin{
 private:
-    USBCompositePart* parts[4];
-    unsigned numParts;
 	uint8_t xbox360_Report[20] = {0,0x14};//    3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
     bool manualReport = false;
     bool enabled;
