@@ -27,12 +27,6 @@
 
 #include <wirish.h>
 
-/*
- * USB HID interface
- */
-
-#define USB_TIMEOUT 50
-
 void HIDXBox360::sendReport(void){
 	x360_tx(xbox360_Report, sizeof(xbox360_Report));
 	
@@ -51,22 +45,35 @@ void HIDXBox360::setLEDCallback(void (*callback)(uint8 pattern)) {
 }
 
 
-HIDXBox360::HIDXBox360(void){
-	
+bool HIDXBox360::init() {
+	usb_generic_set_info(0x045e, 0x028e, NULL, NULL, NULL);
+	return true;
+}
+
+bool HIDXBox360::registerParts() {
+	return device->add(usbX360Part);
 }
 
 void HIDXBox360::begin(void){
 	if(!enabled){
-		x360_enable();
+		device->clear();
+		device->add(this);
+		device->begin();
+
 		enabled = true;
 	}
 }
 
-void HIDXBox360::end(void){
-	if(enabled){
-	    x360_disable();
+void HIDXBox360::end() {
+	if (enabled) {
 		enabled = false;
+        device->end();
 	}
+}
+
+void HIDXBox360::stop(void){
+	setRumbleCallback(NULL);
+	setLEDCallback(NULL);
 }
 
 void HIDXBox360::setManualReportMode(bool mode) {
@@ -165,4 +172,3 @@ void HIDXBox360::sliderRight(uint8_t val){
 }
 
 HIDXBox360 XBox360;
-

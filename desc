@@ -1,0 +1,39 @@
+Serial 66
+HID 25
+Length 100
+09 02 64 00 03 01 00 c0 32 08 0b 00 02 02 02 01 02 09 04 00 00 01 02 02 01 00 05 24 00 01 10 05 24 01 03 01 04 24 02 06 05 24 06 00 01 07 05 82 03 10 00 ff 09 04 01 00 02 0a 00 00 00 
+07 05 03 02 40 00 00 
+07 05 81 02 40 00 00 
+09 04 02 00 01 03 01 00 00 09 21 10 01 00 01 22 57 00 07 05 84 03 40 00 0a 
+09 02 64 00 03 01 00 c0 32 
+09 04 00 00 01 03 01 00 00 09 21 10 01 00 01 22 57 00 07 05 81 03 40 00 0a 
+static const hid_part_config hidPartConfigData = {
+	.HID_Interface = {
+		.bLength            = sizeof(usb_descriptor_interface),
+        .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
+        .bInterfaceNumber   = HID_INTERFACE_NUMBER, // PATCH
+        .bAlternateSetting  = 0x00,
+        .bNumEndpoints      = NUM_HID_ENDPOINTS,    
+        .bInterfaceClass    = USB_INTERFACE_CLASS_HID,
+        .bInterfaceSubClass = USB_INTERFACE_SUBCLASS_HID,
+        .bInterfaceProtocol = 0x00, /* Common AT Commands */
+        .iInterface         = 0x00,
+	},
+	.HID_Descriptor = {
+		.len				= 9,//sizeof(HIDDescDescriptor),
+		.dtype				= HID_DESCRIPTOR_TYPE,
+		.versionL			= 0x10,
+		.versionH			= 0x01,
+		.country			= 0x00,
+		.numDesc			= 0x01,
+		.desctype			= REPORT_DESCRIPTOR,//0x22,
+		.descLenL			= 0x00, //PATCH
+		.descLenH			= 0x00, //PATCH
+	},
+	.HIDDataInEndpoint = {
+		.bLength          = sizeof(usb_descriptor_endpoint),
+        .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
+        .bEndpointAddress = USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX, // PATCH
+        .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT,
+        .wMaxPacketSize   = USB_HID_TX_EPSIZE,//0x40,//big enough for a keyboard 9 byte packet and for a mouse 5 byte packet
+        .bInterval        = 0x0A,

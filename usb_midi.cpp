@@ -60,10 +60,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
+#include <wirish.h>
 #include "usb_midi_device.h"
 #include <libmaple/usb.h>
+#include "usb_generic.h"
 
-#include <wirish.h>
 
 /*
  * USBMidi interface
@@ -71,24 +72,15 @@
 
 #define USB_TIMEOUT 50
 
-USBMidi::USBMidi(void) {
+void USBMidi::setChannel(unsigned int channel) {
+	channelIn_ = channel;
 
 }
 
 // Constructor -- set up defaults for variables, get ready for use (but don't
 //  take over serial port yet)
 
-void USBMidi::begin(unsigned int channel) {
-			
-#ifdef GENERIC_BOOTLOADER			
-			//Reset the USB interface on generic boards - developed by Victor PV
-			gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_OUTPUT_PP);
-			gpio_write_bit(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit,0);
-			
-			for(volatile unsigned int i=0;i<512;i++);// Only small delay seems to be needed, and USB pins will get configured in Serial.begin
-			gpio_set_mode(PIN_MAP[PA12].gpio_device, PIN_MAP[PA12].gpio_bit, GPIO_INPUT_FLOATING);
-#endif			
-    usb_midi_enable();
+bool USBMidi::init() {
     /* Not in proprietary stream */
     recvMode_ = 0;
     /* No bytes recevied */
@@ -103,11 +95,32 @@ void USBMidi::begin(unsigned int channel) {
     lastStatusSent_ = false;
     // Don't send the extra bytes; just send deltas
     sendFullCommands_ = false;
+	
+	return true;
+}
 
+bool USBMidi::registerParts() {
+    return device->add(usbMIDIPart);
+}
+
+void USBMidi::begin(unsigned channel) {
+	setChannel(channel);
+	
+	if (enabled)
+		return;
+
+	device->clear();
+	device->add(this);
+	device->begin();
+	
+	enabled = true;	
 }
 
 void USBMidi::end(void) {
-    usb_midi_disable();
+	if (enabled) {
+		device->end();
+		enabled = false;
+	}
 }
 
 void USBMidi::writePacket(uint32 p) {
@@ -176,7 +189,7 @@ uint8 USBMidi::isConnected(void) {
 }
 
 
-USBMidi MidiUSB;
+USBMidi USBMIDI(USBComposite);
 
 
 

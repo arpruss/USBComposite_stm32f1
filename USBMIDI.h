@@ -32,8 +32,10 @@
 #ifndef _WIRISH_USB_MIDI_H_
 #define _WIRISH_USB_MIDI_H_
 
-#include <Print.h>
+//#include <Print.h>
 #include <boards.h>
+#include <USBComposite.h>
+#include "usb_generic.h"
 
 /*
  * This is the Midi class.  If you are just sending Midi data, you only need to make an
@@ -93,8 +95,9 @@
  *   This causes the Midi class to read data from the serial port and process it.
  */
 
-class USBMidi {
+class USBMidi : public USBPlugin {
 private:
+    bool enabled = false;
     // The serial port used by this Midi instance (it takes complete control over the port)
     
     /* Private Receive Parameters */
@@ -136,9 +139,15 @@ public:
     //  to.  0 means "all channels".
     static const unsigned int PARAM_CHANNEL_IN         = 0x1001;
     
+	bool init();
+	bool registerParts();
+	void setChannel(unsigned channel=0);
+	unsigned getChannel() {
+		return channelIn_;
+	}
     
-    // Constructor -- generally just use e.g. "Midi midi(Serial);"
-    USBMidi();
+    // Constructor
+	USBMidi(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
     
     // Call to start the serial port, at given baud.  For many applications
     //  the default parameters are just fine (which will cause messages for all
@@ -210,7 +219,7 @@ public:
     virtual void handleReset(void);
 };
 
-extern USBMidi MidiUSB;
+extern USBMidi USBMIDI;
 
 
 #endif
