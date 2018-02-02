@@ -72,10 +72,6 @@
 
 #define USB_TIMEOUT 50
 
-USBMidi::USBMidi(void) {
-
-}
-
 void USBMidi::setChannel(unsigned int channel) {
 	channelIn_ = channel;
 
@@ -84,7 +80,7 @@ void USBMidi::setChannel(unsigned int channel) {
 // Constructor -- set up defaults for variables, get ready for use (but don't
 //  take over serial port yet)
 
-void USBMidi::init() {
+bool USBMidi::init() {
     /* Not in proprietary stream */
     recvMode_ = 0;
     /* No bytes recevied */
@@ -99,9 +95,11 @@ void USBMidi::init() {
     lastStatusSent_ = false;
     // Don't send the extra bytes; just send deltas
     sendFullCommands_ = false;
+	
+	return true;
 }
 
-void USBMidi::registerParts() {
+bool USBMidi::registerParts() {
     return device->add(usbMIDIPart);
 }
 

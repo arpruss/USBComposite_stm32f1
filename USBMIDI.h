@@ -147,7 +147,7 @@ public:
 	}
     
     // Constructor
-	USBHIDDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
+	USBMidi(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
     
     // Call to start the serial port, at given baud.  For many applications
     //  the default parameters are just fine (which will cause messages for all

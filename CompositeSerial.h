@@ -5,6 +5,8 @@
 #include "usb_serial.h"
 
 class USBCompositeSerial : public USBPlugin, public Stream {
+private:
+	bool enabled = false;
 public:
 	USBCompositeSerial(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 

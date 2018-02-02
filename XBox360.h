@@ -39,6 +39,7 @@ public:
 	void send(void);
 	bool init();
 	bool registerParts();
+	void stop();
     void setManualReportMode(bool manualReport);
     bool getManualReportMode();
 	void begin(void);
