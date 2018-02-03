@@ -41,7 +41,9 @@ void USBMassStorageDevice::setDrive(uint32 driveNumber, uint32 blockCount, uint3
 
 void USBMassStorageDevice::setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,
 	MassStorageWriter writer, MassStorageStatuser statuser, MassStorageInitializer initializer) {
+		
 	setDrive(driveNumber, byteSize / 512, 512, reader, writer, statuser, initializer);
+	
 }
 
 void USBMassStorageDevice::clearDrives() {
