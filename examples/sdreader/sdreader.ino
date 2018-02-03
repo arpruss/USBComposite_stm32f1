@@ -1,4 +1,6 @@
 // This uses the greiman sdfat library.
+// To use SdFatEX, set ENABLE_EXTENDED_TRANSFER_CLASS to 1 in the library's
+// src/SdFatConfig.h
 #include <CompositeSerial.h>
 #include <MassStorage.h>
 #include <SPI.h>
@@ -6,8 +8,8 @@
 
 #define LED_PIN PB12
 
-SdFat sd;
-const uint32_t speed = SPI_CLOCK_DIV2;
+SdFatEX sd;
+const uint32_t speed = SPI_CLOCK_DIV2 ;
 const uint8_t SD_CHIP_SELECT = SS;
 bool enabled = false;
 uint32 cardSize;
@@ -17,7 +19,6 @@ bool write(uint32_t memoryOffset, const uint8_t *writebuff, uint16_t transferLen
 }
 
 bool read(uint32_t memoryOffset, uint8_t *readbuff, uint16_t transferLength) {
-  CompositeSerial.println(String(memoryOffset)+" "+String(transferLength));
   return sd.card()->readBlocks(memoryOffset/512, readbuff, transferLength/512);
 }
 
@@ -38,7 +39,7 @@ void initReader() {
 
 void loop() {
   if (!enabled) {
-    if (sd.cardBegin(SD_CHIP_SELECT, speed)) {
+    if (sd.begin(SD_CHIP_SELECT)) {
       initReader();
     }
     else {
