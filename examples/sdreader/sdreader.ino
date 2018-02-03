@@ -17,6 +17,7 @@ bool write(uint32_t memoryOffset, const uint8_t *writebuff, uint16_t transferLen
 }
 
 bool read(uint32_t memoryOffset, uint8_t *readbuff, uint16_t transferLength) {
+  CompositeSerial.println(String(memoryOffset)+" "+String(transferLength));
   return sd.card()->readBlocks(memoryOffset/512, readbuff, transferLength/512);
 }
 
@@ -28,7 +29,7 @@ void setup() {
 void initReader() {
   digitalWrite(LED_PIN,0);
   cardSize = sd.card()->cardSize();  
-  USBMassStorage.setDrive(0, cardSize, 512, read, write);
+  USBMassStorage.setDrive(0, cardSize*512, read, write);
   USBComposite.add(USBMassStorage);
   USBComposite.add(CompositeSerial);
   USBComposite.begin();

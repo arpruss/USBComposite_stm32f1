@@ -1,3 +1,5 @@
+// will fail if block size is > 512
+// TODO: perhaps fix?
 #include "usb_mass.h"
 #include "usb_mass_mal.h"
 #include "usb_mass_internal.h"
