@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <libmaple/nvic.h>
 #include <libmaple/usb.h>
-#include "XBox360.h" 
+#include "USBXBox360.h" 
 #include "usb_x360.h"
 
 #include <wirish.h>

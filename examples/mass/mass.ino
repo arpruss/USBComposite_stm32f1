@@ -1,5 +1,5 @@
 #include <USBMassStorage.h>
-#include <USBHID.h>
+#include <USBCompositeSerial.h>
 
 #include "image.h"
 
