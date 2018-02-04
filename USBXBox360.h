@@ -25,7 +25,7 @@
 #include "USBComposite.h"
 #include "usb_generic.h"
 
-class HIDXBox360 : public USBPlugin{
+class USBXBox360 : public USBPlugin{
 private:
 	uint8_t xbox360_Report[20] = {0,0x14};//    3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
     bool manualReport = false;
@@ -33,7 +33,7 @@ private:
 	void safeSendReport(void);
 	void sendReport(void);
 public:
-	HIDXBox360(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
+	USBXBox360(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 	void send(void);
 	bool init();
 	bool registerParts();
@@ -56,7 +56,7 @@ public:
     void setRumbleCallback(void (*callback)(uint8 left, uint8 right));
 };
 
-extern HIDXBox360 XBox360;
+extern USBXBox360 XBox360;
 
 #endif
 

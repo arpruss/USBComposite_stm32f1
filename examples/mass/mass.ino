@@ -1,4 +1,4 @@
-#include <MassStorage.h>
+#include <USBMassStorage.h>
 #include <USBHID.h>
 
 #include "image.h"

@@ -15,6 +15,7 @@
 */
 
 #include "USBHID.h"
+#include "USBCompositeSerial.h"
 
 #include <string.h>
 #include <stdint.h>

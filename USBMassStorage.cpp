@@ -1,4 +1,4 @@
-#include "MassStorage.h"
+#include "USBMassStorage.h"
 #include "usb_mass.h"
 #include "usb_mass_mal.h"
 #include "usb_serial.h"

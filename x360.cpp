@@ -27,7 +27,7 @@
 
 #include <wirish.h>
 
-void HIDXBox360::sendReport(void){
+void USBXBox360::sendReport(void){
 	x360_tx(xbox360_Report, sizeof(xbox360_Report));
 	
 	while (x360_is_transmitting() != 0) {
@@ -36,25 +36,25 @@ void HIDXBox360::sendReport(void){
 	x360_tx(NULL, 0);
 }
 
-void HIDXBox360::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {
+void USBXBox360::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {
     x360_set_rumble_callback(callback);
 }
 
-void HIDXBox360::setLEDCallback(void (*callback)(uint8 pattern)) {
+void USBXBox360::setLEDCallback(void (*callback)(uint8 pattern)) {
     x360_set_led_callback(callback);
 }
 
 
-bool HIDXBox360::init() {
+bool USBXBox360::init() {
 	usb_generic_set_info(0x045e, 0x028e, NULL, NULL, NULL);
 	return true;
 }
 
-bool HIDXBox360::registerParts() {
+bool USBXBox360::registerParts() {
 	return device->add(usbX360Part);
 }
 
-void HIDXBox360::begin(void){
+void USBXBox360::begin(void){
 	if(!enabled){
 		device->clear();
 		device->add(this);
@@ -64,27 +64,27 @@ void HIDXBox360::begin(void){
 	}
 }
 
-void HIDXBox360::end() {
+void USBXBox360::end() {
 	if (enabled) {
 		enabled = false;
         device->end();
 	}
 }
 
-void HIDXBox360::stop(void){
+void USBXBox360::stop(void){
 	setRumbleCallback(NULL);
 	setLEDCallback(NULL);
 }
 
-void HIDXBox360::setManualReportMode(bool mode) {
+void USBXBox360::setManualReportMode(bool mode) {
     manualReport = mode;
 }
 
-bool HIDXBox360::getManualReportMode() {
+bool USBXBox360::getManualReportMode() {
     return manualReport;
 }
 
-void HIDXBox360::safeSendReport() {	
+void USBXBox360::safeSendReport() {	
     if (!manualReport) {
         while (x360_is_transmitting() != 0) {
         }
@@ -92,13 +92,13 @@ void HIDXBox360::safeSendReport() {
     }
 }
 
-void HIDXBox360::send() {
+void USBXBox360::send() {
     while (x360_is_transmitting() != 0) {
     }
     sendReport();
 }
     
-void HIDXBox360::button(uint8_t button, bool val){
+void USBXBox360::button(uint8_t button, bool val){
 	button--;
 	uint8_t mask = (1 << (button & 7));
 	if (val) {
@@ -113,35 +113,35 @@ void HIDXBox360::button(uint8_t button, bool val){
     safeSendReport();
 }
 
-void HIDXBox360::X(int16_t val){
+void USBXBox360::X(int16_t val){
 	xbox360_Report[6] = val;
     xbox360_Report[7] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXBox360::Y(int16_t val){
+void USBXBox360::Y(int16_t val){
 	xbox360_Report[8] = val;
     xbox360_Report[9] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXBox360::XRight(int16_t val){
+void USBXBox360::XRight(int16_t val){
 	xbox360_Report[0xA] = val;
     xbox360_Report[0xB] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXBox360::YRight(int16_t val){
+void USBXBox360::YRight(int16_t val){
 	xbox360_Report[0xC] = val;
     xbox360_Report[0xD] = (uint16)val >> 8;
 		
     safeSendReport();
 }
 
-void HIDXBox360::position(int16_t x, int16_t y){
+void USBXBox360::position(int16_t x, int16_t y){
 	xbox360_Report[6] = x;
     xbox360_Report[7] = (uint16)x >> 8;
 	xbox360_Report[8] = y;
@@ -150,7 +150,7 @@ void HIDXBox360::position(int16_t x, int16_t y){
     safeSendReport();
 }
 
-void HIDXBox360::positionRight(int16_t x, int16_t y){
+void USBXBox360::positionRight(int16_t x, int16_t y){
 	xbox360_Report[0xA] = x;
     xbox360_Report[0xB] = (uint16)x >> 8;
 	xbox360_Report[0xC] = y;
@@ -159,16 +159,16 @@ void HIDXBox360::positionRight(int16_t x, int16_t y){
     safeSendReport();
 }
 
-void HIDXBox360::sliderLeft(uint8_t val){
+void USBXBox360::sliderLeft(uint8_t val){
 	xbox360_Report[4] = val;
 	
     safeSendReport();
 }
 
-void HIDXBox360::sliderRight(uint8_t val){
+void USBXBox360::sliderRight(uint8_t val){
 	xbox360_Report[5] = val;
 	
     safeSendReport();
 }
 
-HIDXBox360 XBox360;
+USBXBox360 XBox360;

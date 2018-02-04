@@ -18,7 +18,7 @@
  * @brief USB HID Keyboard device 
  */
  
-#include "USBHID.h"
+#include <USBCompositeSerial.h>
 
 #include <string.h>
 #include <stdint.h>

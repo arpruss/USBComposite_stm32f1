@@ -20,11 +20,11 @@
 #ifndef _HID_DEVICE_H_
 #define _HID_DEVICE_H_
 
+#include <USBComposite.h>
 #include <Print.h>
 #include <boards.h>
 #include "Stream.h"
 #include "usb_hid.h"
-#include <CompositeSerial.h>
 
 #define USB_HID_MAX_PRODUCT_LENGTH 32
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
