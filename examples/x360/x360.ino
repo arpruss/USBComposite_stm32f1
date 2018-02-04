@@ -1,4 +1,4 @@
-#include <XBox360.h>
+#include <USBXBox360.h>
 
 void setup() {
   XBox360.begin();
