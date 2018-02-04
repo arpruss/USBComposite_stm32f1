@@ -101,9 +101,9 @@ static void x360DataRxCb(void);
 static void (*x360_rumble_callback)(uint8 left, uint8 right);
 static void (*x360_led_callback)(uint8 pattern);
 
-static void x360Reset(const USBCompositePart* part);
-static RESULT x360DataSetup(const USBCompositePart* part, uint8 request);
-static RESULT x360NoDataSetup(const USBCompositePart* part, uint8 request);
+static void x360Reset(void);
+static RESULT x360DataSetup(uint8 request);
+static RESULT x360NoDataSetup(uint8 request);
 static uint8 *HID_GetProtocolValue(uint16 Length);
 
 /*
@@ -286,12 +286,12 @@ static USBEndpointInfo x360Endpoints[2] = {
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
-static void getX360PartDescriptor(const USBCompositePart* part, uint8* out) {
+static void getX360PartDescriptor(uint8* out) {
     memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
     // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += usbX360Part.startInterface;
+    OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += usbX360Part.startEndpoint;
+    OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += usbX360Part.startEndpoint;
 }
 
 USBCompositePart usbX360Part = {
@@ -424,8 +424,7 @@ static void x360DataTxCb(void) {
     transmitting = 0;
 }
 
-static RESULT x360DataSetup(const USBCompositePart* part, uint8 request) {
-    (void)part;
+static RESULT x360DataSetup(uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
 	
 #if 0			
@@ -460,8 +459,7 @@ static RESULT x360DataSetup(const USBCompositePart* part, uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT x360NoDataSetup(const USBCompositePart* part, uint8 request) {
-    (void)part;
+static RESULT x360NoDataSetup(uint8 request) {
 	if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 		&& (request == SET_PROTOCOL)){
 		uint8 wValue0 = pInformation->USBwValue0;
@@ -481,8 +479,7 @@ static uint8* HID_GetProtocolValue(uint16 Length){
 	}
 }
 
-static void x360Reset(const USBCompositePart* part) {
-    (void)part;
+static void x360Reset(void) {
       /* Reset the RX/TX state */
     n_unsent_bytes = 0;
     transmitting = 0;

@@ -53,9 +53,9 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 static uint32 ProtocolValue = 0;
 
 static void hidDataTxCb(void);
-static void hidUSBReset(const USBCompositePart* part);
-static RESULT hidUSBDataSetup(const USBCompositePart* part, uint8 request);
-static RESULT hidUSBNoDataSetup(const USBCompositePart* part, uint8 request);
+static void hidUSBReset(void);
+static RESULT hidUSBDataSetup(uint8 request);
+static RESULT hidUSBNoDataSetup(uint8 request);
 //static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
 static uint8* HID_GetReportDescriptor(uint16 Length);
 static uint8* HID_GetProtocolValue(uint16 Length);
@@ -132,11 +132,11 @@ static USBEndpointInfo hidEndpoints[1] = {
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
-static void getHIDPartDescriptor(const USBCompositePart* part, uint8* out) {
+static void getHIDPartDescriptor(uint8* out) {
     memcpy(out, &hidPartConfigData, sizeof(hid_part_config));
     // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(hidPartConfigData, HID_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(hidPartConfigData, HID_Interface.bInterfaceNumber) += usbHIDPart.startInterface;
+    OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += usbHIDPart.startEndpoint;
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenL) = (uint8)HID_Report_Descriptor.Descriptor_Size;
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenH) = (uint8)(HID_Report_Descriptor.Descriptor_Size>>8);
 }
@@ -397,9 +397,7 @@ flush_hid:
 
 
 
-static void hidUSBReset(const USBCompositePart* part) {
-    (void)part;
-   
+static void hidUSBReset(void) {
     /* Reset the RX/TX state */
 	hid_tx_head = 0;
 	hid_tx_tail = 0;
@@ -459,8 +457,7 @@ static uint8* HID_GetFeature(uint16 length) {
     return (uint8*)currentHIDBuffer->buffer + wOffset;
 }
 
-static RESULT hidUSBDataSetup(const USBCompositePart* part, uint8 request) {
-    (void)part;
+static RESULT hidUSBDataSetup(uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
@@ -544,8 +541,7 @@ static RESULT hidUSBDataSetup(const USBCompositePart* part, uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT hidUSBNoDataSetup(const USBCompositePart* part, uint8 request) {
-    (void)part;
+static RESULT hidUSBNoDataSetup(uint8 request) {
     RESULT ret = USB_UNSUPPORT;
     
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {

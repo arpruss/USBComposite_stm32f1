@@ -55,9 +55,9 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 #include "usb_core.h"
 #include "usb_def.h"
 
-static void serialUSBReset(const USBCompositePart* part);
-static RESULT serialUSBDataSetup(const USBCompositePart* part, uint8 request);
-static RESULT serialUSBNoDataSetup(const USBCompositePart* part, uint8 request);
+static void serialUSBReset(void);
+static RESULT serialUSBDataSetup(uint8 request);
+static RESULT serialUSBNoDataSetup(uint8 request);
 static void vcomDataTxCb(void);
 static void vcomDataRxCb(void);
 
@@ -202,20 +202,20 @@ static USBEndpointInfo serialEndpoints[3] = {
     },
 };
 
-static void getSerialPartDescriptor(const USBCompositePart* part, uint8* out) {
+static void getSerialPartDescriptor(uint8* out) {
     memcpy(out, &serialPartConfigData, sizeof(serial_part_config));
 
     // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += usbSerialPart.startEndpoint;
+    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += usbSerialPart.startEndpoint;
+    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += usbSerialPart.startEndpoint;
 
-    OUT_BYTE(serialPartConfigData, IAD.bFirstInterface) += part->startInterface;
-    OUT_BYTE(serialPartConfigData, CCI_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(serialPartConfigData, CDC_Functional_CallManagement.Data[1]) += part->startInterface;
-    OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[0]) += part->startInterface;
-    OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[1]) += part->startInterface;
+    OUT_BYTE(serialPartConfigData, IAD.bFirstInterface) += usbSerialPart.startInterface;
+    OUT_BYTE(serialPartConfigData, CCI_Interface.bInterfaceNumber) += usbSerialPart.startInterface;
+    OUT_BYTE(serialPartConfigData, DCI_Interface.bInterfaceNumber) += usbSerialPart.startInterface;
+    OUT_BYTE(serialPartConfigData, CDC_Functional_CallManagement.Data[1]) += usbSerialPart.startInterface;
+    OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[0]) += usbSerialPart.startInterface;
+    OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[1]) += usbSerialPart.startInterface;
 }
 
 USBCompositePart usbSerialPart = {
@@ -511,8 +511,7 @@ static uint8* vcomGetSetLineCoding(uint16 length) {
     return (uint8*)&line_coding;
 }
 
-static void serialUSBReset(const USBCompositePart* part) {
-    (void)part;
+static void serialUSBReset(void) {
     //VCOM
     vcom_rx_head = 0;
     vcom_rx_tail = 0;
@@ -520,8 +519,7 @@ static void serialUSBReset(const USBCompositePart* part) {
     vcom_tx_tail = 0;
 }
 
-static RESULT serialUSBDataSetup(const USBCompositePart* part, uint8 request) {
-    (void)part;
+static RESULT serialUSBDataSetup(uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
@@ -552,8 +550,7 @@ static RESULT serialUSBDataSetup(const USBCompositePart* part, uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT serialUSBNoDataSetup(const USBCompositePart* part, uint8 request) {
-    (void)part;
+static RESULT serialUSBNoDataSetup(uint8 request) {
     RESULT ret = USB_UNSUPPORT;
     
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {

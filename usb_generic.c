@@ -242,7 +242,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
             }
             numEndpoints++;
         }
-        parts[i]->getPartDescriptor(parts[i], usbConfig.descriptorData + usbDescriptorSize);
+        parts[i]->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
     }
     
@@ -342,7 +342,7 @@ static void usbInit(void) {
 
     for (unsigned i = 0 ; i < numParts ; i++)
         if(parts[i]->usbInit != NULL)
-            parts[i]->usbInit(parts[i]);
+            parts[i]->usbInit();
 
     USBLIB->state = USB_UNCONNECTED;
 }
@@ -385,7 +385,7 @@ static void usbReset(void) {
             }
         }
         if (parts[i]->usbReset != NULL)
-            parts[i]->usbReset(parts[i]);
+            parts[i]->usbReset();
     }
     
     usbGenericTransmitting = -1;
@@ -427,7 +427,7 @@ static RESULT usbDataSetup(uint8 request) {
 
 	if (CopyRoutine == NULL){
         for (unsigned i = 0 ; i < numParts ; i++) {
-            RESULT r = parts[i]->usbDataSetup(parts[i], request);
+            RESULT r = parts[i]->usbDataSetup(request);
             if (USB_UNSUPPORT != r)
                 return r;
         }
@@ -442,7 +442,7 @@ static RESULT usbDataSetup(uint8 request) {
 
 static RESULT usbNoDataSetup(uint8 request) {
     for (unsigned i = 0 ; i < numParts ; i++) {
-        RESULT r = parts[i]->usbNoDataSetup(parts[i], request);
+        RESULT r = parts[i]->usbNoDataSetup(request);
         if (USB_UNSUPPORT != r)
             return r;
     }
@@ -456,14 +456,14 @@ static void usbSetConfiguration(void) {
     }
     for (unsigned i = 0 ; i < numParts ; i++) {
         if (parts[i]->usbSetConfiguration != NULL)
-            parts[i]->usbSetConfiguration(parts[i]);
+            parts[i]->usbSetConfiguration();
     }
 }
 
 static void usbClearFeature(void) {
     for (unsigned i = 0 ; i < numParts ; i++) {
         if (parts[i]->usbClearFeature != NULL)
-            parts[i]->usbClearFeature(parts[i]);
+            parts[i]->usbClearFeature();
     }
 }
 

@@ -32,16 +32,16 @@ typedef struct USBEndpointInfo {
 typedef struct USBCompositePart {
     uint8 numInterfaces;
     uint8 numEndpoints;
-    uint8 startInterface;
-    uint8 startEndpoint;
+	uint8 startInterface;
+	uint8 startEndpoint;
     uint16 descriptorSize;
-    void (*getPartDescriptor)(const struct USBCompositePart* part, uint8* out);
-    void (*usbInit)(const struct USBCompositePart* part);
-    void (*usbReset)(const struct USBCompositePart* part);
-    void (*usbSetConfiguration)(const struct USBCompositePart* part);
-    void (*usbClearFeature)(const struct USBCompositePart* part);
-    RESULT (*usbDataSetup)(const struct USBCompositePart* part, uint8 request);
-    RESULT (*usbNoDataSetup)(const struct USBCompositePart* part, uint8 request);
+    void (*getPartDescriptor)(uint8* out);
+    void (*usbInit)(void);
+    void (*usbReset)(void);
+    void (*usbSetConfiguration)(void);
+    void (*usbClearFeature)(void);
+    RESULT (*usbDataSetup)(uint8 request);
+    RESULT (*usbNoDataSetup)(uint8 request);
     USBEndpointInfo* endpoints;
 } USBCompositePart;
 

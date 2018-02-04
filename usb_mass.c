@@ -21,11 +21,11 @@
 
 static void usb_mass_bot_cbw_decode();
 
-static void usb_mass_set_configuration(const USBCompositePart* part);
-static void usb_mass_clear_feature(const USBCompositePart* part);
-static RESULT usb_mass_data_setup(const USBCompositePart* part, uint8 request);
-static RESULT usb_mass_no_data_setup(const USBCompositePart* part, uint8 request);
-static void usb_mass_reset(const USBCompositePart* part);
+static void usb_mass_set_configuration();
+static void usb_mass_clear_feature();
+static RESULT usb_mass_data_setup(uint8 request);
+static RESULT usb_mass_no_data_setup(uint8 request);
+static void usb_mass_reset();
 static uint8_t* usb_mass_get_max_lun(uint16_t Length);
 static void usb_mass_in(void);
 static void usb_mass_out(void);
@@ -121,12 +121,12 @@ USBEndpointInfo usbMassEndpoints[2] = {
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
-static void getMassPartDescriptor(const USBCompositePart* part, uint8* out) {
+static void getMassPartDescriptor(uint8* out) {
     memcpy(out, &usbMassConfigDescriptor, sizeof(mass_descriptor_config));
     // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(usbMassConfigDescriptor, MASS_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(usbMassConfigDescriptor, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(usbMassConfigDescriptor, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(usbMassConfigDescriptor, MASS_Interface.bInterfaceNumber) += usbMassPart.startInterface;
+    OUT_BYTE(usbMassConfigDescriptor, DataInEndpoint.bEndpointAddress) += usbMassPart.startEndpoint;
+    OUT_BYTE(usbMassConfigDescriptor, DataOutEndpoint.bEndpointAddress) += usbMassPart.startEndpoint;
 }
 
 
@@ -145,8 +145,7 @@ USBCompositePart usbMassPart = {
     .endpoints = usbMassEndpoints
 };
 
-static void usb_mass_reset(const USBCompositePart* part) {
-  (void)part;
+static void usb_mass_reset(void) {
   usb_mass_mal_init(0);
 
   pInformation->Current_Configuration = 0; // TODO: remove?
@@ -159,8 +158,7 @@ static void usb_mass_reset(const USBCompositePart* part) {
   usb_mass_botState = BOT_STATE_IDLE;
 }
 
-static void usb_mass_set_configuration(const USBCompositePart* part) {
-  (void)part;
+static void usb_mass_set_configuration(void) {
   if (pInformation->Current_Configuration != 0) {
     deviceState = USB_CONFIGURED;
     ClearDTOG_TX(USB_MASS_TX_ENDP);
@@ -169,8 +167,7 @@ static void usb_mass_set_configuration(const USBCompositePart* part) {
   }
 }
 
-static void usb_mass_clear_feature(const USBCompositePart* part) {
-  (void)part;
+static void usb_mass_clear_feature(void) {
   /* when the host send a usb_mass_CBW with invalid signature or invalid length the two
    Endpoints (IN & OUT) shall stall until receiving a Mass Storage Reset     */
   if (usb_mass_CBW.dSignature != BOT_CBW_SIGNATURE) {
@@ -178,8 +175,7 @@ static void usb_mass_clear_feature(const USBCompositePart* part) {
   }
 }
 
-static RESULT usb_mass_data_setup(const USBCompositePart* part, uint8 request) {
-  (void)part;
+static RESULT usb_mass_data_setup(uint8 request) {
   uint8_t * (*copy_routine)(uint16_t);
 
   copy_routine = NULL;
@@ -211,8 +207,7 @@ static uint8_t* usb_mass_get_max_lun(uint16_t length) {
   }
 }
 
-static RESULT usb_mass_no_data_setup(const USBCompositePart* part, uint8 request) {
-  (void)part;
+static RESULT usb_mass_no_data_setup(uint8 request) {
   if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
           && (request == REQUEST_MASS_STORAGE_RESET) && (pInformation->USBwValue == 0)
           && (pInformation->USBwIndex == MASS_INTERFACE_NUMBER) && (pInformation->USBwLength == 0x00)) {

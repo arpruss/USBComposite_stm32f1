@@ -56,9 +56,9 @@
 static void midiDataTxCb(void);
 static void midiDataRxCb(void);
 
-static void usbMIDIReset(const USBCompositePart* part);
-static RESULT usbMIDIDataSetup(const USBCompositePart* part, uint8 request);
-static RESULT usbMIDINoDataSetup(const USBCompositePart* part, uint8 request);
+static void usbMIDIReset(void);
+static RESULT usbMIDIDataSetup(uint8 request);
+static RESULT usbMIDINoDataSetup(uint8 request);
 
 #define MIDI_ENDPOINT_RX 0
 #define MIDI_ENDPOINT_TX 1
@@ -271,13 +271,13 @@ volatile uint8 myMidiID[] = { LEAFLABS_MMA_VENDOR_1,LEAFLABS_MMA_VENDOR_2,LEAFLA
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
-static void getMIDIPartDescriptor(const USBCompositePart* part, uint8* out) {
+static void getMIDIPartDescriptor(uint8* out) {
     memcpy(out, &usbMIDIDescriptor_Config, sizeof(usbMIDIDescriptor_Config));
     // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(usbMIDIDescriptor_Config, AC_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(usbMIDIDescriptor_Config, MS_Interface.bInterfaceNumber) += part->startInterface;
-    OUT_BYTE(usbMIDIDescriptor_Config, DataOutEndpoint.bEndpointAddress) += part->startEndpoint;
-    OUT_BYTE(usbMIDIDescriptor_Config, DataInEndpoint.bEndpointAddress) += part->startEndpoint;
+    OUT_BYTE(usbMIDIDescriptor_Config, AC_Interface.bInterfaceNumber) += usbMIDIPart.startInterface;
+    OUT_BYTE(usbMIDIDescriptor_Config, MS_Interface.bInterfaceNumber) += usbMIDIPart.startInterface;
+    OUT_BYTE(usbMIDIDescriptor_Config, DataOutEndpoint.bEndpointAddress) += usbMIDIPart.startEndpoint;
+    OUT_BYTE(usbMIDIDescriptor_Config, DataInEndpoint.bEndpointAddress) += usbMIDIPart.startEndpoint;
 }
 
 static USBEndpointInfo midiEndpoints[2] = {
@@ -426,18 +426,15 @@ static void midiDataRxCb(void) {
 
 }
 
-static void usbMIDIReset(const USBCompositePart* part) {
-    (void)part;
-
+static void usbMIDIReset(void) {
     /* Reset the RX/TX state */
     n_unread_packets = 0;
     n_unsent_packets = 0;
     rx_offset = 0;
 }
 
-static RESULT usbMIDIDataSetup(const USBCompositePart* part, uint8 request) {
+static RESULT usbMIDIDataSetup(uint8 request) {
     (void)request;//unused
-    (void)part;
 #if 0
     uint8* (*CopyRoutine)(uint16) = 0;
 
@@ -456,9 +453,8 @@ static RESULT usbMIDIDataSetup(const USBCompositePart* part, uint8 request) {
     return USB_UNSUPPORT;
 }
 
-static RESULT usbMIDINoDataSetup(const USBCompositePart* part, uint8 request) {
+static RESULT usbMIDINoDataSetup(uint8 request) {
     (void)request;//unused
-    (void)part;//unused
 #if 0    
     RESULT ret = USB_UNSUPPORT;
 
