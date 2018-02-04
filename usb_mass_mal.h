@@ -18,7 +18,6 @@ typedef bool (*MassStorageFormatter)(void);
 
 typedef struct {
     uint32_t blockCount;
-	uint32_t blockSize;
 	MassStorageReader read;
 	MassStorageWriter write;
 	MassStorageStatuser status;

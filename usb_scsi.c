@@ -1,5 +1,3 @@
-// will fail if block size is > 512
-// TODO: perhaps fix?
 #include "usb_mass.h"
 #include "usb_mass_mal.h"
 #include "usb_mass_internal.h"
@@ -115,9 +113,9 @@ void scsi_read_format_capacity_cmd(uint8_t lun) {
   SCSI_readFormatCapacityData[6] = (uint8_t) (usb_mass_drives[lun].blockCount >> 8);
   SCSI_readFormatCapacityData[7] = (uint8_t) (usb_mass_drives[lun].blockCount);
 
-  SCSI_readFormatCapacityData[9] = (uint8_t) (usb_mass_drives[lun].blockSize >> 16);
-  SCSI_readFormatCapacityData[10] = (uint8_t) (usb_mass_drives[lun].blockSize >> 8);
-  SCSI_readFormatCapacityData[11] = (uint8_t) (usb_mass_drives[lun].blockSize);
+  SCSI_readFormatCapacityData[9] = (uint8_t) (SCSI_BLOCK_SIZE >> 16);
+  SCSI_readFormatCapacityData[10] = (uint8_t) (SCSI_BLOCK_SIZE >> 8);
+  SCSI_readFormatCapacityData[11] = (uint8_t) (SCSI_BLOCK_SIZE);
   usb_mass_transfer_data_request(SCSI_readFormatCapacityData, SCSI_READ_FORMAT_CAPACITY_DATA_LEN);
 }
 
@@ -134,10 +132,10 @@ void scsi_read_capacity10_cmd(uint8_t lun) {
   SCSI_readFormatCapacity10Data[2] = (uint8_t) ((usb_mass_drives[lun].blockCount - 1) >> 8);
   SCSI_readFormatCapacity10Data[3] = (uint8_t) (usb_mass_drives[lun].blockCount - 1);
 
-  SCSI_readFormatCapacity10Data[4] = (uint8_t) (usb_mass_drives[lun].blockSize >> 24);
-  SCSI_readFormatCapacity10Data[5] = (uint8_t) (usb_mass_drives[lun].blockSize >> 16);
-  SCSI_readFormatCapacity10Data[6] = (uint8_t) (usb_mass_drives[lun].blockSize >> 8);
-  SCSI_readFormatCapacity10Data[7] = (uint8_t) (usb_mass_drives[lun].blockSize);
+  SCSI_readFormatCapacity10Data[4] = (uint8_t) (SCSI_BLOCK_SIZE >> 24);
+  SCSI_readFormatCapacity10Data[5] = (uint8_t) (SCSI_BLOCK_SIZE >> 16);
+  SCSI_readFormatCapacity10Data[6] = (uint8_t) (SCSI_BLOCK_SIZE >> 8);
+  SCSI_readFormatCapacity10Data[7] = (uint8_t) (SCSI_BLOCK_SIZE);
   usb_mass_transfer_data_request(SCSI_readFormatCapacity10Data, SCSI_READ_FORMAT_CAPACITY10_DATA_LEN);
 }
 
@@ -245,7 +243,7 @@ uint8_t scsi_address_management(uint8_t lun, uint8_t cmd, uint32_t lba, uint32_t
   }
 
 
-  if (CBW.dDataLength != blockNbr * usb_mass_drives[lun].blockSize) {
+  if (CBW.dDataLength != blockNbr * SCSI_BLOCK_SIZE) {
     if (cmd == SCSI_WRITE10) {
       usb_mass_bot_abort(BOT_DIR_BOTH);
     } else {
@@ -262,18 +260,18 @@ void scsi_read_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLengt
   static uint32_t offset, length;
 
   if (SCSI_transferState == SCSI_TXFR_IDLE) {
-    offset = memoryOffset * usb_mass_drives[lun].blockSize;
-    length = transferLength * usb_mass_drives[lun].blockSize;
+    offset = memoryOffset * SCSI_BLOCK_SIZE;
+    length = transferLength * SCSI_BLOCK_SIZE;
     SCSI_transferState = SCSI_TXFR_ONGOING;
   }
 
   if (SCSI_transferState == SCSI_TXFR_ONGOING) {
     if (SCSI_blockReadCount == 0) {
-      usb_mass_mal_read_memory(lun, offset, SCSI_dataBuffer, usb_mass_drives[lun].blockSize);
+      usb_mass_mal_read_memory(lun, offset, SCSI_dataBuffer, SCSI_BLOCK_SIZE);
 
       usb_mass_sil_write(SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
 
-      SCSI_blockReadCount = usb_mass_drives[lun].blockSize - MAX_BULK_PACKET_SIZE;
+      SCSI_blockReadCount = SCSI_BLOCK_SIZE - MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset = MAX_BULK_PACKET_SIZE;
     } else {
       usb_mass_sil_write(SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
@@ -308,8 +306,8 @@ void scsi_write_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLeng
   uint32_t temp = SCSI_counter + 64;
 
   if (SCSI_transferState == SCSI_TXFR_IDLE) {
-    offset = memoryOffset * usb_mass_drives[lun].blockSize;
-    length = transferLength * usb_mass_drives[lun].blockSize;
+    offset = memoryOffset * SCSI_BLOCK_SIZE;
+    length = transferLength * SCSI_BLOCK_SIZE;
     SCSI_transferState = SCSI_TXFR_ONGOING;
   }
 
@@ -322,9 +320,9 @@ void scsi_write_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLeng
     offset += dataLength;
     length -= dataLength;
 
-    if (!(length % usb_mass_drives[lun].blockSize)) {
+    if (!(length % SCSI_BLOCK_SIZE)) {
       SCSI_counter = 0;
-      usb_mass_mal_write_memory(lun, offset - usb_mass_drives[lun].blockSize, SCSI_dataBuffer, usb_mass_drives[lun].blockSize);
+      usb_mass_mal_write_memory(lun, offset - SCSI_BLOCK_SIZE, SCSI_dataBuffer, SCSI_BLOCK_SIZE);
     }
 
     CSW.dDataResidue -= dataLength;
