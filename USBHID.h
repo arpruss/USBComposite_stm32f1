@@ -725,7 +725,6 @@ public:
 extern HIDMouse Mouse;
 extern HIDKeyboard Keyboard;
 extern HIDJoystick Joystick;
-extern USBCompositeSerial CompositeSerial;
 extern HIDKeyboard BootKeyboard;
 
 extern const HIDReportDescriptor* hidReportMouse;
@@ -745,5 +744,4 @@ extern const HIDReportDescriptor* hidReportBootKeyboard;
 #define HID_BOOT_KEYBOARD           hidReportBootKeyboard
 
 #endif
-        
-		
+        		
