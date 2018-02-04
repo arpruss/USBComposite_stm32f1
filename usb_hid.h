@@ -38,7 +38,7 @@
 #include <libmaple/usb.h>
 #include "usb_generic.h"
 
-#define MAX_HID_BUFFERS 12
+#define MAX_HID_BUFFERS 8
 #define HID_BUFFER_SIZE(n,reportID) ((n)+((reportID)!=0))
 #define HID_BUFFER_ALLOCATE_SIZE(n,reportID) ((HID_BUFFER_SIZE((n),(reportID))+1)/2*2)
 

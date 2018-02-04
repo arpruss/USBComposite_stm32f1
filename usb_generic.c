@@ -220,15 +220,18 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     for (unsigned i = 0 ; i < _numParts ; i++ ) {
         parts[i]->startInterface = numInterfaces;
         numInterfaces += parts[i]->numInterfaces;
-        if (numEndpoints + parts[i]->numEndpoints > 8)
+        if (numEndpoints + parts[i]->numEndpoints > 8) {
             return 0;
-        if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) 
+		}
+        if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) {
             return 0;
+		}
         parts[i]->startEndpoint = numEndpoints;
         USBEndpointInfo* ep = parts[i]->endpoints;
         for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
-            if (ep[j].bufferSize + pmaOffset > PMA_MEMORY_SIZE) 
+            if (ep[j].bufferSize + pmaOffset > PMA_MEMORY_SIZE) { 
                 return 0;
+			}
             ep[j].pmaAddress = pmaOffset;
             pmaOffset += ep[j].bufferSize;
             ep[j].address = numEndpoints;
