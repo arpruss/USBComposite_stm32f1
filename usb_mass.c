@@ -38,15 +38,15 @@ uint32_t usb_mass_sil_read(uint8_t* pBufferPointer);
 
 #define LUN_DATA_LENGTH            1
 
-uint32_t maxLun = 0;
-uint32_t deviceState = DEVICE_STATE_UNCONNECTED;
-uint8_t botState = BOT_STATE_IDLE;
-BulkOnlyCBW CBW;
-BulkOnlyCSW CSW;
-uint8_t bulkDataBuff[MAX_BULK_PACKET_SIZE];
-uint16_t dataLength;
-uint8_t inRequestPending;
-uint8_t outRequestPending;
+static uint32_t maxLun = 0;
+static uint32_t deviceState = DEVICE_STATE_UNCONNECTED;
+uint8_t usb_mass_botState = BOT_STATE_IDLE;
+BulkOnlyCBW usb_mass_CBW;
+BulkOnlyCSW usb_mass_CSW;
+uint8_t usb_mass_bulkDataBuff[MAX_BULK_PACKET_SIZE];
+uint16_t usb_mass_dataLength;
+static uint8_t inRequestPending;
+static uint8_t outRequestPending;
 
 typedef struct mass_descriptor_config {
 //    usb_descriptor_config_header Config_Header;
@@ -155,8 +155,8 @@ static void usb_mass_reset(const USBCompositePart* part) {
   pInformation->Current_Feature = (USB_CONFIG_ATTR_BUSPOWERED | USB_CONFIG_ATTR_SELF_POWERED); // usbMassConfigDescriptor.Config_Header.bmAttributes; // TODO: remove?
 
   deviceState = DEVICE_STATE_ATTACHED;
-  CBW.dSignature = BOT_CBW_SIGNATURE;
-  botState = BOT_STATE_IDLE;
+  usb_mass_CBW.dSignature = BOT_CBW_SIGNATURE;
+  usb_mass_botState = BOT_STATE_IDLE;
 }
 
 static void usb_mass_set_configuration(const USBCompositePart* part) {
@@ -165,15 +165,15 @@ static void usb_mass_set_configuration(const USBCompositePart* part) {
     deviceState = USB_CONFIGURED;
     ClearDTOG_TX(USB_MASS_TX_ENDP);
     ClearDTOG_RX(USB_MASS_RX_ENDP);
-    botState = BOT_STATE_IDLE;
+    usb_mass_botState = BOT_STATE_IDLE;
   }
 }
 
 static void usb_mass_clear_feature(const USBCompositePart* part) {
   (void)part;
-  /* when the host send a CBW with invalid signature or invalid length the two
+  /* when the host send a usb_mass_CBW with invalid signature or invalid length the two
    Endpoints (IN & OUT) shall stall until receiving a Mass Storage Reset     */
-  if (CBW.dSignature != BOT_CBW_SIGNATURE) {
+  if (usb_mass_CBW.dSignature != BOT_CBW_SIGNATURE) {
     usb_mass_bot_abort(BOT_DIR_BOTH);
   }
 }
@@ -223,9 +223,9 @@ static RESULT usb_mass_no_data_setup(const USBCompositePart* part, uint8 request
     /* Initialize Endpoint 2 */
     ClearDTOG_RX(USB_MASS_RX_ENDP);
 
-    /*initialize the CBW signature to enable the clear feature*/
-    CBW.dSignature = BOT_CBW_SIGNATURE;
-    botState = BOT_STATE_IDLE;
+    /*initialize the usb_mass_CBW signature to enable the clear feature*/
+    usb_mass_CBW.dSignature = BOT_CBW_SIGNATURE;
+    usb_mass_botState = BOT_STATE_IDLE;
 
     return USB_SUCCESS;
   }
@@ -237,16 +237,16 @@ void usb_mass_loop() {
   if (inRequestPending) {
     inRequestPending = 0;
 
-    switch (botState) {
+    switch (usb_mass_botState) {
       case BOT_STATE_CSW_Send:
       case BOT_STATE_ERROR:
-        botState = BOT_STATE_IDLE;
+        usb_mass_botState = BOT_STATE_IDLE;
         SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL); /* enable the Endpoint to receive the next cmd*/
         break;
       case BOT_STATE_DATA_IN:
-        switch (CBW.CB[0]) {
+        switch (usb_mass_CBW.CB[0]) {
           case SCSI_READ10:
-            scsi_read10_cmd(CBW.bLUN, SCSI_lba, SCSI_blkLen);
+            scsi_read10_cmd(usb_mass_CBW.bLUN, SCSI_lba, SCSI_blkLen);
             break;
         }
         break;
@@ -264,24 +264,24 @@ void usb_mass_loop() {
     outRequestPending = 0;
 
     uint8_t CMD;
-    CMD = CBW.CB[0];
+    CMD = usb_mass_CBW.CB[0];
 
-    switch (botState) {
+    switch (usb_mass_botState) {
       case BOT_STATE_IDLE:
         usb_mass_bot_cbw_decode();
         break;
       case BOT_STATE_DATA_OUT:
         if (CMD == SCSI_WRITE10) {
-          scsi_write10_cmd(CBW.bLUN, SCSI_lba, SCSI_blkLen);
+          scsi_write10_cmd(usb_mass_CBW.bLUN, SCSI_lba, SCSI_blkLen);
           break;
         }
         usb_mass_bot_abort(BOT_DIR_OUT);
-        scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+        scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
         usb_mass_bot_set_csw(BOT_CSW_PHASE_ERROR, BOT_SEND_CSW_DISABLE);
         break;
       default:
         usb_mass_bot_abort(BOT_DIR_BOTH);
-        scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+        scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
         usb_mass_bot_set_csw(BOT_CSW_PHASE_ERROR, BOT_SEND_CSW_DISABLE);
         break;
     }
@@ -299,80 +299,80 @@ static void usb_mass_in(void) {
  *  OUT
  */
 static void usb_mass_out(void) {
-  dataLength = usb_mass_sil_read(bulkDataBuff);
+  usb_mass_dataLength = usb_mass_sil_read(usb_mass_bulkDataBuff);
   outRequestPending = 1;
 }
 
 static void usb_mass_bot_cbw_decode() {
   uint32_t counter;
 
-  for (counter = 0; counter < dataLength; counter++) {
-    *((uint8_t *) & CBW + counter) = bulkDataBuff[counter];
+  for (counter = 0; counter < usb_mass_dataLength; counter++) {
+    *((uint8_t *) & usb_mass_CBW + counter) = usb_mass_bulkDataBuff[counter];
   }
-  CSW.dTag = CBW.dTag;
-  CSW.dDataResidue = CBW.dDataLength;
-  if (dataLength != BOT_CBW_PACKET_LENGTH) {
+  usb_mass_CSW.dTag = usb_mass_CBW.dTag;
+  usb_mass_CSW.dDataResidue = usb_mass_CBW.dDataLength;
+  if (usb_mass_dataLength != BOT_CBW_PACKET_LENGTH) {
     usb_mass_bot_abort(BOT_DIR_BOTH);
-    /* reset the CBW.dSignature to disable the clear feature until receiving a Mass storage reset*/
-    CBW.dSignature = 0;
-    scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_PARAMETER_LIST_LENGTH_ERROR);
+    /* reset the usb_mass_CBW.dSignature to disable the clear feature until receiving a Mass storage reset*/
+    usb_mass_CBW.dSignature = 0;
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_PARAMETER_LIST_LENGTH_ERROR);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
     return;
   }
 
-  if ((CBW.CB[0] == SCSI_READ10) || (CBW.CB[0] == SCSI_WRITE10)) {
+  if ((usb_mass_CBW.CB[0] == SCSI_READ10) || (usb_mass_CBW.CB[0] == SCSI_WRITE10)) {
     /* Calculate Logical Block Address */
-    SCSI_lba = (CBW.CB[2] << 24) | (CBW.CB[3] << 16) | (CBW.CB[4] << 8) | CBW.CB[5];
+    SCSI_lba = (usb_mass_CBW.CB[2] << 24) | (usb_mass_CBW.CB[3] << 16) | (usb_mass_CBW.CB[4] << 8) | usb_mass_CBW.CB[5];
     /* Calculate the Number of Blocks to transfer */
-    SCSI_blkLen = (CBW.CB[7] << 8) | CBW.CB[8];
+    SCSI_blkLen = (usb_mass_CBW.CB[7] << 8) | usb_mass_CBW.CB[8];
   }
 
-  if (CBW.dSignature == BOT_CBW_SIGNATURE) {
-    /* Valid CBW */
-    if ((CBW.bLUN > maxLun) || (CBW.bCBLength < 1) || (CBW.bCBLength > 16)) {
+  if (usb_mass_CBW.dSignature == BOT_CBW_SIGNATURE) {
+    /* Valid usb_mass_CBW */
+    if ((usb_mass_CBW.bLUN > maxLun) || (usb_mass_CBW.bCBLength < 1) || (usb_mass_CBW.bCBLength > 16)) {
       usb_mass_bot_abort(BOT_DIR_BOTH);
-      scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+      scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
       usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
     } else {
-      switch (CBW.CB[0]) {
+      switch (usb_mass_CBW.CB[0]) {
         case SCSI_REQUEST_SENSE:
-          scsi_request_sense_cmd(CBW.bLUN);
+          scsi_request_sense_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_INQUIRY:
-          scsi_inquiry_cmd(CBW.bLUN);
+          scsi_inquiry_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_START_STOP_UNIT:
-          scsi_start_stop_unit_cmd(CBW.bLUN);
+          scsi_start_stop_unit_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_ALLOW_MEDIUM_REMOVAL:
-          scsi_start_stop_unit_cmd(CBW.bLUN);
+          scsi_start_stop_unit_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_MODE_SENSE6:
-          scsi_mode_sense6_cmd(CBW.bLUN);
+          scsi_mode_sense6_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_MODE_SENSE10:
-          scsi_mode_sense10_cmd(CBW.bLUN);
+          scsi_mode_sense10_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_READ_FORMAT_CAPACITIES:
-          scsi_read_format_capacity_cmd(CBW.bLUN);
+          scsi_read_format_capacity_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_READ_CAPACITY10:
-          scsi_read_capacity10_cmd(CBW.bLUN);
+          scsi_read_capacity10_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_TEST_UNIT_READY:
-          scsi_test_unit_ready_cmd(CBW.bLUN);
+          scsi_test_unit_ready_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_READ10:
-          scsi_read10_cmd(CBW.bLUN, SCSI_lba, SCSI_blkLen);
+          scsi_read10_cmd(usb_mass_CBW.bLUN, SCSI_lba, SCSI_blkLen);
           break;
         case SCSI_WRITE10:
-          scsi_write10_cmd(CBW.bLUN, SCSI_lba, SCSI_blkLen);
+          scsi_write10_cmd(usb_mass_CBW.bLUN, SCSI_lba, SCSI_blkLen);
           break;
         case SCSI_VERIFY10:
-          scsi_verify10_cmd(CBW.bLUN);
+          scsi_verify10_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_FORMAT_UNIT:
-          scsi_format_cmd(CBW.bLUN);
+          scsi_format_cmd(usb_mass_CBW.bLUN);
           break;
 
         case SCSI_MODE_SELECT10:
@@ -387,21 +387,21 @@ static void usb_mass_bot_cbw_decode() {
         case SCSI_VERIFY12:
         case SCSI_VERIFY16:
         case SCSI_WRITE16:
-          scsi_invalid_cmd(CBW.bLUN);
+          scsi_invalid_cmd(usb_mass_CBW.bLUN);
           break;
 
         default:
         {
           usb_mass_bot_abort(BOT_DIR_BOTH);
-          scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
+          scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
           usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
         }
       }
     }
   } else {
-    /* Invalid CBW */
+    /* Invalid usb_mass_CBW */
     usb_mass_bot_abort(BOT_DIR_BOTH);
-    scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
   }
 }
@@ -427,20 +427,20 @@ void usb_mass_transfer_data_request(uint8_t* dataPointer, uint16_t dataLen) {
   usb_mass_sil_write(dataPointer, dataLen);
 
   SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
-  botState = BOT_STATE_DATA_IN_LAST;
-  CSW.dDataResidue -= dataLen;
-  CSW.bStatus = BOT_CSW_CMD_PASSED;
+  usb_mass_botState = BOT_STATE_DATA_IN_LAST;
+  usb_mass_CSW.dDataResidue -= dataLen;
+  usb_mass_CSW.bStatus = BOT_CSW_CMD_PASSED;
 }
 
 void usb_mass_bot_set_csw(uint8_t status, uint8_t sendPermission) {
-  CSW.dSignature = BOT_CSW_SIGNATURE;
-  CSW.bStatus = status;
+  usb_mass_CSW.dSignature = BOT_CSW_SIGNATURE;
+  usb_mass_CSW.bStatus = status;
 
-  usb_mass_sil_write(((uint8_t *) & CSW), BOT_CSW_DATA_LENGTH);
+  usb_mass_sil_write(((uint8_t *) & usb_mass_CSW), BOT_CSW_DATA_LENGTH);
 
-  botState = BOT_STATE_ERROR;
+  usb_mass_botState = BOT_STATE_ERROR;
   if (sendPermission) {
-    botState = BOT_STATE_CSW_Send;
+    usb_mass_botState = BOT_STATE_CSW_Send;
     SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
   }
 }
@@ -456,14 +456,14 @@ uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize) {
 }
 
 uint32_t usb_mass_sil_read(uint8_t* pBufferPointer) {
-  uint32_t dataLength = 0;
+  uint32_t usb_mass_dataLength = 0;
 
   /* Get the number of received data on the selected Endpoint */
-  dataLength = GetEPRxCount(USB_MASS_RX_ENDP);
+  usb_mass_dataLength = GetEPRxCount(USB_MASS_RX_ENDP);
 
   /* Use the memory interface function to write to the selected endpoint */
-  usb_copy_from_pma(pBufferPointer, dataLength, USB_MASS_RX_ADDR);
+  usb_copy_from_pma(pBufferPointer, usb_mass_dataLength, USB_MASS_RX_ADDR);
 
   /* Return the number of received data */
-  return dataLength;
+  return usb_mass_dataLength;
 }

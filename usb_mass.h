@@ -99,6 +99,12 @@ extern "C" {
   
   extern USBCompositePart usbMassPart;
 
+extern uint8_t usb_mass_botState;
+extern BulkOnlyCBW usb_mass_CBW;
+extern BulkOnlyCSW usb_mass_CSW;
+extern uint8_t usb_mass_bulkDataBuff[MAX_BULK_PACKET_SIZE];
+extern uint16_t usb_mass_dataLength;
+
 #ifdef __cplusplus
 }
 #endif

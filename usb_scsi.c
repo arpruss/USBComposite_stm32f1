@@ -25,13 +25,6 @@
 #define SCSI_TXFR_IDLE     0
 #define SCSI_TXFR_ONGOING  1
 
-/* See usb_mass.c */
-extern BulkOnlyCBW CBW;
-extern BulkOnlyCSW CSW;
-extern uint8_t botState;
-extern uint8_t bulkDataBuff[MAX_BULK_PACKET_SIZE];
-extern uint16_t dataLength;
-
 extern uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize);
 
 /* See usb_scsi_data.c */
@@ -60,7 +53,7 @@ void scsi_inquiry_cmd(uint8_t lun) {
   uint8_t* inquiryData;
   uint16_t inquiryDataLength;
 
-  if (CBW.CB[1] & 0x01) /*Evpd is set*/ {
+  if (usb_mass_CBW.CB[1] & 0x01) /*Evpd is set*/ {
     inquiryData = SCSI_page00InquiryData;
     inquiryDataLength = 5;
   } else {
@@ -70,8 +63,8 @@ void scsi_inquiry_cmd(uint8_t lun) {
       inquiryData = SCSI_standardInquiryData2;
     }
 
-    if (CBW.CB[4] <= SCSI_STANDARD_INQUIRY_DATA_LEN) {
-      inquiryDataLength = CBW.CB[4];
+    if (usb_mass_CBW.CB[4] <= SCSI_STANDARD_INQUIRY_DATA_LEN) {
+      inquiryDataLength = usb_mass_CBW.CB[4];
     } else {
       inquiryDataLength = SCSI_STANDARD_INQUIRY_DATA_LEN;
     }
@@ -81,8 +74,8 @@ void scsi_inquiry_cmd(uint8_t lun) {
 
 void scsi_request_sense_cmd(uint8_t lun) {
   uint8_t requestSenseDataLength;
-  if (CBW.CB[4] <= SCSI_REQUEST_SENSE_DATA_LEN) {
-    requestSenseDataLength = CBW.CB[4];
+  if (usb_mass_CBW.CB[4] <= SCSI_REQUEST_SENSE_DATA_LEN) {
+    requestSenseDataLength = usb_mass_CBW.CB[4];
   } else {
     requestSenseDataLength = SCSI_REQUEST_SENSE_DATA_LEN;
   }
@@ -103,7 +96,7 @@ void scsi_mode_sense10_cmd(uint8_t lun) {
 
 void scsi_read_format_capacity_cmd(uint8_t lun) {
   if (usb_mass_mal_get_status(lun)) {
-    scsi_set_sense_data(CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_ENABLE);
     usb_mass_bot_abort(BOT_DIR_IN);
     return;
@@ -121,7 +114,7 @@ void scsi_read_format_capacity_cmd(uint8_t lun) {
 
 void scsi_read_capacity10_cmd(uint8_t lun) {
   if (usb_mass_mal_get_status(lun)) {
-    scsi_set_sense_data(CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_ENABLE);
     usb_mass_bot_abort(BOT_DIR_IN);
     return;
@@ -140,48 +133,48 @@ void scsi_read_capacity10_cmd(uint8_t lun) {
 }
 
 void scsi_read10_cmd(uint8_t lun, uint32_t lba, uint32_t blockNbr) {
-  if (botState == BOT_STATE_IDLE) {
-    if (!(scsi_address_management(CBW.bLUN, SCSI_READ10, lba, blockNbr))) /*address out of range*/ {
+  if (usb_mass_botState == BOT_STATE_IDLE) {
+    if (!(scsi_address_management(usb_mass_CBW.bLUN, SCSI_READ10, lba, blockNbr))) /*address out of range*/ {
       return;
     }
 
-    if ((CBW.bmFlags & 0x80) != 0) {
-      botState = BOT_STATE_DATA_IN;
+    if ((usb_mass_CBW.bmFlags & 0x80) != 0) {
+      usb_mass_botState = BOT_STATE_DATA_IN;
       scsi_read_memory(lun, lba, blockNbr);
     } else {
       usb_mass_bot_abort(BOT_DIR_BOTH);
-      scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+      scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
       usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_ENABLE);
     }
     return;
-  } else if (botState == BOT_STATE_DATA_IN) {
+  } else if (usb_mass_botState == BOT_STATE_DATA_IN) {
     scsi_read_memory(lun, lba, blockNbr);
   }
 }
 
 void scsi_write10_cmd(uint8_t lun, uint32_t lba, uint32_t blockNbr) {
-  if (botState == BOT_STATE_IDLE) {
-    if (!(scsi_address_management(CBW.bLUN, SCSI_WRITE10, lba, blockNbr)))/*address out of range*/ {
+  if (usb_mass_botState == BOT_STATE_IDLE) {
+    if (!(scsi_address_management(usb_mass_CBW.bLUN, SCSI_WRITE10, lba, blockNbr)))/*address out of range*/ {
       return;
     }
 
-    if ((CBW.bmFlags & 0x80) == 0) {
-      botState = BOT_STATE_DATA_OUT;
+    if ((usb_mass_CBW.bmFlags & 0x80) == 0) {
+      usb_mass_botState = BOT_STATE_DATA_OUT;
       SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL);
     } else {
       usb_mass_bot_abort(BOT_DIR_IN);
-      scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+      scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
       usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
     }
     return;
-  } else if (botState == BOT_STATE_DATA_OUT) {
+  } else if (usb_mass_botState == BOT_STATE_DATA_OUT) {
     scsi_write_memory(lun, lba, blockNbr);
   }
 }
 
 void scsi_test_unit_ready_cmd(uint8_t lun) {
   if (usb_mass_mal_get_status(lun)) {
-    scsi_set_sense_data(CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_ENABLE);
     usb_mass_bot_abort(BOT_DIR_IN);
     return;
@@ -191,18 +184,18 @@ void scsi_test_unit_ready_cmd(uint8_t lun) {
 }
 
 void scsi_verify10_cmd(uint8_t lun) {
-  if ((CBW.dDataLength == 0) && !(CBW.CB[1] & SCSI_BLKVFY))/* BLKVFY not set*/ {
+  if ((usb_mass_CBW.dDataLength == 0) && !(usb_mass_CBW.CB[1] & SCSI_BLKVFY))/* BLKVFY not set*/ {
     usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
   } else {
     usb_mass_bot_abort(BOT_DIR_BOTH);
-    scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
   }
 }
 
 void scsi_format_cmd(uint8_t lun) {
   if (usb_mass_mal_get_status(lun)) {
-    scsi_set_sense_data(CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_NOT_READY, SCSI_MEDIUM_NOT_PRESENT);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_ENABLE);
     usb_mass_bot_abort(BOT_DIR_IN);
     return;
@@ -217,16 +210,16 @@ void scsi_set_sense_data(uint8_t lun, uint8_t sensKey, uint8_t asc) {
 }
 
 void scsi_invalid_cmd(uint8_t lun) {
-  if (CBW.dDataLength == 0) {
+  if (usb_mass_CBW.dDataLength == 0) {
     usb_mass_bot_abort(BOT_DIR_IN);
   } else {
-    if ((CBW.bmFlags & 0x80) != 0) {
+    if ((usb_mass_CBW.bmFlags & 0x80) != 0) {
       usb_mass_bot_abort(BOT_DIR_IN);
     } else {
       usb_mass_bot_abort(BOT_DIR_BOTH);
     }
   }
-  scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
+  scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
   usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
 }
 
@@ -243,13 +236,13 @@ uint8_t scsi_address_management(uint8_t lun, uint8_t cmd, uint32_t lba, uint32_t
   }
 
 
-  if (CBW.dDataLength != blockNbr * SCSI_BLOCK_SIZE) {
+  if (usb_mass_CBW.dDataLength != blockNbr * SCSI_BLOCK_SIZE) {
     if (cmd == SCSI_WRITE10) {
       usb_mass_bot_abort(BOT_DIR_BOTH);
     } else {
       usb_mass_bot_abort(BOT_DIR_IN);
     }
-    scsi_set_sense_data(CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
     usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_DISABLE);
     return (FALSE);
   }
@@ -285,8 +278,8 @@ void scsi_read_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLengt
     offset += MAX_BULK_PACKET_SIZE;
     length -= MAX_BULK_PACKET_SIZE;
 
-    CSW.dDataResidue -= MAX_BULK_PACKET_SIZE;
-    CSW.bStatus = BOT_CSW_CMD_PASSED;
+    usb_mass_CSW.dDataResidue -= MAX_BULK_PACKET_SIZE;
+    usb_mass_CSW.bStatus = BOT_CSW_CMD_PASSED;
     // TODO: Led_RW_ON();
   }
 
@@ -294,7 +287,7 @@ void scsi_read_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLengt
     SCSI_blockReadCount = 0;
     SCSI_blockOffset = 0;
     offset = 0;
-    botState = BOT_STATE_DATA_IN_LAST;
+    usb_mass_botState = BOT_STATE_DATA_IN_LAST;
     SCSI_transferState = SCSI_TXFR_IDLE;
     // TODO: Led_RW_OFF();
   }
@@ -314,24 +307,24 @@ void scsi_write_memory(uint8_t lun, uint32_t memoryOffset, uint32_t transferLeng
   if (SCSI_transferState == SCSI_TXFR_ONGOING) {
 
     for (idx = 0; SCSI_counter < temp; SCSI_counter++) {
-      *((uint8_t *) SCSI_dataBuffer + SCSI_counter) = bulkDataBuff[idx++];
+      *((uint8_t *) SCSI_dataBuffer + SCSI_counter) = usb_mass_bulkDataBuff[idx++];
     }
 
-    offset += dataLength;
-    length -= dataLength;
+    offset += usb_mass_dataLength;
+    length -= usb_mass_dataLength;
 
     if (!(length % SCSI_BLOCK_SIZE)) {
       SCSI_counter = 0;
       usb_mass_mal_write_memory(lun, offset - SCSI_BLOCK_SIZE, SCSI_dataBuffer, SCSI_BLOCK_SIZE);
     }
 
-    CSW.dDataResidue -= dataLength;
+    usb_mass_CSW.dDataResidue -= usb_mass_dataLength;
     SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL); /* enable the next transaction*/
 
     // TODO: Led_RW_ON();
   }
 
-  if ((length == 0) || (botState == BOT_STATE_CSW_Send)) {
+  if ((length == 0) || (usb_mass_botState == BOT_STATE_CSW_Send)) {
     SCSI_counter = 0;
     usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
     SCSI_transferState = SCSI_TXFR_IDLE;
