@@ -347,7 +347,7 @@ class HIDReporter {
         // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
         // reportID byte
         HIDReporter(uint8_t* _buffer, unsigned _size, uint8_t _reportID);
-        // if you use this init function, the buffer has no reportID function in it
+        // if you use this init function, the buffer has no reportID byte in it
         HIDReporter(uint8_t* _buffer, unsigned _size);
         uint16_t getFeature(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
