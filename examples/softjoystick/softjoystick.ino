@@ -33,7 +33,7 @@ const uint8_t reportDescription[] = {
 };
 
 void setup() {
-  USBHID.begin(reportDescription, sizeof(reportDescription));
+  USBHID_begin_with_serial(reportDescription, sizeof(reportDescription));
   joy.begin();
 }
 

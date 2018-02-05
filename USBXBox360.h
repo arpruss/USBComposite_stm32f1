@@ -25,7 +25,7 @@
 #include "USBComposite.h"
 #include "usb_generic.h"
 
-class USBXBox360 : public USBPlugin{
+class USBXBox360 {
 private:
 	uint8_t xbox360_Report[20] = {0,0x14};//    3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
     bool manualReport = false;
@@ -33,10 +33,9 @@ private:
 	void safeSendReport(void);
 	void sendReport(void);
 public:
-	USBXBox360(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 	void send(void);
-	bool init();
-	bool registerParts();
+	static bool init(void* ignore);
+	bool registerPart();
 	void stop();
     void setManualReportMode(bool manualReport);
     bool getManualReportMode();

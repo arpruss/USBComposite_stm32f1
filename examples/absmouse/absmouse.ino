@@ -7,7 +7,7 @@ const uint8_t reportDescription[] = {
 HIDAbsMouse mouse;
 
 void setup(){
-  USBHID.begin(reportDescription, sizeof(reportDescription));
+  USBHID_begin_with_serial(reportDescription, sizeof(reportDescription));
   delay(1000);
   mouse.move(0,0);
   delay(1000);

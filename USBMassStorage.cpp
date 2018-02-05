@@ -6,24 +6,24 @@
 
 void USBMassStorageDevice::begin() {
 	if(!enabled) {
-		device->clear();
-		device->add(this);
-		device->begin();
+		USBComposite.clear();
+		registerPart();
+		USBComposite.begin();
 
 		enabled = true;
 	}
 }
 
 void USBMassStorageDevice::end() {
-	device->end();
+	USBComposite.end();
 }
 
 void USBMassStorageDevice::loop() {
 	usb_mass_loop();
 }
 
-bool USBMassStorageDevice::registerParts() {
-	return device->add(usbMassPart);
+bool USBMassStorageDevice::registerPart() {
+	return USBComposite.add(&usbMassPart);
 }
 
 void USBMassStorageDevice::setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,
@@ -42,4 +42,4 @@ void USBMassStorageDevice::clearDrives() {
 	memset(usb_mass_drives, 0, sizeof(usb_mass_drives));
 }
 
-USBMassStorageDevice USBMassStorage;
+USBMassStorageDevice MassStorage;

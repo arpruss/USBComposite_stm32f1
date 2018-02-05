@@ -36,7 +36,6 @@ USBCompositeDevice::USBCompositeDevice(void) {
         vendorId = 0;
         productId = 0;
         numParts = 0;
-        numPlugins = 0;
         setManufacturerString(NULL);
         setProductString(NULL);
         setSerialString(DEFAULT_SERIAL_STRING);
@@ -103,9 +102,9 @@ bool USBCompositeDevice::begin() {
         return true;
 	usb_generic_set_info(vendorId, productId, iManufacturer[0] ? iManufacturer : NULL, iProduct[0] ? iProduct : NULL, 
         haveSerialNumber ? iSerialNumber : NULL);
-    for (uint32 i = 0 ; i < numPlugins ; i++) {
-        if (!plugins[i]->init())
-            return false;
+    for (uint32 i = 0 ; i < numParts ; i++) {
+		if (init[i] != NULL && !init[i](plugin[i]))
+			return false;
 	}
     if (! usb_generic_set_parts(parts, numParts))
         return false;
@@ -118,27 +117,24 @@ void USBCompositeDevice::end() {
     if (!enabled)
         return;
     usb_generic_disable();
-    for (uint32 i = 0 ; i < numPlugins ; i++)
-        plugins[i]->stop();
+    for (uint32 i = 0 ; i < numParts ; i++)
+		if (stop[i] != NULL)
+			stop[i](plugin[i]);
     enabled = false;
 }
 
 void USBCompositeDevice::clear() {
     numParts = 0;
-    numPlugins = 0;
 }
 
-bool USBCompositeDevice::add(USBPlugin* pluginPtr) {
-    if (numPlugins >= USB_COMPOSITE_MAX_PLUGINS)
-        return false;
-    plugins[numPlugins++] = pluginPtr;
-	return pluginPtr->registerParts();
-}
-
-bool USBCompositeDevice::add(USBCompositePart& part) {
+bool USBCompositeDevice::add(USBCompositePart* part, USBPartInitializer _init, USBPartStopper _stop, void* _plugin) {
     if (numParts >= USB_COMPOSITE_MAX_PARTS)
         return false;
-    parts[numParts++] = &part;
+    parts[numParts] = part;
+    init[numParts] = _init;
+    stop[numParts] = _stop;
+	plugin[numParts] = _plugin;
+	numParts++;
     return true;
 }
 

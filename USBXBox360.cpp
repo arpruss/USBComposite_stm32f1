@@ -45,29 +45,30 @@ void USBXBox360::setLEDCallback(void (*callback)(uint8 pattern)) {
 }
 
 
-bool USBXBox360::init() {
+bool USBXBox360::init(void* ignore) {
+	(void)ignore;
 	usb_generic_set_info(0x045e, 0x028e, NULL, NULL, NULL);
 	return true;
 }
 
-bool USBXBox360::registerParts() {
-	return device->add(usbX360Part);
+bool USBXBox360::registerPart() {
+	return USBComposite.add(&usbX360Part, init);
 }
 
 void USBXBox360::begin(void){
 	if(!enabled){
-		device->clear();
-		device->add(this);
-		device->begin();
+		USBComposite.clear();
+		registerPart();
+		USBComposite.begin();
 
-		enabled = true;
+		//enabled = true;
 	}
 }
 
 void USBXBox360::end() {
 	if (enabled) {
 		enabled = false;
-        device->end();
+        USBComposite.end();
 	}
 }
 

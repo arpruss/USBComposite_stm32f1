@@ -2,7 +2,7 @@
 
 
 void setup() {
-  USBHID.begin(HID_KEYBOARD);
+  USBHID_begin_with_serial(HID_KEYBOARD);
   Keyboard.begin(); // needed for LED support
   delay(1000);
 }

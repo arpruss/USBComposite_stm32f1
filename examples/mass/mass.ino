@@ -50,15 +50,15 @@ void dumpDrive() {
 }
 
 void setup() {
-  USBMassStorage.setDrive(0, sizeof(image), read, write);
-  USBComposite.add(USBMassStorage);
-  USBComposite.add(CompositeSerial);
+  MassStorage.setDrive(0, sizeof(image), read, write);
+  MassStorage.registerPart();
+  CompositeSerial.registerPart();
   USBComposite.begin();
   delay(2000);
 }
 
 void loop() {
-  USBMassStorage.loop();
+  MassStorage.loop();
   if (CompositeSerial.available() && 'd' == CompositeSerial.read()) {
       dumpDrive();
   }

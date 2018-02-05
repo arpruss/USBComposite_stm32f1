@@ -37,7 +37,8 @@ static void rxHook(unsigned, void*);
 static void ifaceSetupHook(unsigned, void*);
 #endif
 
-bool USBCompositeSerial::init() {
+bool USBCompositeSerial::init(USBCompositeSerial* me) {
+	(void)me;
 #if defined(SERIAL_USB)
 	composite_cdcacm_set_hooks(USBHID_CDCACM_HOOK_RX, rxHook);
 	composite_cdcacm_set_hooks(USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook);
@@ -47,16 +48,16 @@ bool USBCompositeSerial::init() {
 
 void USBCompositeSerial::begin() {
 	if (!enabled) {
-		device->clear();
-		device->add(this);
-		device->begin();
+		USBComposite.clear();
+		registerPart();
+		USBComposite.begin();
 		enabled = true;
 	}
 }
 
 void USBCompositeSerial::end() {
 	if (enabled) {
-		device->end();
+		USBComposite.end();
 		enabled = false;
 	}
 }
@@ -106,8 +107,8 @@ int USBCompositeSerial::peek(void)
 	}
 }
 
-bool USBCompositeSerial::registerParts(void) {
-	return device->add(usbSerialPart);
+bool USBCompositeSerial::registerPart() {
+	return USBComposite.add(&usbSerialPart, (USBPartInitializer)&USBCompositeSerial::init);
 }
 
 void USBCompositeSerial::flush(void)

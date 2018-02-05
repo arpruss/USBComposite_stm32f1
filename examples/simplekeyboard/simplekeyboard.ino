@@ -1,7 +1,7 @@
 #include <USBHID.h>
 
 void setup() {
-  USBHID.begin(HID_KEYBOARD);
+  USBHID_begin_with_serial(HID_KEYBOARD);
   Keyboard.begin(); // needed in case you want LED support
   delay(1000);
 }

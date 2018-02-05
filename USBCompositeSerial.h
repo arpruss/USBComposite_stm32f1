@@ -4,16 +4,14 @@
 #include "USBComposite.h"
 #include "usb_serial.h"
 
-class USBCompositeSerial : public USBPlugin, public Stream {
+class USBCompositeSerial : public Stream {
 private:
 	bool enabled = false;
 public:
-	USBCompositeSerial(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
-
 	void begin();
 	void end();
-	bool init();
-	bool registerParts();
+	static bool init(USBCompositeSerial* me);
+	bool registerPart();
 
 	operator bool() { return true; } // Roger Clark. This is needed because in cardinfo.ino it does if (!Serial) . It seems to be a work around for the Leonardo that we needed to implement just to be compliant with the API
 

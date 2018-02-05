@@ -290,21 +290,11 @@ typedef struct {
     uint16_t length;    
 } HIDReportDescriptor;
 
-// You could use this for a serial number, but you'll be revealing the device ID to the host,
-// and hence burning it for cryptographic purposes.
-const char* getDeviceIDString();
-
-class USBHIDDevice : public USBPlugin {
+class USBHIDDevice {
 private:
-	bool enabled = false;
-    uint8_t serialSupport = true;
-    uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_MANUFACTURER_LENGTH)];
-    uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_PRODUCT_LENGTH)];
-    uint8_t iSerialNumber[USB_DESCRIPTOR_STRING_LEN(USB_HID_MAX_SERIAL_NUMBER_LENGTH)];    
+	bool enabledHID = false;
 public:
-	USBHIDDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
-//	bool init();
-	bool registerParts();
+	bool registerPart();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
 	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
@@ -332,6 +322,10 @@ public:
     void end(void);
 };
 
+void USBHID_begin_with_serial(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,
+	const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");
+void USBHID_begin_with_serial(const HIDReportDescriptor* reportDescriptor, uint16_t idVendor=0, uint16_t idProduct=0,
+	const char* manufacturer=NULL, const char* product=NULL, const char* serialNumber="00000000000000000001");
 
 class HIDReporter {
     private:

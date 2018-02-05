@@ -31,21 +31,15 @@
 const char* getDeviceIDString();
 
 #define USB_COMPOSITE_MAX_PARTS 6
-#define USB_COMPOSITE_MAX_PLUGINS 6
 
 class USBCompositeDevice;
 
-class USBPlugin {
-protected:
-    USBCompositeDevice* device;
-public:
-    virtual bool init() {return true;}
-    virtual void stop() {}
-    virtual bool registerParts() = 0;
-    USBPlugin(USBCompositeDevice& _device) { device = &_device; }
-};
-
 #define DEFAULT_SERIAL_STRING "00000000000000000001"
+
+//typedef std::function<bool()> USBPartInitializer;
+//typedef std::function<void()> USBPartStopper;
+typedef bool(*USBPartInitializer)(void*);
+typedef void(*USBPartStopper)(void*);
 
 class USBCompositeDevice {
 private:
@@ -57,9 +51,10 @@ private:
     uint16 vendorId;
     uint16 productId;
     USBCompositePart* parts[USB_COMPOSITE_MAX_PARTS];
-    USBPlugin* plugins[USB_COMPOSITE_MAX_PLUGINS];
+	USBPartInitializer init[USB_COMPOSITE_MAX_PARTS];
+	USBPartStopper stop[USB_COMPOSITE_MAX_PARTS];
+	void* plugin[USB_COMPOSITE_MAX_PARTS];
     uint32 numParts;
-    uint32 numPlugins;
 public:
 	USBCompositeDevice(void); 
     void setVendorId(uint16 vendor=0);
@@ -70,11 +65,7 @@ public:
     bool begin(void);
     void end(void);
     void clear();
-    bool add(USBPlugin* pluginPtr);
-    bool add(USBPlugin& plugin) {
-		return add(&plugin);
-	}
-    bool add(USBCompositePart& part);
+    bool add(USBCompositePart* part, USBPartInitializer init = NULL, USBPartStopper stop = NULL, void* plugin = NULL);
 };
 
 extern USBCompositeDevice USBComposite;

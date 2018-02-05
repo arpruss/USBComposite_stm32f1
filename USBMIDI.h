@@ -95,7 +95,7 @@
  *   This causes the Midi class to read data from the serial port and process it.
  */
 
-class USBMidi : public USBPlugin {
+class USBMidi {
 private:
     bool enabled = false;
     // The serial port used by this Midi instance (it takes complete control over the port)
@@ -139,15 +139,12 @@ public:
     //  to.  0 means "all channels".
     static const unsigned int PARAM_CHANNEL_IN         = 0x1001;
     
-	bool init();
-	bool registerParts();
+	bool init(USBMidi* me);
+	bool registerPart();
 	void setChannel(unsigned channel=0);
 	unsigned getChannel() {
 		return channelIn_;
 	}
-    
-    // Constructor
-	USBMidi(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
     
     // Call to start the serial port, at given baud.  For many applications
     //  the default parameters are just fine (which will cause messages for all

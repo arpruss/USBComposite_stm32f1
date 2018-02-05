@@ -2,8 +2,7 @@
 
 void setup() 
 {
-    USBHID.setSerial(0); // this may not be needed
-    USBHID.begin(HID_BOOT_KEYBOARD);
+    USBHID_begin_with_serial(HID_BOOT_KEYBOARD);
     BootKeyboard.begin(); // needed just in case you need LED support
 }
 

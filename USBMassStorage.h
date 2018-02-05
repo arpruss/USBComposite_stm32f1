@@ -6,7 +6,7 @@
 #include "usb_generic.h"
 #include "usb_mass_mal.h"
 
-class USBMassStorageDevice : public USBPlugin {
+class USBMassStorageDevice {
 private:
   bool enabled = false;
 public:
@@ -14,13 +14,12 @@ public:
   void end();
   void loop();
   void clearDrives(void);
-  bool registerParts();
+  bool registerPart();
   void setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,
 	MassStorageWriter writer = NULL, MassStorageStatuser = NULL, MassStorageInitializer = NULL);
-  USBMassStorageDevice(USBCompositeDevice& device = USBComposite) : USBPlugin(device) {}
 };
 
-extern USBMassStorageDevice USBMassStorage;
+extern USBMassStorageDevice MassStorage;
 
 #endif	/* USBMASSSTORAGE_H */
 

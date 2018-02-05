@@ -30,9 +30,9 @@ void setup() {
 void initReader() {
   digitalWrite(LED_PIN,0);
   cardSize = sd.card()->cardSize();  
-  USBMassStorage.setDrive(0, cardSize*512, read, write);
-  USBComposite.add(USBMassStorage);
-  USBComposite.add(CompositeSerial);
+  MassStorage.setDrive(0, cardSize*512, read, write);
+  MassStorage.registerPart();
+  CompositeSerial.registerPart();
   USBComposite.begin();
   enabled=true;
 }
@@ -47,7 +47,7 @@ void loop() {
     }
   }
   else {
-    USBMassStorage.loop();
+    MassStorage.loop();
   }
 }
 

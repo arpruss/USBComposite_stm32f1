@@ -80,27 +80,27 @@ void USBMidi::setChannel(unsigned int channel) {
 // Constructor -- set up defaults for variables, get ready for use (but don't
 //  take over serial port yet)
 
-bool USBMidi::init() {
+bool USBMidi::init(USBMidi* me) {
     /* Not in proprietary stream */
-    recvMode_ = 0;
+    me->recvMode_ = 0;
     /* No bytes recevied */
-    recvByteCount_ = 0;
+    me->recvByteCount_ = 0;
     /* Not processing an event */
-    recvEvent_ = 0;
+    me->recvEvent_ = 0;
     /* No arguments to the event we haven't received */
-    recvArg0_ = 0;
+    me->recvArg0_ = 0;
     /* Not waiting for bytes to complete a message */
-    recvBytesNeeded_ = 0;
+    me->recvBytesNeeded_ = 0;
     // There was no last event.
-    lastStatusSent_ = false;
+    me->lastStatusSent_ = false;
     // Don't send the extra bytes; just send deltas
-    sendFullCommands_ = false;
+    me->sendFullCommands_ = false;
 	
 	return true;
 }
 
-bool USBMidi::registerParts() {
-    return device->add(usbMIDIPart);
+bool USBMidi::registerPart() {
+    return USBComposite.add(&usbMIDIPart, (USBPartInitializer)&USBMidi::init, NULL, this); 
 }
 
 void USBMidi::begin(unsigned channel) {
@@ -109,16 +109,16 @@ void USBMidi::begin(unsigned channel) {
 	if (enabled)
 		return;
 
-	device->clear();
-	device->add(this);
-	device->begin();
+	USBComposite.clear();
+	registerPart();
+	USBComposite.begin();
 	
 	enabled = true;	
 }
 
 void USBMidi::end(void) {
 	if (enabled) {
-		device->end();
+		USBComposite.end();
 		enabled = false;
 	}
 }
@@ -189,7 +189,7 @@ uint8 USBMidi::isConnected(void) {
 }
 
 
-USBMidi USBMIDI(USBComposite);
+USBMidi USBMIDI;
 
 
 

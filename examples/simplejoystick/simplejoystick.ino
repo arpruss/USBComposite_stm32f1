@@ -1,7 +1,13 @@
+#include <USBComposite.h>
+#include <USBCompositeSerial.h>
 #include <USBHID.h>
 
 void setup() {
-  USBHID.begin(HID_JOYSTICK);
+//  CompositeSerial.registerPart();
+//  USBHID.setReportDescriptor(HID_JOYSTICK);
+//  USBHID.registerPart();
+//  USBComposite.begin();
+  USBHID_begin_with_serial(HID_JOYSTICK);
 }
 
 void loop() {

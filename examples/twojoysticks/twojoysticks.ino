@@ -10,7 +10,7 @@ const uint8_t reportDescription[] = {
 HIDJoystick Joystick2(HID_JOYSTICK_REPORT_ID+1);
 
 void setup(){
-  USBHID.begin(reportDescription, sizeof(reportDescription));
+  USBHID_begin_with_serial(reportDescription, sizeof(reportDescription));
   Joystick.setManualReportMode(true);
   Joystick2.setManualReportMode(true);
 }
