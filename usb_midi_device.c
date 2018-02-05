@@ -233,18 +233,6 @@ static const usb_descriptor_config usbMIDIDescriptor_Config = {
 
 };
 
-/*
-  String Descriptors:
-  we may choose to specify any or none of the following string
-  identifiers:
-  iManufacturer:    LeafLabs
-  iProduct:         Maple
-  iSerialNumber:    NONE
-  iConfiguration:   NONE
-  iInterface(CCI):  NONE
-  iInterface(DCI):  NONE
-*/
-
 /* I/O state */
 
 /* Received data */
