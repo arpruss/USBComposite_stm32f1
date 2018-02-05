@@ -51,8 +51,8 @@ void dumpDrive() {
 
 void setup() {
   MassStorage.setDrive(0, sizeof(image), read, write);
-  MassStorage.registerPart();
-  CompositeSerial.registerPart();
+  MassStorage.registerComponent();
+  CompositeSerial.registerComponent();
   USBComposite.begin();
   delay(2000);
 }

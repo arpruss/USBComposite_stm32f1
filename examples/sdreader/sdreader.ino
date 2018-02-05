@@ -31,8 +31,8 @@ void initReader() {
   digitalWrite(LED_PIN,0);
   cardSize = sd.card()->cardSize();  
   MassStorage.setDrive(0, cardSize*512, read, write);
-  MassStorage.registerPart();
-  CompositeSerial.registerPart();
+  MassStorage.registerComponent();
+  CompositeSerial.registerComponent();
   USBComposite.begin();
   enabled=true;
 }
