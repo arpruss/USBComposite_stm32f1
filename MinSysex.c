@@ -129,10 +129,12 @@ volatile int sysexFinger=0;
 #define EXC_RETURN 0xFFFFFFF9
 #define DEFAULT_CPSR 0x61000000
 #define RESET_DELAY 100000
+#if 0
 static void wait_reset(void) {
     delay_us(RESET_DELAY);
     nvic_sys_reset();
 }
+#endif
 
 /* -----------------------------------------------------------------------------dealWithItQuickly()
  * Note: at this point we have established that the sysex belongs to us.
@@ -152,6 +154,7 @@ void dealWithItQuickly(){
             }
         case USYSEX_REAL_TIME:
             break;
+#if 0			
         case LEAFLABS_MMA_VENDOR_1:
             if (sysexBuffer[5]==LGL_RESET_CMD) {
                 uintptr_t target = (uintptr_t)wait_reset | 0x1;
@@ -180,7 +183,7 @@ void dealWithItQuickly(){
                 ASSERT_FAULT(0);
 
             }
-    
+#endif    
         default:
             break;
     }
