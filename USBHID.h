@@ -294,7 +294,7 @@ class USBHIDDevice {
 private:
 	bool enabledHID = false;
 public:
-	bool registerPart();
+	bool registerComponent();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
 	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.

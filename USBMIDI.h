@@ -140,7 +140,7 @@ public:
     static const unsigned int PARAM_CHANNEL_IN         = 0x1001;
     
 	bool init(USBMidi* me);
-	bool registerPart();
+	bool registerComponent();
 	void setChannel(unsigned channel=0);
 	unsigned getChannel() {
 		return channelIn_;

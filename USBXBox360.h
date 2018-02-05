@@ -35,7 +35,7 @@ private:
 public:
 	void send(void);
 	static bool init(void* ignore);
-	bool registerPart();
+	bool registerComponent();
 	void stop();
     void setManualReportMode(bool manualReport);
     bool getManualReportMode();

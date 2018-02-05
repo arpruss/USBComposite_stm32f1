@@ -49,7 +49,7 @@ bool USBCompositeSerial::init(USBCompositeSerial* me) {
 void USBCompositeSerial::begin() {
 	if (!enabled) {
 		USBComposite.clear();
-		registerPart();
+		registerComponent();
 		USBComposite.begin();
 		enabled = true;
 	}
@@ -107,7 +107,7 @@ int USBCompositeSerial::peek(void)
 	}
 }
 
-bool USBCompositeSerial::registerPart() {
+bool USBCompositeSerial::registerComponent() {
 	return USBComposite.add(&usbSerialPart, (USBPartInitializer)&USBCompositeSerial::init);
 }
 

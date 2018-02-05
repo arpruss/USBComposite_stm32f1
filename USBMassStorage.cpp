@@ -7,7 +7,7 @@
 void USBMassStorageDevice::begin() {
 	if(!enabled) {
 		USBComposite.clear();
-		registerPart();
+		registerComponent();
 		USBComposite.begin();
 
 		enabled = true;
@@ -22,7 +22,7 @@ void USBMassStorageDevice::loop() {
 	usb_mass_loop();
 }
 
-bool USBMassStorageDevice::registerPart() {
+bool USBMassStorageDevice::registerComponent() {
 	return USBComposite.add(&usbMassPart);
 }
 

@@ -33,7 +33,7 @@
  * USB HID interface
  */
 
-bool USBHIDDevice::registerPart() {
+bool USBHIDDevice::registerComponent() {
 	return USBComposite.add(&usbHIDPart);
 }
 
@@ -59,7 +59,7 @@ void USBHIDDevice::begin(const uint8_t* report_descriptor, uint16_t report_descr
 	USBComposite.setManufacturerString(manufacturer);
 	USBComposite.setProductString(product);
 	USBComposite.setSerialString(serialNumber); 
-	registerPart();
+	registerComponent();
 
 	USBComposite.begin(); 
 	
@@ -166,9 +166,9 @@ void USBHID_begin_with_serial(const uint8_t* report_descriptor, uint16_t report_
 	USBComposite.setSerialString(serialNumber); 
 
 	USBHID.setReportDescriptor(report_descriptor, report_descriptor_length);
-	USBHID.registerPart();
+	USBHID.registerComponent();
 
-	CompositeSerial.registerPart();
+	CompositeSerial.registerComponent();
 
 	USBComposite.begin();
 }

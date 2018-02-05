@@ -51,14 +51,14 @@ bool USBXBox360::init(void* ignore) {
 	return true;
 }
 
-bool USBXBox360::registerPart() {
+bool USBXBox360::registerComponent() {
 	return USBComposite.add(&usbX360Part, init);
 }
 
 void USBXBox360::begin(void){
 	if(!enabled){
 		USBComposite.clear();
-		registerPart();
+		registerComponent();
 		USBComposite.begin();
 
 		//enabled = true;

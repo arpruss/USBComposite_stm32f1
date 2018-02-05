@@ -99,7 +99,7 @@ bool USBMidi::init(USBMidi* me) {
 	return true;
 }
 
-bool USBMidi::registerPart() {
+bool USBMidi::registerComponent() {
     return USBComposite.add(&usbMIDIPart, (USBPartInitializer)&USBMidi::init, NULL, this); 
 }
 
@@ -110,7 +110,7 @@ void USBMidi::begin(unsigned channel) {
 		return;
 
 	USBComposite.clear();
-	registerPart();
+	registerComponent();
 	USBComposite.begin();
 	
 	enabled = true;	
