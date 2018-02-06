@@ -81,18 +81,6 @@ void USBMidi::setChannel(unsigned int channel) {
 //  take over serial port yet)
 
 bool USBMidi::init(USBMidi* me) {
-    /* Not in proprietary stream */
-    me->recvMode_ = 0;
-    /* No bytes recevied */
-    me->recvByteCount_ = 0;
-    /* Not processing an event */
-    me->recvEvent_ = 0;
-    /* No arguments to the event we haven't received */
-    me->recvArg0_ = 0;
-    /* Not waiting for bytes to complete a message */
-    me->recvBytesNeeded_ = 0;
-    // There was no last event.
-    me->lastStatusSent_ = false;
     // Don't send the extra bytes; just send deltas
     me->sendFullCommands_ = false;
 	
@@ -192,12 +180,6 @@ uint8 USBMidi::isConnected(void) {
 USBMidi USBMIDI;
 
 
-
-// This is used for tracking when we're processing a proprietary stream of data
-//  The assigned value is arbitrary; just for internal use.
-static const int MODE_PROPRIETARY = 0xff;
-
-
 // These are midi status message types are defined in MidiSpec.h
 
 union EVENT_t {
@@ -216,22 +198,7 @@ void USBMidi::dispatchPacket(uint32 p)
 {
     union EVENT_t e;
 
-    
     e.i=p;
-    // !!!!!!!!!!!!!!!!  Add a sysex handler  FIX THIS VERY VERY SHORTLY !!!!!!!!!!!!!!
-    if (recvMode_ & MODE_PROPRIETARY
-        && CIN_IS_SYSEX(e.p.cin))
-    {
-        /* If sysex handling compiled in, just pass all data received
-         * to the sysex handler
-         */
-        
-#ifdef CONFIG_MIDI_PROPRIETARY
-//        handleSysex(p);
-#endif
-        
-        return;
-    }
     
     switch (e.p.cin) {
         case CIN_3BYTE_SYS_COMMON:
@@ -398,7 +365,7 @@ void USBMidi::sendPitchChange(unsigned int pitch)
     outPacket.p.cin=CIN_PITCH_WHEEL;
     outPacket.p.midi0=MIDIv1_PITCH_WHEEL;
     outPacket.p.midi1= (uint8) pitch & 0x07F;
-    outPacket.p.midi2= (uint8)  (pitch<<7) & 0x7f;
+    outPacket.p.midi2= (uint8)  (pitch>>7) & 0x7f;
     writePacket(outPacket.i);
     
 }
@@ -410,7 +377,7 @@ void USBMidi::sendSongPosition(unsigned int position)
     outPacket.p.cin=CIN_3BYTE_SYS_COMMON;
     outPacket.p.midi0=MIDIv1_SONG_POSITION_PTR;
     outPacket.p.midi1= (uint8) position & 0x07F;
-    outPacket.p.midi2= (uint8)  (position<<7) & 0x7f;
+    outPacket.p.midi2= (uint8)  (position>>7) & 0x7f;
     writePacket(outPacket.i);
     
 }
@@ -520,6 +487,8 @@ unsigned int USBMidi::getParam(unsigned int param)
     return 0;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 // Placeholders.  You should subclass the Midi base class and define these to have your
 //  version called.
 void USBMidi::handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity) {}
@@ -538,3 +507,4 @@ void USBMidi::handleContinue(void) {}
 void USBMidi::handleStop(void) {}
 void USBMidi::handleActiveSense(void) {}
 void USBMidi::handleReset(void) {}
+#pragma GCC diagnostic pop

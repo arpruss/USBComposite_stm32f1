@@ -105,14 +105,6 @@ private:
     // The channel this Midi instance receives data for (0 means all channels)
     int channelIn_;
     
-    // These are for keeping track of partial Midi messages as bytes come in
-    int recvMode_;
-    int recvByteCount_;
-    int recvEvent_;
-    int recvArg0_;
-    int recvBytesNeeded_;
-    int lastStatusSent_;
-    
     /* Private Send Parameters */
     
     // This controls whether every Midi message gets a command byte sent with it
@@ -139,7 +131,7 @@ public:
     //  to.  0 means "all channels".
     static const unsigned int PARAM_CHANNEL_IN         = 0x1001;
     
-	bool init(USBMidi* me);
+	static bool init(USBMidi* me);
 	bool registerComponent();
 	void setChannel(unsigned channel=0);
 	unsigned getChannel() {
