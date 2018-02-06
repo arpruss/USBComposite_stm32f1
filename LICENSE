@@ -20,6 +20,7 @@ The MIT License
 Copyright (c) 2011 LeafLabs LLC.
 Parts of composite HID+Serial code taken from https://github.com/libarra111/Arduino_STM32
 USB Mass storage code based on Joe Ferner's code: https://github.com/joeferner/maple-usbMassStorage
+MIDI code Copyright (c) 2010 Perry Hung, (c) 2013 Magnus Lundin, (c) 2013 Donald Delmar Davis, Suspect Devices.
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -41,3 +42,23 @@ ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+ *  Midi.cpp: Code for MIDI processing library, Arduino version
+ *
+ *             (c) 2003-2008 Tymm Twillman <tymm@booyaka.com>
+ *
+ *  This file is part of Tymm's Arduino Midi Library.
+ *
+ *  Tymm's Arduino Midi Library is free software: you can redistribute it
+ *  and/or modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation, either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  Tymm's Arduino Midi Library is distributed in the hope that it will be
+ *  useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with Tymm's Arduino Midi Library.  If not, see
+ *  <http://www.gnu.org/licenses/>.
+	
