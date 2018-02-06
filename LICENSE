@@ -43,6 +43,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
  *  Midi.cpp: Code for MIDI processing library, Arduino version
+ *  This started as a munging of Tymm's arduino Midi Library into the Libusb class.
+ *  Then Alexander Pruss removed the remaining Tymm code and comments, though keeping the API. 
+ *  This probably means that the LGL license can be removed, but it's kept for safety and history for now.
  *
  *             (c) 2003-2008 Tymm Twillman <tymm@booyaka.com>
  *
