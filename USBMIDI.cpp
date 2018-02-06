@@ -1,10 +1,15 @@
 /******************************************************************************
+ *  This started out as a munging of Tymm Twillman's arduino Midi Library into the Libusb class,
+ *  though by now very little of the original code is left, except for the class API and
+ *  comments. Tymm Twillman kindly gave Alexander Pruss permission to relicense his code under the MIT
+ *  license, which fixed a nasty licensing mess.
+ *
  * The MIT License
  *
  * Copyright (c) 2010 Perry Hung.
  * Copyright (c) 2013 Magnus Lundin.
  * Copyright (c) 2013 Donald Delmar Davis, Suspect Devices.
- * Copyright (c) 2018 Alexander Pruss
+ * (c) 2003-2008 Tymm Twillman <tymm@booyaka.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -25,30 +30,6 @@
  * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
- *  This started as a munging of Tymm's arduino Midi Library into the Libusb class.
- *  Then Alexander Pruss removed the remaining Tymm code and comments, though keeping the API. 
- *  This probably means that the LGL license can be removed, but it's kept for safety and history for now.
- *
- *  Midi.cpp: Code for MIDI processing library, Arduino version
- *
- *             (c) 2003-2008 Tymm Twillman <tymm@booyaka.com>
- *
- *  This file is part of Tymm's Arduino Midi Library.
- *
- *  Tymm's Arduino Midi Library is free software: you can redistribute it
- *  and/or modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation, either version 2.1
- *  of the License, or (at your option) any later version.
- *
- *  Tymm's Arduino Midi Library is distributed in the hope that it will be
- *  useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public License
- *  along with Tymm's Arduino Midi Library.  If not, see
- *  <http://www.gnu.org/licenses/>.
  *
  *
  *****************************************************************************/
@@ -75,18 +56,16 @@
 #define USB_TIMEOUT 50
 
 void USBMidi::setChannel(unsigned int channel) {
-	inputChannel = channel;
+	channelIn_ = channel;
 
 }
 
-bool USBMidi::init(USBMidi* me) {
-	me->inputChannel = 0;
-	
+/*bool USBMidi::init(USBMidi* me) {
 	return true;
-}
+}*/
 
 bool USBMidi::registerComponent() {
-    return USBComposite.add(&usbMIDIPart, (USBPartInitializer)&USBMidi::init, NULL, this); 
+    return USBComposite.add(&usbMIDIPart); // (USBPartInitializer)&USBMidi::init, NULL, this); 
 }
 
 void USBMidi::begin(unsigned channel) {
@@ -159,7 +138,7 @@ uint32 USBMidi::readPackets(void *buf, uint32 len) {
     return rxed;
 }
 
-/* Blocks forever until 1 packet is received */
+/* Blocks forever until 1 byte is received */
 uint32 USBMidi::readPacket(void) {
     uint32 p;
     this->readPackets(&p, 1);
@@ -179,12 +158,19 @@ USBMidi USBMIDI;
 
 
 // These are midi status message types are defined in MidiSpec.h
+
 union EVENT_t {
     uint32 i;
     uint8 b[4];
     MIDI_EVENT_PACKET_t p;
 };
 
+// Handle decoding incoming MIDI traffic a word at a time -- remembers
+//  what it needs to from one call to the next.
+//
+//  This is a private function & not meant to be called from outside this class.
+//  It's used whenever data is available from the USB port.
+//
 void USBMidi::dispatchPacket(uint32 p)
 {
     union EVENT_t e;
@@ -264,6 +250,7 @@ void USBMidi::dispatchPacket(uint32 p)
 }
 
 
+// Try to read data from USB port & pass anything read to processing function
 void USBMidi::poll(void)
 {   while(available()) {
         dispatchPacket(readPacket());
@@ -272,6 +259,7 @@ void USBMidi::poll(void)
 
 static union EVENT_t outPacket; // since we only use one at a time no point in reallocating it
 
+// Send Midi NOTE OFF message to a given channel, with note 0-127 and velocity 0-127
 void USBMidi::sendNoteOff(unsigned int channel, unsigned int note, unsigned int velocity)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -284,6 +272,7 @@ void USBMidi::sendNoteOff(unsigned int channel, unsigned int note, unsigned int 
 }
 
 
+// Send Midi NOTE ON message to a given channel, with note 0-127 and velocity 0-127
 void USBMidi::sendNoteOn(unsigned int channel, unsigned int note, unsigned int velocity)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -295,6 +284,8 @@ void USBMidi::sendNoteOn(unsigned int channel, unsigned int note, unsigned int v
     
 }
 
+// Send a Midi VELOCITY CHANGE message to a given channel, with given note 0-127,
+// and new velocity 0-127
 // Note velocity change == polyphonic aftertouch.
 // Note aftertouch == channel pressure.
 void USBMidi::sendVelocityChange(unsigned int channel, unsigned int note, unsigned int velocity)
@@ -309,6 +300,8 @@ void USBMidi::sendVelocityChange(unsigned int channel, unsigned int note, unsign
 }
 
 
+// Send a Midi CC message to a given channel, as a given controller 0-127, with given
+//  value 0-127
 void USBMidi::sendControlChange(unsigned int channel, unsigned int controller, unsigned int value)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -320,6 +313,7 @@ void USBMidi::sendControlChange(unsigned int channel, unsigned int controller, u
     
 }
 
+// Send a Midi PROGRAM CHANGE message to given channel, with program ID 0-127
 void USBMidi::sendProgramChange(unsigned int channel, unsigned int program)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -330,6 +324,7 @@ void USBMidi::sendProgramChange(unsigned int channel, unsigned int program)
     
 }
 
+// Send a Midi AFTER TOUCH message to given channel, with velocity 0-127
 void USBMidi::sendAfterTouch(unsigned int channel, unsigned int velocity)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -340,6 +335,7 @@ void USBMidi::sendAfterTouch(unsigned int channel, unsigned int velocity)
     
 }
 
+// Send a Midi PITCH CHANGE message, with a 14-bit pitch (always for all channels)
 void USBMidi::sendPitchChange(unsigned int pitch)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -351,6 +347,7 @@ void USBMidi::sendPitchChange(unsigned int pitch)
     
 }
 
+// Send a Midi SONG POSITION message, with a 14-bit position (always for all channels)
 void USBMidi::sendSongPosition(unsigned int position)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -362,6 +359,7 @@ void USBMidi::sendSongPosition(unsigned int position)
     
 }
 
+// Send a Midi SONG SELECT message, with a song ID of 0-127 (always for all channels)
 void USBMidi::sendSongSelect(unsigned int song)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -372,6 +370,7 @@ void USBMidi::sendSongSelect(unsigned int song)
     
 }
 
+// Send a Midi TUNE REQUEST message (TUNE REQUEST is always for all channels)
 void USBMidi::sendTuneRequest(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -381,6 +380,7 @@ void USBMidi::sendTuneRequest(void)
 }
 
 
+// Send a Midi SYNC message (SYNC is always for all channels)
 void USBMidi::sendSync(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -389,6 +389,7 @@ void USBMidi::sendSync(void)
     writePacket(outPacket.i);
 }
 
+// Send a Midi START message (START is always for all channels)
 void USBMidi::sendStart(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -398,6 +399,7 @@ void USBMidi::sendStart(void)
 }
 
 
+// Send a Midi CONTINUE message (CONTINUE is always for all channels)
 void USBMidi::sendContinue(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -407,6 +409,7 @@ void USBMidi::sendContinue(void)
 }
 
 
+// Send a Midi STOP message (STOP is always for all channels)
 void USBMidi::sendStop(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -415,6 +418,7 @@ void USBMidi::sendStop(void)
     writePacket(outPacket.i);
 }
 
+// Send a Midi ACTIVE SENSE message (ACTIVE SENSE is always for all channels)
 void USBMidi::sendActiveSense(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
@@ -423,6 +427,7 @@ void USBMidi::sendActiveSense(void)
     writePacket(outPacket.i);
 }
 
+// Send a Midi RESET message (RESET is always for all channels)
 void USBMidi::sendReset(void)
 {
     outPacket.p.cable=DEFAULT_MIDI_CABLE;
