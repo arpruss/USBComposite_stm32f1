@@ -1,7 +1,7 @@
 /*--------------------------------------------------------------------------MidiSpecs.h
  *
  * These defines are based on specs created by the USB and MMA standards organizations. 
- * There are not a lot of other ways to code them so liscensing this is rather ludicrous.
+ * There are not a lot of other ways to code them so licensing this is rather ludicrous.
  * However, in order to be able to embed this in client projects, and avoid the stupidity 
  * of enforced open everything I will declare the following about this file.
  *
