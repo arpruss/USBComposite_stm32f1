@@ -137,7 +137,6 @@ public:
     uint8 isConnected();
     uint8 pending();
 
-    
     // poll() should be called every time through loop() IF dealing with incoming MIDI
     //  (if you're only SENDING MIDI events from the Arduino, you don't need to call
     //  poll); it causes data to be read from the USB port and processed.
@@ -182,5 +181,6 @@ public:
 
 extern USBMidi USBMIDI;
 
+extern const uint32 midiNoteFrequency_10ths[128];
 
 #endif
