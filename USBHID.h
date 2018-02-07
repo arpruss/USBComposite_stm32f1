@@ -21,6 +21,7 @@
 #define _HID_DEVICE_H_
 
 #include <USBComposite.h>
+#include <USBCompositeSerial.h>
 #include <Print.h>
 #include <boards.h>
 #include "Stream.h"

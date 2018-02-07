@@ -459,58 +459,58 @@ static uint8* HID_GetFeature(uint16 length) {
 
 static RESULT hidUSBDataSetup(uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
+	
+	if (pInformation->USBwIndex0 != HID_INTERFACE_NUMBER)
+		return USB_UNSUPPORT;
     
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
+    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         switch (request) {
         case SET_REPORT:
-            if (pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){                
-                if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
-                    volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, pInformation->USBwValue0);
-                    
-                    if (buffer == NULL) {
-                        return USB_UNSUPPORT;
-                    }
-                    
-                    if (0 == (buffer->mode & HID_BUFFER_MODE_NO_WAIT) && buffer->state == HID_BUFFER_UNREAD) {
-                        return USB_NOT_READY;
-                    } 
-                    else 
-                    {
-                        currentHIDBuffer = buffer;
-                        CopyRoutine = HID_Set;        
-                    }
-                }
-                else if (pInformation->USBwValue1 == HID_REPORT_TYPE_OUTPUT) {
-                    volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_OUTPUT, pInformation->USBwValue0);
-                        
-                    if (buffer == NULL) {
-                        return USB_UNSUPPORT;
-                    }
-                    
-                    if (0 == (buffer->mode & HID_BUFFER_MODE_NO_WAIT) && buffer->state == HID_BUFFER_UNREAD) {
-                        return USB_NOT_READY;
-                    } 
-                    else 
-                    {
-                        currentHIDBuffer = buffer;
-                        CopyRoutine = HID_Set;        
-                    }
-                }
-            }
+			if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
+				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, pInformation->USBwValue0);
+				
+				if (buffer == NULL) {
+					return USB_UNSUPPORT;
+				}
+				
+				if (0 == (buffer->mode & HID_BUFFER_MODE_NO_WAIT) && buffer->state == HID_BUFFER_UNREAD) {
+					return USB_NOT_READY;
+				} 
+				else 
+				{
+					currentHIDBuffer = buffer;
+					CopyRoutine = HID_Set;        
+				}
+			}
+			else if (pInformation->USBwValue1 == HID_REPORT_TYPE_OUTPUT) {
+				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_OUTPUT, pInformation->USBwValue0);
+					
+				if (buffer == NULL) {
+					return USB_UNSUPPORT;
+				}
+				
+				if (0 == (buffer->mode & HID_BUFFER_MODE_NO_WAIT) && buffer->state == HID_BUFFER_UNREAD) {
+					return USB_NOT_READY;
+				} 
+				else 
+				{
+					currentHIDBuffer = buffer;
+					CopyRoutine = HID_Set;        
+				}
+			}
             break;
         case GET_REPORT:
-            if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE &&
-                pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){						
-            volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, pInformation->USBwValue0);
-            
-            if (buffer == NULL || buffer->state == HID_BUFFER_EMPTY) {
-                return USB_UNSUPPORT;
-            }
+            if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
+				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, pInformation->USBwValue0);
+				
+				if (buffer == NULL || buffer->state == HID_BUFFER_EMPTY) {
+					return USB_UNSUPPORT;
+				}
 
-            currentHIDBuffer = buffer;
-            CopyRoutine = HID_GetFeature;        
-            break;
-        }
+				currentHIDBuffer = buffer;
+				CopyRoutine = HID_GetFeature;        
+				break;
+			}
         default:
             break;
         }
@@ -519,13 +519,11 @@ static RESULT hidUSBDataSetup(uint8 request) {
 	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
     	switch (request){
     		case GET_DESCRIPTOR:
-    			if(pInformation->USBwIndex0 == HID_INTERFACE_NUMBER){
-					if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
-						CopyRoutine = HID_GetReportDescriptor;
-					} 					
-				}
+				if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
+					CopyRoutine = HID_GetReportDescriptor;
+				} 					
     			break;
-    		case GET_PROTOCOL:
+    		case GET_PROTOCOL: // TODO: check for interface number?
     			CopyRoutine = HID_GetProtocolValue;
     			break;
 		}
@@ -542,6 +540,9 @@ static RESULT hidUSBDataSetup(uint8 request) {
 }
 
 static RESULT hidUSBNoDataSetup(uint8 request) {
+	if (pInformation->USBwIndex0 != HID_INTERFACE_NUMBER)
+		return USB_UNSUPPORT;
+    
     RESULT ret = USB_UNSUPPORT;
     
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {

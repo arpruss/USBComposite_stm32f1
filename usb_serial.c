@@ -62,9 +62,9 @@ static void vcomDataTxCb(void);
 static void vcomDataRxCb(void);
 
 #define NUM_SERIAL_ENDPOINTS       3
-#define CCI_INTERFACE_NUMBER 	0x00
-#define DCI_INTERFACE_NUMBER 	0x01
-
+#define CCI_INTERFACE_OFFSET 	0x00
+#define DCI_INTERFACE_OFFSET 	0x01
+#define SERIAL_MANAGEMENT_INTERFACE_NUMBER (CCI_INTERFACE_OFFSET+usbSerialPart.startInterface)
 
 /*
  * Descriptors
@@ -90,7 +90,7 @@ static const serial_part_config serialPartConfigData = {
 	.IAD = {
 		.bLength			= 0x08,
 		.bDescriptorType	= 0x0B,
-		.bFirstInterface	= CCI_INTERFACE_NUMBER, // PATCH
+		.bFirstInterface	= CCI_INTERFACE_OFFSET, // PATCH
 		.bInterfaceCount	= 0x02,
 		.bFunctionClass		= 0x02,
 		.bFunctionSubClass	= 0x02,
@@ -100,7 +100,7 @@ static const serial_part_config serialPartConfigData = {
     .CCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = CCI_INTERFACE_NUMBER, // PATCH
+        .bInterfaceNumber   = CCI_INTERFACE_OFFSET, // PATCH
         .bAlternateSetting  = 0x00,
         .bNumEndpoints      = 0x01,
         .bInterfaceClass    = USB_INTERFACE_CLASS_CDC,
@@ -120,7 +120,7 @@ static const serial_part_config serialPartConfigData = {
         .bLength         = CDC_FUNCTIONAL_DESCRIPTOR_SIZE(2),
         .bDescriptorType = 0x24,
         .SubType         = 0x01,
-        .Data            = {0x03, DCI_INTERFACE_NUMBER}, // PATCH
+        .Data            = {0x03, DCI_INTERFACE_OFFSET}, // PATCH
     },
 
     .CDC_Functional_ACM = {
@@ -134,7 +134,7 @@ static const serial_part_config serialPartConfigData = {
         .bLength         = CDC_FUNCTIONAL_DESCRIPTOR_SIZE(2),
         .bDescriptorType = 0x24,
         .SubType         = 0x06,
-        .Data            = {CCI_INTERFACE_NUMBER, DCI_INTERFACE_NUMBER}, // PATCH, PATCH
+        .Data            = {CCI_INTERFACE_OFFSET, DCI_INTERFACE_OFFSET}, // PATCH, PATCH
     },
 
     .ManagementEndpoint = {
@@ -150,7 +150,7 @@ static const serial_part_config serialPartConfigData = {
     .DCI_Interface = {
         .bLength            = sizeof(usb_descriptor_interface),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_INTERFACE,
-        .bInterfaceNumber   = DCI_INTERFACE_NUMBER, // PATCH
+        .bInterfaceNumber   = DCI_INTERFACE_OFFSET, // PATCH
         .bAlternateSetting  = 0x00,
         .bNumEndpoints      = 0x02,
         .bInterfaceClass    = USB_INTERFACE_CLASS_DIC,
@@ -522,7 +522,8 @@ static void serialUSBReset(void) {
 static RESULT serialUSBDataSetup(uint8 request) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {        
+    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
+		pInformation->USBwIndex0 == SERIAL_MANAGEMENT_INTERFACE_NUMBER) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
             CopyRoutine = vcomGetSetLineCoding;
@@ -553,7 +554,8 @@ static RESULT serialUSBDataSetup(uint8 request) {
 static RESULT serialUSBNoDataSetup(uint8 request) {
     RESULT ret = USB_UNSUPPORT;
     
-	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
+	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
+		pInformation->USBwIndex0 == SERIAL_MANAGEMENT_INTERFACE_NUMBER) { 
         switch(request) {
             case USBHID_CDCACM_SET_COMM_FEATURE:
 	            /* We support set comm. feature, but don't handle it. */
@@ -567,11 +569,11 @@ static RESULT serialUSBNoDataSetup(uint8 request) {
                 ret = USB_SUCCESS;
 	            break;
         }
-    }
-    /* Call the user hook. */
-    if (iface_setup_hook) {
-        uint8 req_copy = request;
-        iface_setup_hook(USBHID_CDCACM_HOOK_IFACE_SETUP, &req_copy);
+		/* Call the user hook. */
+		if (iface_setup_hook) {
+			uint8 req_copy = request;
+			iface_setup_hook(USBHID_CDCACM_HOOK_IFACE_SETUP, &req_copy);
+		}
     }
     return ret;
 }
