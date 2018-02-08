@@ -14,10 +14,6 @@
 ** SOFTWARE.
 */
 
-/**
- * @brief USB HID Keyboard device 
- */
- 
 #include <USBCompositeSerial.h>
 
 #include <string.h>
