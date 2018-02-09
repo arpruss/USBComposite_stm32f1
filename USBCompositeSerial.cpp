@@ -42,7 +42,8 @@ bool USBCompositeSerial::init(USBCompositeSerial* me) {
 	return true;
 }
 
-void USBCompositeSerial::begin() {
+void USBCompositeSerial::begin(long speed) {
+	(void)speed;
 	if (!enabled) {
 		USBComposite.clear();
 		registerComponent();

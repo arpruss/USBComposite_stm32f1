@@ -8,7 +8,7 @@ class USBCompositeSerial : public Stream {
 private:
 	bool enabled = false;
 public:
-	void begin();
+	void begin(long speed=9600);
 	void end();
 	static bool init(USBCompositeSerial* me);
 	bool registerComponent();
