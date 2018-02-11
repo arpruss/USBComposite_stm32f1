@@ -61,7 +61,7 @@ void USBXBox360::begin(void){
 		registerComponent();
 		USBComposite.begin();
 
-		//enabled = true;
+		enabled = true;
 	}
 }
 
