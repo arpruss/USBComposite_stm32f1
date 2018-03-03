@@ -2,11 +2,12 @@
 
 void setup() {
   USBHID_begin_with_serial(HID_KEYBOARD);
-  Keyboard.begin(); // needed in case you want LED support
+  Keyboard.begin(); // useful to detect host capslock state and LEDs
   delay(1000);
 }
 
 void loop() {
-  Keyboard.println("hello");
-  delay(5000);
+  Keyboard.println("Hello world");
+  delay(10000);
 }
+
