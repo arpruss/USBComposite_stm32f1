@@ -34,7 +34,7 @@
  */
 
 bool USBHIDDevice::registerComponent() {
-	return USBComposite.add(&usbHIDPart);
+	return USBComposite.add(&usbHIDPart, this);
 }
 
 void USBHIDDevice::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {

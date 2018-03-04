@@ -105,7 +105,7 @@ int USBCompositeSerial::peek(void)
 }
 
 bool USBCompositeSerial::registerComponent() {
-	return USBComposite.add(&usbSerialPart, (USBPartInitializer)&USBCompositeSerial::init);
+	return USBComposite.add(&usbSerialPart, this, (USBPartInitializer)&USBCompositeSerial::init);
 }
 
 void USBCompositeSerial::flush(void)

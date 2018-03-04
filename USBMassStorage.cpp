@@ -23,7 +23,7 @@ void USBMassStorageDevice::loop() {
 }
 
 bool USBMassStorageDevice::registerComponent() {
-	return USBComposite.add(&usbMassPart);
+	return USBComposite.add(&usbMassPart, this);
 }
 
 void USBMassStorageDevice::setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,

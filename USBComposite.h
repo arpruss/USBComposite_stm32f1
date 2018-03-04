@@ -21,8 +21,6 @@ class USBCompositeDevice;
 
 #define DEFAULT_SERIAL_STRING "00000000000000000001"
 
-//typedef std::function<bool()> USBPartInitializer;
-//typedef std::function<void()> USBPartStopper;
 typedef bool(*USBPartInitializer)(void*);
 typedef void(*USBPartStopper)(void*);
 
@@ -50,7 +48,7 @@ public:
     bool begin(void);
     void end(void);
     void clear();
-    bool add(USBCompositePart* part, USBPartInitializer init = NULL, USBPartStopper stop = NULL, void* plugin = NULL);
+    bool add(USBCompositePart* part, void* plugin, USBPartInitializer init = NULL, USBPartStopper stop = NULL);
 };
 
 extern USBCompositeDevice USBComposite;

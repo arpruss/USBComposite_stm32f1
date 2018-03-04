@@ -65,7 +65,7 @@ void USBMidi::setChannel(unsigned int channel) {
 }*/
 
 bool USBMidi::registerComponent() {
-    return USBComposite.add(&usbMIDIPart); // (USBPartInitializer)&USBMidi::init, NULL, this); 
+    return USBComposite.add(&usbMIDIPart, this); 
 }
 
 void USBMidi::begin(unsigned channel) {
