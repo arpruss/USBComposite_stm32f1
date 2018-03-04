@@ -1,5 +1,4 @@
-#include <USBMIDI.h>
-#include <USBCompositeSerial.h>
+#include <USBComposite.h>
 
 #define SPEAKER_PIN PA0
 

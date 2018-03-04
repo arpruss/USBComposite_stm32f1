@@ -1,4 +1,4 @@
-#include <USBHID.h>
+#include <USBComposite.h>
 
 void setup() {
   USBHID_begin_with_serial(HID_KEYBOARD);

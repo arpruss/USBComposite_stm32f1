@@ -1,9 +1,9 @@
-// This is a super silly project: you send a feature
+// This is a silly project: you send a feature
 // report from the PC, and it becomes a joystick setting.
 // I guess it's not completely useless as it lets you
 // get vJoy functionality without special vJoy drivers.
 
-#include <USBHID.h>
+#include <USBComposite.h>
 
 #define DATA_SIZE (sizeof(JoystickReport_t)-1)
 

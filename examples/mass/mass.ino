@@ -1,5 +1,4 @@
-#include <USBMassStorage.h>
-#include <USBCompositeSerial.h>
+#include <USBComposite.h>
 
 #include "image.h"
 

@@ -1,4 +1,4 @@
-#include <USBHID.h>
+#include <USBComposite.h>
 
 const uint8_t reportDescription[] = {
    HID_MOUSE_REPORT_DESCRIPTOR(),

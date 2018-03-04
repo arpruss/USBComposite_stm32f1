@@ -1,8 +1,7 @@
 // This uses the greiman sdfat library.
 // To use SdFatEX, set ENABLE_EXTENDED_TRANSFER_CLASS to 1 in the library's
 // src/SdFatConfig.h
-#include <CompositeSerial.h>
-#include <USBMassStorage.h>
+#include <USBComposite.h>
 #include <SPI.h>
 #include "SdFat.h"
 

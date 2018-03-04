@@ -1,5 +1,4 @@
-#include <USBHID.h>
-#include <libmaple/usb.h>
+#include <USBComposite.h>
 
 #define TXSIZE 256
 #define RXSIZE 300
