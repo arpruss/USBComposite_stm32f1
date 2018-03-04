@@ -1,6 +1,6 @@
 # USB Composite library for STM32F1
 
-Supports:
+## Protocols supported
 
 - standard USB HID, with many built-in profiles, and customizable with more
 
@@ -32,7 +32,7 @@ extern USBCompositeSerial CompositeSerial;
 If you want to make a simple (non-composite) USB device, you can just call the plugin's `begin()`
 method, and it will take care of registering itself with `USBComposite` and starting up
 `USBComposite`. If you want to make a composite USB device, however,
-you need to control the device with `USBComppsite`.
+you need to control the device with `USBComposite`.
 
 ```
 USBComposite.clear(); // clear any plugins previously registered
