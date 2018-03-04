@@ -12,6 +12,11 @@
 
 ## Basic concepts
 
+Start with:
+```
+#include <USBComposite.h>
+```
+
 The library defines several crucial objects. The central object is:
 
 ```
@@ -58,3 +63,21 @@ multiple HID profiles, e.g., Mouse / Keyboard / three joysticks.
 Not all combinations will fit within the constraints of the STM32F1 USB system, and not all
 combinations will be supported by all operating systems.
 
+## Simple USB device configuration
+
+A simple USB device uses a single plugin. You just need to call any setup methods for the plugin
+and the `begin()` method for the plugin. For instance, to inject keyboard data, you can do:
+
+```
+USBHID.begin(HID_KEYBOARD);
+```
+
+and then call `Keyboard.print("TextToInject")` to inject keyboard data. Some plugin configurations
+may require further initialization code or further code that needs to be called inside the Arduino
+`loop()` function.
+
+See the `BootKeyboard`, `midiout` and `x360` example code for this procedure.
+
+Additionally, for backwards compatibility reasons, the `USBHID` plugin has a convenience 
+`USBHID_begin_with_serial()` function which works just like `USBHID.begin()` except that it also
+composites a `CompositeSerial` plugin.

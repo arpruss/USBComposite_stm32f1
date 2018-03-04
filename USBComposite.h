@@ -1,10 +1,15 @@
-#ifndef _USB_DEVICE_H_
-#define _USB_DEVICE_H_
+#ifndef _USBCOMPOSITE_H_
+#define _USBCOMPOSITE_H_
 
 #include <boards.h>
 #include "Stream.h"
 #include "usb_generic.h"
 #include <libmaple/usb.h>
+
+#include <USBHID.h>
+#include <USBXBox360.h>
+#include <USBMassStorage.h>
+#include <USBCompositeSerial.h>
 
 #define USB_MAX_PRODUCT_LENGTH 32
 #define USB_MAX_MANUFACTURER_LENGTH 32
