@@ -15,18 +15,18 @@ Supports:
 The library defines several crucial objects. The central object is:
 
 ```
-USBCompositeDevice USBComposite;
+extern USBCompositeDevice USBComposite;
 ```
 
 This controls the USB device identification as well as registers the plugins that are connected to it.
 Plugin objects included in the library are: 
 
 ```
-USBHIDDevice USBHID;
-USBMidi USBMIDI;
-USBXBox360 XBox360;
-USBMassStorageDevice MassStorage;
-USBCompositeSerial CompositeSerial;
+extern USBHIDDevice USBHID;
+extern USBMidi USBMIDI;
+extern USBXBox360 XBox360;
+extern USBMassStorageDevice MassStorage;
+extern USBCompositeSerial CompositeSerial;
 ```
 
 If you want to make a simple (non-composite) USB device, you can just call the plugin's `begin()`
@@ -46,9 +46,9 @@ before the `USBComposite.begin()` call.
 
 Finally, there are a number of objects that implement particular USBHID protocols:
 ```
-HIDMouse Mouse;
-HIDKeyboard Keyboard;
-HIDJoystick Joystick;
-HIDKeyboard BootKeyboard;
+extern HIDMouse Mouse;
+extern HIDKeyboard Keyboard;
+extern HIDJoystick Joystick;
+extern HIDKeyboard BootKeyboard;
 ```
 And you can define more.
