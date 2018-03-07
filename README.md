@@ -35,6 +35,8 @@ extern USBMassStorageDevice MassStorage;
 extern USBCompositeSerial CompositeSerial;
 ```
 
+You can also create your own customized instances of these plugin classes or their subclasses.
+
 If you want to make a simple (non-composite) USB device, you can just call the plugin's `begin()`
 method, and it will take care of registering itself with `USBComposite` and starting up
 `USBComposite`. If you want to make a composite USB device, however,
