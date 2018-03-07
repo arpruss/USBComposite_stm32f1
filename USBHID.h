@@ -33,6 +33,8 @@
 #define HID_CONSUMER_REPORT_ID 3
 #define HID_JOYSTICK_REPORT_ID 20
 
+#define HID_KEYBOARD_ROLLOVER 6
+
 #define MACRO_GET_ARGUMENT_2(x, y, ...) y
 #define MACRO_GET_ARGUMENT_1_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_2(placeholder, ## __VA_ARGS__, default)
 #define MACRO_ARGUMENT_2_TO_END(skip, ...) __VA_ARGS__
@@ -155,7 +157,7 @@
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x81, 0x03,						/*    INPUT (Cnst,Var,Abs) */ \
 \
-	0x95, 0x06,						/*    REPORT_COUNT (6) */ \
+	0x95, HID_KEYBOARD_ROLLOVER,						/*    REPORT_COUNT (6) */ \
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
     0x25, 0x65,						/*    LOGICAL_MAXIMUM (101) */ \
@@ -468,7 +470,7 @@ typedef struct{
     uint8_t reportID;
 	uint8_t modifiers;
 	uint8_t reserved;
-	uint8_t keys[6];
+	uint8_t keys[HID_KEYBOARD_ROLLOVER];
 } __packed KeyReport_t;
 
 class HIDKeyboard : public Print, public HIDReporter {
