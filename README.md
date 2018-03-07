@@ -83,3 +83,6 @@ See the `BootKeyboard`, `midiout` and `x360` example code for this procedure.
 Additionally, for backwards compatibility reasons, the `USBHID` plugin has a convenience 
 `USBHID_begin_with_serial()` function which works just like `USBHID.begin()` except that it also
 composites a `CompositeSerial` plugin.
+
+However, if you want a USB device using more than one plugin, then you will NOT call the plugin's
+`begin()` method.
