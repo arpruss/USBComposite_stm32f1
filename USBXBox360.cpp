@@ -25,8 +25,6 @@
 #include "USBXBox360.h" 
 #include "usb_x360.h"
 
-#include <wirish.h>
-
 void USBXBox360::sendReport(void){
 	x360_tx(xbox360_Report, sizeof(xbox360_Report));
 	

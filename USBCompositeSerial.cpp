@@ -23,7 +23,6 @@
 #include <string.h>
 #include <libmaple/iwdg.h>
 
-#include <wirish.h>
 #include "usb_serial.h"
 
 #define USB_TIMEOUT 50

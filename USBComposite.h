@@ -4,7 +4,7 @@
 #include <boards.h>
 #include "Stream.h"
 #include "usb_generic.h"
-#include <libmaple/usb.h>
+//#include <libmaple/usb.h>
 
 #include <USBHID.h>
 #include <USBXBox360.h>
@@ -53,6 +53,9 @@ public:
     bool begin(void);
     void end(void);
     void clear();
+    static bool isReady() {
+        return usb_is_connected(USBLIB) && usb_is_configured(USBLIB);    
+    }
     bool add(USBCompositePart* part, void* plugin, USBPartInitializer init = NULL, USBPartStopper stop = NULL);
 };
 

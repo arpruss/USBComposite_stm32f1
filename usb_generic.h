@@ -1,8 +1,7 @@
 #ifndef _USB_GENERIC_H
 #define _USB_GENERIC_H
 #include <libmaple/libmaple_types.h>
-//#include <usb_type.h>
-//#include <usb_core.h>
+#undef SUCCESS
 #include <usb_lib_globals.h>
 #include <libmaple/usb.h>
 
