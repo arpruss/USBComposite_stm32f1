@@ -54,7 +54,7 @@ public:
     void end(void);
     void clear();
     static bool isReady() {
-        return usb_is_connected(USBLIB) && usb_is_configured(USBLIB);    
+        return enabled && usb_is_connected(USBLIB) && usb_is_configured(USBLIB);    
     }
     bool add(USBCompositePart* part, void* plugin, USBPartInitializer init = NULL, USBPartStopper stop = NULL);
 };
