@@ -39,7 +39,7 @@
 #include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 #include <libmaple/gpio.h>
-//#include <usb_lib_globals.h>
+#include <usb_lib_globals.h>
 #include <usb_reg_map.h>
 //#include <usb_core.h>
 #include <board/board.h>

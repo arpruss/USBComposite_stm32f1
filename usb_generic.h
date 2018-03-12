@@ -1,8 +1,9 @@
 #ifndef _USB_GENERIC_H
 #define _USB_GENERIC_H
 #include <libmaple/libmaple_types.h>
-#undef SUCCESS
-#include <usb_lib_globals.h>
+typedef unsigned short u16;
+typedef unsigned char u8;
+#include <usb_core.h>
 #include <libmaple/usb.h>
 
 #define PMA_MEMORY_SIZE 512
