@@ -89,7 +89,7 @@ However, if you want a USB device using more than one plugin, then you will NOT 
 
 ## Memory limitations
 
-There are 320 bytes of buffer memory available after endpoint 0 is taken into account. The following 
+There are 320 bytes of hardware buffer memory available after endpoint 0 is taken into account. The following 
 are the buffer memory needs of the current components:
 
  * USB Serial: 144 bytes
