@@ -96,7 +96,7 @@ are the buffer memory needs of the current components:
  
  * USB HID: 64 bytes
  
- * USB Mass storage: 128 bytes
+ * USB Mass Storage: 128 bytes
  
  * USB MIDI: 128 bytes
  
