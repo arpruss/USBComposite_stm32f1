@@ -86,3 +86,22 @@ composites a `CompositeSerial` plugin.
 
 However, if you want a USB device using more than one plugin, then you will NOT call the plugin's
 `begin()` method.
+
+## Memory limitations
+
+There are 320 bytes of buffer memory available after endpoint 0 is taken into account. The following 
+are the buffer memory needs of the current components:
+
+ * USB Serial: 144 bytes
+ 
+ * USB HID: 64 bytes
+ 
+ * USB Mass storage: 128 bytes
+ 
+ * USB MIDI: 128 bytes
+ 
+ * XBox360 controller: 64 bytes
+ 
+This places a limit on what combinations can be used together. For instance, HID+Mass storage+MIDI should be theoretically 
+OK (320 bytes), but Serial+HID+Mass storage (336 bytes) will fail (and return false from USBComposite.begin()) due to 
+lack of memory.
