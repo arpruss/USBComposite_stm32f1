@@ -7,6 +7,8 @@
 class USBCompositeSerial : public Stream {
 private:
 	bool enabled = false;
+    uint32 txPacketSize;
+    uint32 rxPacketSize;
 public:
 	void begin(long speed=9600);
 	void end();
@@ -34,6 +36,14 @@ public:
     uint8 getDTR();
     uint8 isConnected();
     uint8 pending();
+    
+    void setRXPacketSize(uint32 size=64) {
+        rxPacketSize = size;
+    }
+
+    void setTXPacketSize(uint32 size=64) {
+        txPacketSize = size;
+    }
 };
 
 extern USBCompositeSerial CompositeSerial;
