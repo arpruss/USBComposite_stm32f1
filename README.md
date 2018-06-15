@@ -65,6 +65,10 @@ multiple HID profiles, e.g., Mouse / Keyboard / three joysticks.
 Not all combinations will fit within the constraints of the STM32F1 USB system, and not all
 combinations will be supported by all operating systems.
 
+I recommend calling `USBComposite.setDeviceId(device)` with a device number other than the default 0x0004
+to prevent collisions with Maple drivers. This call should occur before calling a `begin()` method (either
+of a plugin or of `USBComposite`).
+
 ## Simple USB device configuration
 
 A simple USB device uses a single plugin. You just need to call any setup methods for the plugin
@@ -90,7 +94,7 @@ However, if you want a USB device using more than one plugin, then you will NOT 
 ## Memory limitations
 
 There are 320 bytes of hardware buffer memory available after endpoint 0 is taken into account. The following 
-are the buffer memory needs of the current components:
+are the default buffer memory needs of the current components:
 
  * USB Serial: 144 bytes
  
@@ -103,5 +107,21 @@ are the buffer memory needs of the current components:
  * XBox360 controller: 64 bytes
  
 This places a limit on what combinations can be used together. For instance, HID+Mass storage+MIDI should be theoretically 
-OK (320 bytes), but Serial+HID+Mass storage (336 bytes) will fail (and return false from USBComposite.begin()) due to 
-lack of memory.
+OK (320 bytes), but Serial+HID+Mass storage (336 bytes) will fail with default settings (and return false from 
+USBComposite.begin()) due to lack of memory.
+
+However, USB Serial, USB HID and USB MIDI allow you to decrease buffer sizes (and allow for more complex composite devices)
+by calling:
+```
+CompositeSerial.setRXPacketSize(size);
+CompositeSerial.setTXPacketSize(size);
+USBHID.setTXPacketSize(size); // not committed yet
+USBMIDI.setRXPacketSize(size); // not committed yet
+USBMIDI.setTXPacketSize(size); // not committed yet
+```
+The maximum and default packet size is 64. Smaller packet sizes have not been thoroughly tested and may slow things down. In 
+particular, for HID you should make sure your packet size is sufficient for your largest HID report. The CompositeSerial 
+device also has a control channel whose 16 byte packet size is not adjustable.
+
+Note that in the above, RX and TX are from the point of view of the MCU, not the host (i.e., RX corresponds to USB Out and TX
+to USB In).
