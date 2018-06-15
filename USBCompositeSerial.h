@@ -7,8 +7,8 @@
 class USBCompositeSerial : public Stream {
 private:
 	bool enabled = false;
-    uint32 txPacketSize;
-    uint32 rxPacketSize;
+    uint32 txPacketSize = 64;
+    uint32 rxPacketSize = 64;
 public:
 	void begin(long speed=9600);
 	void end();

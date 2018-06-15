@@ -70,8 +70,8 @@ static void vcomDataRxCb(void);
  * Descriptors
  */
  
-uint32_t txEPSize = 64;
-uint32_t rxEPSize = 64;
+static uint32_t txEPSize = 64;
+static uint32_t rxEPSize = 64;
 
 typedef struct {
     //CDCACM
@@ -182,7 +182,7 @@ static const serial_part_config serialPartConfigData = {
 };
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
-#define OUT_WORD(s,v) *(uint16_t*)&OUT_BYTE(s,v) // OK on Cortex which can handle unaligned writes
+#define OUT_16(s,v) *(uint16_t*)&OUT_BYTE(s,v) // OK on Cortex which can handle unaligned writes
 
 static USBEndpointInfo serialEndpoints[3] = {
     {
@@ -220,19 +220,19 @@ static void getSerialPartDescriptor(uint8* out) {
     OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[0]) += usbSerialPart.startInterface;
     OUT_BYTE(serialPartConfigData, CDC_Functional_Union.Data[1]) += usbSerialPart.startInterface;
     
-    OUT_WORD(serialPartConfigData, DataOutEndpoint.wMaxPacketSize) = rxEPSize;
-    OUT_WORD(serialPartConfigData, DataInEndpoint.wMaxPacketSize) = txEPSize;
+    OUT_16(serialPartConfigData, DataOutEndpoint.wMaxPacketSize) = rxEPSize;
+    OUT_16(serialPartConfigData, DataInEndpoint.wMaxPacketSize) = txEPSize;
 }
 
 void composite_cdcacm_setTXEPSize(uint32_t size) {
-    if (size > 64)
+    if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[0].bufferSize = size;
     txEPSize = size;
 }
 
 void composite_cdcacm_setRXEPSize(uint32_t size) {
-    if (size > 64)
+    if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[2].bufferSize = size;
     rxEPSize = size;
