@@ -33,8 +33,13 @@
  * USB HID interface
  */
 
+bool USBHIDDevice::init(USBHIDDevice* me) {
+    usb_hid_setTXEPSize(me->txPacketSize);
+	return true;
+}
+
 bool USBHIDDevice::registerComponent() {
-	return USBComposite.add(&usbHIDPart, this);
+	return USBComposite.add(&usbHIDPart, this, (USBPartInitializer)&USBHIDDevice::init);
 }
 
 void USBHIDDevice::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {

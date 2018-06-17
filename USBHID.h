@@ -293,7 +293,9 @@ typedef struct {
 class USBHIDDevice {
 private:
 	bool enabledHID = false;
+    uint32 txPacketSize = 64;
 public:
+	static bool init(USBHIDDevice* me);
 	bool registerComponent();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
 	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
@@ -320,6 +322,9 @@ public:
         setBuffers(HID_REPORT_TYPE_OUTPUT, fb, count);
     }     
     void end(void);
+    void setTXPacketSize(uint32 size=64) {
+        txPacketSize = size;
+    }
 };
 
 void USBHID_begin_with_serial(const uint8_t* report_descriptor, uint16_t length, uint16_t idVendor=0, uint16_t idProduct=0,

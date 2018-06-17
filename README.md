@@ -104,7 +104,7 @@ are the default buffer memory needs of the current components:
  
  * USB MIDI: 128 bytes
  
- * XBox360 controller: 64 bytes
+ * XBox360 Controller: 64 bytes
  
 This places a limit on what combinations can be used together. For instance, HID+Mass storage+MIDI should be theoretically 
 OK (320 bytes), but Serial+HID+Mass storage (336 bytes) will fail with default settings (and return false from 
@@ -125,3 +125,21 @@ device also has a control channel whose 16 byte packet size is not adjustable.
 
 Note that in the above, RX and TX are from the point of view of the MCU, not the host (i.e., RX corresponds to USB Out and TX
 to USB In).
+
+## Endpoint limitations
+
+There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more. Here are 
+how many endpoints besides endpoint 0 are needed for each plugin:
+
+* USB Serial: 3
+
+* USB HID: 1
+
+* USB Mass Storage: 2
+
+* USB MIDI: 2
+
+* XBox360 Controller: 2
+
+When combining plugins, make sure the count of these endpoints does not exceed 7. For instance, USB Serial + USB Mass Storage + 
+USB MIDI + USB HID adds up to 8, which is too much.
