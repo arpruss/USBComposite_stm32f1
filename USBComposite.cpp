@@ -1,7 +1,7 @@
 #include "USBComposite.h"
 
 #define DEFAULT_VENDOR_ID  0x1EAF
-#define DEFAULT_PRODUCT_ID 0x0004
+#define DEFAULT_PRODUCT_ID 0x0024
 
 static char* putSerialNumber(char* out, int nibbles, uint32 id) {
     for (int i=0; i<nibbles; i++, id >>= 4) {
