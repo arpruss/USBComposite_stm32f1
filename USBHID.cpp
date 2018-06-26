@@ -87,7 +87,7 @@ void USBHIDDevice::clearBuffers() {
 }
 
 void USBHIDDevice::end(void){
-	if(enabledHID){
+	if(enabledHID) {
 		USBComposite.end();
 		enabledHID = false;
 	}
