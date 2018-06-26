@@ -45,6 +45,8 @@ void USBXBox360::setLEDCallback(void (*callback)(uint8 pattern)) {
 
 bool USBXBox360::init(void* ignore) {
 	(void)ignore;
+    USBComposite.setVendorId(0x045e);
+    USBComposite.setProductId(0x028e);
 	usb_generic_set_info(0x045e, 0x028e, NULL, NULL, NULL);
 	return true;
 }
