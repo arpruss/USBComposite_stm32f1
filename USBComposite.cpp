@@ -100,12 +100,12 @@ void USBCompositeDevice::setSerialString(const char* s) {
 bool USBCompositeDevice::begin() {
    if (enabled)
         return true;
-	usb_generic_set_info(vendorId, productId, iManufacturer[0] ? iManufacturer : NULL, iProduct[0] ? iProduct : NULL, 
-        haveSerialNumber ? iSerialNumber : NULL);
     for (uint32 i = 0 ; i < numParts ; i++) {
 		if (init[i] != NULL && !init[i](plugin[i]))
 			return false;
 	}
+	usb_generic_set_info(vendorId, productId, iManufacturer[0] ? iManufacturer : NULL, iProduct[0] ? iProduct : NULL, 
+        haveSerialNumber ? iSerialNumber : NULL);
     if (! usb_generic_set_parts(parts, numParts))
         return false;
     usb_generic_enable();

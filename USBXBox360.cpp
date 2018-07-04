@@ -51,7 +51,7 @@ bool USBXBox360::init(void* ignore) {
 }
 
 bool USBXBox360::registerComponent() {
-	return USBComposite.add(&usbX360Part, this, init);
+	return USBComposite.add(&usbX360Part, this, (USBPartInitializer)&USBXBox360::init);
 }
 
 void USBXBox360::begin(void){
