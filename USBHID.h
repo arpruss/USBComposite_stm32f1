@@ -302,7 +302,6 @@ public:
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
     void begin(const uint8_t* report_descriptor, uint16_t length);
     void begin(const HIDReportDescriptor* reportDescriptor);
-    void setSerial(uint8 serialSupport=true);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
     bool addBuffer(uint8_t type, volatile HIDBuffer_t* buffer);
 	void clearBuffers(uint8_t type);

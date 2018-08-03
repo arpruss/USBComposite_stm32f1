@@ -270,6 +270,5 @@ static void rxHook(unsigned hook, void *ignored) {
 }
 #endif
 
-
 USBCompositeSerial CompositeSerial;
 
