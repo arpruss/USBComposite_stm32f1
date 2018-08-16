@@ -14,7 +14,7 @@
 ** SOFTWARE.
 */
 
-#include <USBCompositeSerial.h>
+#include "USBComposite.h" 
 
 #include <string.h>
 #include <stdint.h>
@@ -269,6 +269,4 @@ static void rxHook(unsigned hook, void *ignored) {
     }
 }
 #endif
-
-USBCompositeSerial CompositeSerial;
 

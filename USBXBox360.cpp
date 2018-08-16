@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include <libmaple/nvic.h>
 #include <libmaple/usb.h>
-#include "USBXBox360.h" 
+#include "USBComposite.h" 
 #include "usb_x360.h"
 
 bool USBXBox360::wait() {
@@ -175,5 +175,3 @@ void USBXBox360::sliderRight(uint8_t val){
 	
     safeSendReport();
 }
-
-USBXBox360 XBox360;

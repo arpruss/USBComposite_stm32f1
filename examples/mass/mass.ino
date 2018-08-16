@@ -1,5 +1,8 @@
 #include <USBComposite.h>
 
+USBMassStorage MassStorage;
+USBCompositeSerial CompositeSerial;
+
 #define PRODUCT_ID 0x29
 
 #include "image.h"

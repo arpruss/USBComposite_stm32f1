@@ -53,7 +53,5 @@ public:
     void setRumbleCallback(void (*callback)(uint8 left, uint8 right));
 };
 
-extern USBXBox360 XBox360;
-
 #endif
 

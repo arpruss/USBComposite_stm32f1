@@ -4,10 +4,13 @@
  * and then moves the mouse in that direction. If the mouse doesn't recenter
  * at the end, it is probably due to mouse acceleration 
  */
-HIDAbsMouse mouse;
 
+USBHID HID;
+HIDKeyboard Keyboard(HID);
+HIDMouse Mouse(HID); 
+ 
 void setup() {
-  USBHID_begin_with_serial(HID_KEYBOARD_MOUSE);
+  HID.begin(HID_KEYBOARD_MOUSE);
   delay(2000);
 }
 

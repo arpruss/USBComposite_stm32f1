@@ -5,6 +5,9 @@
 #include <SPI.h>
 #include "SdFat.h"
 
+USBMassStorage MassStorage;
+USBCompositeSerial CompositeSerial;
+
 #define LED_PIN PB12
 #define PRODUCT_ID 0x29
 
