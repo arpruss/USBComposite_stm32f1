@@ -17,12 +17,12 @@ const uint8_t SD_CHIP_SELECT = SS;
 bool enabled = false;
 uint32 cardSize;
 
-bool write(uint32_t memoryOffset, const uint8_t *writebuff, uint16_t transferLength) {
-  return sd.card()->writeBlocks(memoryOffset/512, writebuff, transferLength/512);
+bool write(const uint8_t *writebuff, uint32_t startSector, uint16_t numSectors) {
+  return sd.card()->writeBlocks(startSector, writebuff, numSectors);
 }
 
-bool read(uint32_t memoryOffset, uint8_t *readbuff, uint16_t transferLength) {
-  return sd.card()->readBlocks(memoryOffset/512, readbuff, transferLength/512);
+bool read(uint8_t *readbuff, uint32_t startSector, uint16_t numSectors) {
+  return sd.card()->readBlocks(startSector, readbuff, numSectors);
 }
 
 void setup() {
@@ -34,7 +34,7 @@ void setup() {
 void initReader() {
   digitalWrite(LED_PIN,0);
   cardSize = sd.card()->cardSize();  
-  MassStorage.setDrive(0, cardSize*512, read, write);
+  MassStorage.setDriveData(0, cardSize, read, write);
   MassStorage.registerComponent();
   CompositeSerial.registerComponent();
   USBComposite.begin();
