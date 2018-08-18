@@ -15,7 +15,7 @@ public:
   void loop();
   void clearDrives(void);
   bool registerComponent();
-  void setDrive(uint32 driveNumber, uint32 byteSize, MassStorageReader reader,
+  void setDriveData(uint32 driveNumber, uint32 numSectors, MassStorageReader reader,
 	MassStorageWriter writer = NULL, MassStorageStatuser = NULL, MassStorageInitializer = NULL);
 };
 
