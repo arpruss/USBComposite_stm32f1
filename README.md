@@ -1,4 +1,4 @@
-# USB Composite library for STM32F1
+# USB Composite library for Roger's Melbourne's STM32F1 core: https://github.com/rogerclarkmelbourne/Arduino_STM32/
 
 ## Protocols supported
 
@@ -72,6 +72,19 @@ combinations will be supported by all operating systems.
 
 I recommend calling `USBComposite.setDeviceId(device)` with a different device number for each combination
 of plugins and profiles to prevent problems with cached configurations on the host computer.
+
+## Uploading with STM32duino bootloader
+
+Normally, the STM32duino bootloader upload method in the Roger Melbourne STM32F1 core sends a command 
+to reset the board via the USB serial port, and thereby put it in bootloader mode, just prior to uploading. 
+If you have installed a sketch that includes a USB serial port in the composite device, this should still
+work. But if the sketch you've installed doesn't include a USB serial port, then you need to manually activate 
+the bootloader mode next time you want to upload a sketch.
+
+The bootloader mode is active for a short period after the board powers up or resets. So just initiate
+the upload in the Arduino IDE as usual, but when "Searching for DFU device [1EAF:0003]" is displayed,
+hit the reset button (or if the device is USB-powered, keep it unplugged from USB and plug it in when you 
+get this message).
 
 ## Simple USB device configuration
 
