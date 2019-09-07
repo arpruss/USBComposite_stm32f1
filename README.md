@@ -50,7 +50,8 @@ plugin2.registerComponent();
 USBComposite.begin();
 ```
 
-Of course, you may need to do some further configuring of the plugins or the `USBComposite` device
+Of course, you may need to do some further configuring of the plugins (e.g., if plugin1 is USBHID, then
+you may want to do `USBHID.setReportDescriptor(HID_KEYBOARD)`) or of the `USBComposite` device
 before the `USBComposite.begin()` call.
 
 Finally, there are a number of classes that implement particular protocols for the `USBHID` class plugin.
