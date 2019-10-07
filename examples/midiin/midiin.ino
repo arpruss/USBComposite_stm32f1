@@ -1,8 +1,8 @@
-#include <USBMIDI.h>
+#include <USBComposite.h>
 
 #define SPEAKER_PIN PA0
 
-class myMidi : public USBMidi {
+class myMidi : public USBMIDI {
  virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity) {
   noTone(SPEAKER_PIN);
  }
@@ -13,6 +13,7 @@ class myMidi : public USBMidi {
 };
 
 myMidi midi;
+USBCompositeSerial CompositeSerial;
 
 void setup() {
     USBComposite.setProductId(0x0030);

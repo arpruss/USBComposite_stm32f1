@@ -1,17 +1,19 @@
 #######################################
-# Syntax Coloring Map USBHID
+# Syntax Coloring Map USBComposite
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-HID	KEYWORD1
-Joystick	KEYWORD1
-Keyboard	KEYWORD1
-Mouse	KEYWORD1
-CompositeSerial	KEYWORD1
-XBox360	KEYWORD1
+USBComposite	KEYWORD1
+USBHID	KEYWORD1
+USBMIDI	KEYWORD1
+USBXBox360	KEYWORD1
+USBMassStorage	KEYWORD1
+USBCompositeSerial	KEYWORD1
+HIDMouse	KEYWORD1
+HIDKeyboard	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -36,7 +38,7 @@ releaseAll	KEYWORD2
 move	KEYWORD2
 send	KEYWORD2
 click	KEYWORD2
-
+registerComponent	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
