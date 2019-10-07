@@ -11,6 +11,7 @@
 #include <USBXBox360.h>
 #include <USBMassStorage.h>
 #include <USBMIDI.h>
+#include <USBAudio.h>
 
 #define USB_MAX_PRODUCT_LENGTH 32
 #define USB_MAX_MANUFACTURER_LENGTH 32

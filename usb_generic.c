@@ -493,7 +493,7 @@ static uint8* usbGetStringDescriptor(uint16 length) {
 
 
 static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
-    if (alt_setting > 0) {
+    if (alt_setting > 1) {
         return USB_UNSUPPORT;
     } else if (interface >= usbConfig.Config_Header.bNumInterfaces) {
         return USB_UNSUPPORT;
