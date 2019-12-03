@@ -306,7 +306,7 @@ void usb_generic_enable(void) {
     gpio_set_mode(GPIOA, 12, GPIO_OUTPUT_PP);
     gpio_write_bit(GPIOA, 12, 0);
 
-    for(volatile unsigned int i=0;i<5120;i++);// Only small delay seems to be needed
+    for(volatile unsigned int i=0;i<512;i++);// Only small delay seems to be needed
     gpio_set_mode(GPIOA, 12, GPIO_INPUT_FLOATING);
 #endif			
 
