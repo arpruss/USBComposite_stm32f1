@@ -1,4 +1,5 @@
 #include "USBComposite.h"
+#include <Arduino.h>
 
 #define DEFAULT_VENDOR_ID  0x1EAF
 #define DEFAULT_PRODUCT_ID 0x0024
@@ -110,6 +111,7 @@ bool USBCompositeDevice::begin() {
         return false;
     usb_generic_enable();
     enabled = true;  
+    delay(250); // seems to be helpful sometimes
     return true;
 }
 

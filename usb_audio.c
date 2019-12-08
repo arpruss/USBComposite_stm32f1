@@ -17,6 +17,7 @@
 /* Private headers */
 #include "usb_lib_globals.h"
 #include "usb_reg_map.h"
+#include "libmaple/usb.h"
 
 #include "usb_audio.h"
 
