@@ -118,6 +118,13 @@ void USBXBox360::button(uint8_t button, bool val){
     safeSendReport();
 }
 
+void USBXBox360::buttons(uint16_t buttons){
+    xbox360_Report[2] = buttons & 0xFF;
+    xbox360_Report[3] = buttons >> 8;
+	
+    safeSendReport();
+}
+
 void USBXBox360::X(int16_t val){
 	xbox360_Report[6] = val;
     xbox360_Report[7] = (uint16)val >> 8;

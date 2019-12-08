@@ -40,6 +40,7 @@ public:
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);
+    void buttons(uint16_t b);
 	void X(int16_t val);
 	void Y(int16_t val);
 	void position(int16_t x, int16_t y);
