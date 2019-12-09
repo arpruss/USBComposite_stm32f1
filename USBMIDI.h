@@ -188,7 +188,11 @@ public:
     virtual void handleStop(void);
     virtual void handleActiveSense(void);
     virtual void handleReset(void);
-    
+
+    // sysex experimental
+    virtual void handleSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2);
+    uint32 sysexvalue; // sysex return value
+    boolean sysexflag = 0;
 };
 
 extern const uint32 midiNoteFrequency_10ths[128];
