@@ -179,6 +179,9 @@ void USBMIDI::dispatchPacket(uint32 p)
     e.i=p;
     
     switch (e.p.cin) {
+	case CIN_SYSEX ... CIN_SYSEX_ENDS_IN_3:
+            handleSysex(e.p.cin,e.p.midi0,e.p.midi1,e.p.midi2);
+            break;
         case CIN_3BYTE_SYS_COMMON:
             if (e.p.midi0 == MIDIv1_SONG_POSITION_PTR) {
                 handleSongPosition(((uint16)e.p.midi2)<<7|((uint16)e.p.midi1));
