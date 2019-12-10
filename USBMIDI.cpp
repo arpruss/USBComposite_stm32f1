@@ -38,7 +38,7 @@
  * @brief USB MIDI device with a class compatible with maplemidi
  */
 
-#include "USBComposite.h" 
+#include "USBComposite.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -67,20 +67,20 @@ bool USBMIDI::init(USBMIDI* me) {
 }
 
 bool USBMIDI::registerComponent() {
-    return USBComposite.add(&usbMIDIPart, this, (USBPartInitializer)&USBMIDI::init); 
+    return USBComposite.add(&usbMIDIPart, this, (USBPartInitializer)&USBMIDI::init);
 }
 
 void USBMIDI::begin(unsigned channel) {
 	setChannel(channel);
-	
+
 	if (enabled)
 		return;
 
 	USBComposite.clear();
 	registerComponent();
 	USBComposite.begin();
-	
-	enabled = true;	
+
+	enabled = true;
 }
 
 void USBMIDI::end(void) {
@@ -177,11 +177,12 @@ void USBMIDI::dispatchPacket(uint32 p)
     union EVENT_t e;
 
     e.i=p;
-    
+
     switch (e.p.cin) {
-	case CIN_SYSEX ... CIN_SYSEX_ENDS_IN_3:
-            handleSysex(e.p.cin,e.p.midi0,e.p.midi1,e.p.midi2);
+				case CIN_SYSEX ... CIN_SYSEX_ENDS_IN_3:
+            appendSysex(e.p.cin,e.p.midi0,e.p.midi1,e.p.midi2);
             break;
+
         case CIN_3BYTE_SYS_COMMON:
             if (e.p.midi0 == MIDIv1_SONG_POSITION_PTR) {
                 handleSongPosition(((uint16)e.p.midi2)<<7|((uint16)e.p.midi1));
@@ -216,7 +217,7 @@ void USBMIDI::dispatchPacket(uint32 p)
         case CIN_CHANNEL_PRESSURE:
             handleAfterTouch(MIDIv1_VOICE_CHANNEL(e.p.midi0), e.p.midi1);
             break;
-                     
+
         case CIN_PITCH_WHEEL:
             handlePitchChange(((uint16)e.p.midi2)<<7|((uint16)e.p.midi1));
             break;
@@ -272,7 +273,7 @@ void USBMIDI::sendNoteOff(unsigned int channel, unsigned int note, unsigned int 
     outPacket.p.midi1=note;
     outPacket.p.midi2=velocity;
     writePacket(outPacket.i);
-    
+
 }
 
 
@@ -285,7 +286,7 @@ void USBMIDI::sendNoteOn(unsigned int channel, unsigned int note, unsigned int v
     outPacket.p.midi1=note;
     outPacket.p.midi2=velocity;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi VELOCITY CHANGE message to a given channel, with given note 0-127,
@@ -300,7 +301,7 @@ void USBMIDI::sendVelocityChange(unsigned int channel, unsigned int note, unsign
     outPacket.p.midi1=note;
     outPacket.p.midi2=velocity;
     writePacket(outPacket.i);
-    
+
 }
 
 
@@ -314,7 +315,7 @@ void USBMIDI::sendControlChange(unsigned int channel, unsigned int controller, u
     outPacket.p.midi1=controller;
     outPacket.p.midi2=value;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi PROGRAM CHANGE message to given channel, with program ID 0-127
@@ -325,7 +326,7 @@ void USBMIDI::sendProgramChange(unsigned int channel, unsigned int program)
     outPacket.p.midi0=MIDIv1_PROGRAM_CHANGE |(channel & 0x0f);
     outPacket.p.midi1=program;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi AFTER TOUCH message to given channel, with velocity 0-127
@@ -336,7 +337,7 @@ void USBMIDI::sendAfterTouch(unsigned int channel, unsigned int velocity)
     outPacket.p.midi0=MIDIv1_CHANNEL_PRESSURE |(channel & 0x0f);
     outPacket.p.midi1=velocity;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi PITCH CHANGE message, with a 14-bit pitch (always for all channels)
@@ -348,7 +349,7 @@ void USBMIDI::sendPitchChange(unsigned int pitch)
     outPacket.p.midi1= (uint8) pitch & 0x07F;
     outPacket.p.midi2= (uint8)  (pitch>>7) & 0x7f;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi SONG POSITION message, with a 14-bit position (always for all channels)
@@ -360,7 +361,7 @@ void USBMIDI::sendSongPosition(unsigned int position)
     outPacket.p.midi1= (uint8) position & 0x07F;
     outPacket.p.midi2= (uint8)  (position>>7) & 0x7f;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi SONG SELECT message, with a song ID of 0-127 (always for all channels)
@@ -371,7 +372,7 @@ void USBMIDI::sendSongSelect(unsigned int song)
     outPacket.p.midi0=MIDIv1_SONG_SELECT;
     outPacket.p.midi1= (uint8) song & 0x07F;
     writePacket(outPacket.i);
-    
+
 }
 
 // Send a Midi TUNE REQUEST message (TUNE REQUEST is always for all channels)
@@ -441,13 +442,13 @@ void USBMIDI::sendReset(void)
 }
 
 const uint32 midiNoteFrequency_10ths[128] = {
-	 82, 87, 92, 97, 103, 109, 116, 122, 130, 138, 146, 154, 164, 173, 184, 194, 
-	 206, 218, 231, 245, 260, 275, 291, 309, 327, 346, 367, 389, 412, 437, 462, 490, 
-	 519, 550, 583, 617, 654, 693, 734, 778, 824, 873, 925, 980, 1038, 1100, 1165, 1235, 
-	 1308, 1386, 1468, 1556, 1648, 1746, 1850, 1960, 2077, 2200, 2331, 2469, 2616, 2772, 2937, 3111, 
-	 3296, 3492, 3700, 3920, 4153, 4400, 4662, 4939, 5233, 5544, 5873, 6223, 6593, 6985, 7400, 7840, 
-	 8306, 8800, 9323, 9878, 10465, 11087, 11747, 12445, 13185, 13969, 14800, 15680, 16612, 17600, 18647, 19755, 
-	 20930, 22175, 23493, 24890, 26370, 27938, 29600, 31360, 33224, 35200, 37293, 39511, 41860, 44349, 46986, 49780, 
+	 82, 87, 92, 97, 103, 109, 116, 122, 130, 138, 146, 154, 164, 173, 184, 194,
+	 206, 218, 231, 245, 260, 275, 291, 309, 327, 346, 367, 389, 412, 437, 462, 490,
+	 519, 550, 583, 617, 654, 693, 734, 778, 824, 873, 925, 980, 1038, 1100, 1165, 1235,
+	 1308, 1386, 1468, 1556, 1648, 1746, 1850, 1960, 2077, 2200, 2331, 2469, 2616, 2772, 2937, 3111,
+	 3296, 3492, 3700, 3920, 4153, 4400, 4662, 4939, 5233, 5544, 5873, 6223, 6593, 6985, 7400, 7840,
+	 8306, 8800, 9323, 9878, 10465, 11087, 11747, 12445, 13185, 13969, 14800, 15680, 16612, 17600, 18647, 19755,
+	 20930, 22175, 23493, 24890, 26370, 27938, 29600, 31360, 33224, 35200, 37293, 39511, 41860, 44349, 46986, 49780,
 	 52740, 55877, 59199, 62719, 66449, 70400, 74586, 79021, 83720, 88698, 93973, 99561, 105481, 111753, 118398, 125439 };
 
 #pragma GCC diagnostic push
@@ -470,4 +471,111 @@ void USBMIDI::handleContinue(void) {}
 void USBMIDI::handleStop(void) {}
 void USBMIDI::handleActiveSense(void) {}
 void USBMIDI::handleReset(void) {}
+#pragma GCC diagnostic pop
+
+uint8_t sysexstring[256];
+uint32_t sysexpos = 0;
+
+void USBMIDI::appendSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2) {
+	if (cin == CIN_SYSEX && midi0 == MIDIv1_SYSEX_START) // new sysex string
+	{
+		sysexstring[0] = midi1;
+		sysexstring[1] = midi2;
+		sysexpos = 2;
+	}
+	else if  (cin == CIN_SYSEX && midi1 != MIDIv1_SYSEX_START) // parsing sysex
+	{
+		sysexstring[sysexpos] = midi0;
+		sysexstring[sysexpos + 1] = midi1;
+		sysexstring[sysexpos + 2] = midi2;
+		sysexpos += 3;
+	}
+	else // sysex ends
+	{
+		uint32_t sysexlen;
+		if(midi0 == MIDIv1_SYSEX_START) //Edge case - only one variable was passed in Sysex
+		{
+			sysexstring[0] = midi1;
+			sysexlen = 1;
+		}
+		else
+		{
+			switch(cin)
+			{
+				case CIN_SYSEX_ENDS_IN_1:
+				sysexlen = sysexpos;
+				break;
+				case CIN_SYSEX_ENDS_IN_2:
+				sysexlen = sysexpos + 1;
+				break;
+				case CIN_SYSEX_ENDS_IN_3:
+				sysexlen = sysexpos + 2;
+				break;
+			}
+			sysexstring[sysexpos] = midi0;
+			sysexstring[sysexpos + 1] = midi1;
+			sysexstring[sysexpos + 2] = midi2;
+		}
+		sysexpos = 0;
+		handleSysex(sysexstring, sysexlen);
+	}
+}
+
+void USBMIDI::handleSysex(uint8_t *sysexBuffer, uint32 len) {}
+
+void USBMIDI::sendSysex(uint8_t *sysexBuffer, uint32 len) //Header&Ending excluded
+{
+	outPacket.p.cable=DEFAULT_MIDI_CABLE;
+	if(len == 1)
+	{
+		outPacket.p.cin=CIN_SYSEX_ENDS_IN_3;
+		outPacket.p.midi0= MIDIv1_SYSEX_START;
+		outPacket.p.midi1= sysexBuffer[0];
+		outPacket.p.midi2= MIDIv1_SYSEX_END;
+		writePacket(outPacket.i);
+	}
+	else
+	{
+		outPacket.p.cin=CIN_SYSEX;
+		outPacket.p.midi0= MIDIv1_SYSEX_START;
+		outPacket.p.midi1= sysexBuffer[0];
+		outPacket.p.midi2= sysexBuffer[1];
+		writePacket(outPacket.i);
+		if(len > 2) //Edge case
+		{
+			for(uint8_t i = 2; i < len - 2; i +=3)
+			{
+				outPacket.p.midi0= sysexBuffer[i];
+				outPacket.p.midi1= sysexBuffer[i+1];
+				outPacket.p.midi2= sysexBuffer[i+2];
+				writePacket(outPacket.i);
+			}
+		}
+		switch((len - 2) % 3)
+		{
+			case 2:
+			outPacket.p.cin=CIN_SYSEX_ENDS_IN_3;
+			outPacket.p.midi0= sysexBuffer[len-2];
+			outPacket.p.midi1= sysexBuffer[len-1];
+			outPacket.p.midi2= MIDIv1_SYSEX_END;
+			writePacket(outPacket.i);
+			break;
+			case 1:
+			outPacket.p.cin=CIN_SYSEX_ENDS_IN_2;
+			outPacket.p.midi0= sysexBuffer[len-1];
+			outPacket.p.midi1= MIDIv1_SYSEX_END;
+			outPacket.p.midi2= NULL;
+			writePacket(outPacket.i);
+			break;
+			case 0:
+			outPacket.p.cin=CIN_SYSEX_ENDS_IN_1;
+			outPacket.p.midi0= MIDIv1_SYSEX_END;
+			outPacket.p.midi1= NULL;
+			outPacket.p.midi2= NULL;
+			writePacket(outPacket.i);
+			break;
+		}
+	}
+}
+
 #pragma GCC diagnostic pop

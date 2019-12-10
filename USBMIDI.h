@@ -98,17 +98,17 @@
 class USBMIDI {
 private:
     bool enabled = false;
-    
+
     /* Private Receive Parameters */
-    
+
     // The channel this Midi instance receives data for (0 means all channels)
     int channelIn_;
-    
+
     /* Internal functions */
-    
+
     // Called whenever data is read from the USB port
     void dispatchPacket(uint32 packet);
-    
+
     uint32 txPacketSize = 64;
     uint32 rxPacketSize = 64;
 
@@ -120,7 +120,7 @@ public:
 	unsigned getChannel() {
 		return channelIn_;
 	}
-    
+
     void setRXPacketSize(uint32 size=64) {
         rxPacketSize = size;
     }
@@ -135,16 +135,16 @@ public:
     void begin(unsigned int channel = 0);
     //void begin();
     void end();
-    
+
     uint32 available(void);
-    
+
     uint32 readPackets(void *buf, uint32 len);
     uint32 readPacket(void);
-    
+
     void writePacket(uint32);
 //    void write(const char *str);
     void writePackets(const void*, uint32);
-    
+
     uint8 isConnected();
     uint8 pending();
 
@@ -152,7 +152,7 @@ public:
     //  (if you're only SENDING MIDI events from the Arduino, you don't need to call
     //  poll); it causes data to be read from the USB port and processed.
     void poll();
-    
+
     // Call these to send MIDI messages of the given types
     void sendNoteOff(unsigned int channel, unsigned int note, unsigned int velocity);
     void sendNoteOn(unsigned int channel, unsigned int note, unsigned int velocity);
@@ -170,7 +170,7 @@ public:
     void sendStop(void);
     void sendActiveSense(void);
     void sendReset(void);
-    
+
     // Overload these in a subclass to get MIDI messages when they come in
     virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity);
     virtual void handleNoteOn(unsigned int channel, unsigned int note, unsigned int velocity);
@@ -190,9 +190,11 @@ public:
     virtual void handleReset(void);
 
     // sysex experimental
-    virtual void handleSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2);
-    uint32 sysexvalue; // sysex return value
-    boolean sysexflag = 0;
+    void appendSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2);
+    virtual void handleSysex(uint8_t *sysexBuffer, uint32 len);
+    uint8_t sysexstring[256]; // sysex buffer - default MAX_SYSEX_SIZE is 256 but it's .c so can't refence. NEED FIX
+    uint32_t sysexpos;
+    void sendSysex(uint8_t *sysexBuffer, uint32 len);
 };
 
 extern const uint32 midiNoteFrequency_10ths[128];
