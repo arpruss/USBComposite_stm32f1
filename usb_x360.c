@@ -460,7 +460,8 @@ static RESULT x360DataSetup(uint8 request) {
 }
 
 static RESULT x360NoDataSetup(uint8 request) {
-	if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
+	if (pInformation->USBwIndex0 == X360_INTERFACE_NUMBER && 
+        (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 		&& (request == SET_PROTOCOL)){
 		uint8 wValue0 = pInformation->USBwValue0;
 		ProtocolValue = wValue0;

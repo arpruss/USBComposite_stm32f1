@@ -54,5 +54,17 @@ public:
     void setRumbleCallback(void (*callback)(uint8 left, uint8 right));
 };
 
-#endif
+#define XBOX_A 13
+#define XBOX_B 14
+#define XBOX_X 15
+#define XBOX_Y 16
+#define XBOX_DUP 1
+#define XBOX_DDOWN 2
+#define XBOX_DLEFT 3
+#define XBOX_DRIGHT 4
+#define XBOX_START 5
+#define XBOX_LSHOULDER 9
+#define XBOX_RSHOULDER 10
+#define XBOX_GUIDE  11
 
+#endif
