@@ -258,6 +258,11 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
         }
         parts[i]->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
+        // make sure endpoint numbers of different parts don't overlap between TX and RX
+        if (numEndpointsTX>numEndpointsRX)
+            numEndpointsRX=numEndpointsTX;
+        else
+            numEndpointsTX=numEndpointsRX;
     }
     
     usbConfig.Config_Header = Base_Header;    
