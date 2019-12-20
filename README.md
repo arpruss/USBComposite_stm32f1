@@ -153,18 +153,20 @@ to USB In).
 
 ## Endpoint limitations
 
-There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more. Here are 
+There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more in each direction. Here are 
 how many endpoints besides endpoint 0 are needed for each plugin:
 
-* USB Serial: 3
+* USB Serial: 2 TX, 1 RX
 
-* USB HID: 1
+* USB HID: 1 TX
 
-* USB Mass Storage: 2
+* USB Mass Storage: 1 TX, 1 RX
 
-* USB MIDI: 2
+* USB MIDI: 1 TX, 1 RX
 
-* XBox360 Controller: 2
+* XBox360 Controller: 1 TX, 1 RX
 
-When combining plugins, make sure the count of these endpoints does not exceed 7. For instance, USB Serial + USB Mass Storage + 
-USB MIDI + USB HID adds up to 8, which is too much.
+* USB Audio: 1 TX or 1 RX depending on mode
+
+When combining plugins, make sure the count of RX endpoints does not exceed 7 and the count of TX endpoints does not exceed 7, though
+with the above list of plugins it's going to be hard to exceed that!
