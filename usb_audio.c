@@ -32,8 +32,8 @@
 #define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
 #define AUDIO_ISO_EP_ADDRESS       usbAUDIOPart.endpoints[0].address
 #define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
-#define AUDIO_ISO_BUF0_PMA_ADDRESS usbAUDIOPart.endpoints[0].pmaAddress
-#define AUDIO_ISO_BUF1_PMA_ADDRESS usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE
+#define AUDIO_ISO_BUF0_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress)
+#define AUDIO_ISO_BUF1_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE)
 
 /* Tx data */
 static volatile uint8 audioBufferTx[AUDIO_BUFFER_SIZE];
