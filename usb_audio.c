@@ -421,7 +421,7 @@ static void getAUDIOPartDescriptor(uint8* out) {
     }
     OUT_BYTE(audioPartConfigData, AUDIO_Alternate0.bInterfaceNumber) += usbAUDIOPart.startInterface;
     OUT_BYTE(audioPartConfigData, AUDIO_Alternate1.bInterfaceNumber) += usbAUDIOPart.startInterface;
-    OUT_BYTE(audioPartConfigData, AUDIO_Iso_EP.bEndpointAddress) += usbAUDIOPart.startEndpoint;
+    OUT_BYTE(audioPartConfigData, AUDIO_Iso_EP.bEndpointAddress) += AUDIO_ISO_EP_ADDRESS;
     OUT_BYTE(audioPartConfigData, AUDIO_Format_Type.bNrChannels) = channels;
     OUT_BYTE(audioPartConfigData, AUDIO_Format_Type.tSamFreq0) = AUDIO_SAMPLE_FREQ_0(sample_rate);
     OUT_BYTE(audioPartConfigData, AUDIO_Format_Type.tSamFreq1) = AUDIO_SAMPLE_FREQ_1(sample_rate);
@@ -437,14 +437,14 @@ static void getAUDIOPartDescriptor2(uint8* out) {
     OUT_BYTE(audioPartConfigData2, AUDIO_Interface.bInterfaceNumber) += usbAUDIOPart.startInterface;
     if (usbAUDIOPart.endpoints == audioEndpointOUT) {
         OUT_16(audioPartConfigData2, AUDIO_Input.wTerminalType) = 0x0301 /* Generic Speaker */;
-        OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) = USB_DESCRIPTOR_ENDPOINT_OUT;
+        OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) += USB_DESCRIPTOR_ENDPOINT_OUT;
     }
     OUT_BYTE(audioPartConfigData2, AUDIO_Input.bNrChannels) = channels;
     if (channels == 2)
         OUT_32(audioPartConfigData2, AUDIO_Input.bmChannelConfig) = 0x00000003; /* Front Left, Front Right */
     OUT_BYTE(audioPartConfigData2, AUDIO_Alternate0.bInterfaceNumber) += usbAUDIOPart.startInterface;
     OUT_BYTE(audioPartConfigData2, AUDIO_Alternate1.bInterfaceNumber) += usbAUDIOPart.startInterface;
-    OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) += usbAUDIOPart.startEndpoint;
+    OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) += AUDIO_ISO_EP_ADDRESS;
     OUT_BYTE(audioPartConfigData2, AUDIO_AS_AC.bNrChannels) = channels;
     OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bmAttributes) |= 0x0C; /* synchronous */
     /* Used in conjunction with other attributes for bandwidth allocation calculation */

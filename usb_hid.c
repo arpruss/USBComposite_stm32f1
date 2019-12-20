@@ -81,6 +81,8 @@ static ONE_DESCRIPTOR HID_Report_Descriptor = {
 
 
 #define HID_ENDPOINT_TX      0
+#define USB_HID_TX_ENDP (hidEndpoints[HID_ENDPOINT_TX].address)
+
 
 typedef struct {
     //HID
@@ -115,7 +117,7 @@ static const hid_part_config hidPartConfigData = {
 	.HIDDataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = USB_DESCRIPTOR_ENDPOINT_IN | HID_ENDPOINT_TX, // PATCH
+        .bEndpointAddress = USB_DESCRIPTOR_ENDPOINT_IN | 0, // PATCH: USB_HID_TX_ENDP
         .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT,
         .wMaxPacketSize   = 64, //PATCH
         .bInterval        = 0x0A,
@@ -145,7 +147,7 @@ static void getHIDPartDescriptor(uint8* out) {
     memcpy(out, &hidPartConfigData, sizeof(hid_part_config));
     // patch to reflect where the part goes in the descriptor
     OUT_BYTE(hidPartConfigData, HID_Interface.bInterfaceNumber) += usbHIDPart.startInterface;
-    OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += usbHIDPart.startEndpoint;
+    OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += USB_HID_TX_ENDP;
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenL) = (uint8)HID_Report_Descriptor.Descriptor_Size;
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenH) = (uint8)(HID_Report_Descriptor.Descriptor_Size>>8);
     OUT_16(hidPartConfigData, HIDDataInEndpoint.wMaxPacketSize) = txEPSize;
@@ -401,8 +403,8 @@ static void hidDataTxCb(void)
     
 flush_hid:
 	// enable Tx endpoint
-    usb_set_ep_tx_count(usbHIDPart.endpoints[HID_ENDPOINT_TX].address, tx_unsent);
-    usb_set_ep_tx_stat(usbHIDPart.endpoints[HID_ENDPOINT_TX].address, USB_EP_STAT_TX_VALID);
+    usb_set_ep_tx_count(USB_HID_TX_ENDP, tx_unsent);
+    usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_VALID);
 }
 
 

@@ -48,6 +48,10 @@
 #define CDCACM_ENDPOINT_MANAGEMENT 1
 #define CDCACM_ENDPOINT_RX         2
 
+#define USB_CDCACM_MANAGEMENT_ENDP    (serialEndpoints[CDCACM_ENDPOINT_MANAGEMENT].address)
+#define USB_CDCACM_TX_ENDP            (serialEndpoints[CDCACM_ENDPOINT_TX].address)
+#define USB_CDCACM_RX_ENDP            (serialEndpoints[CDCACM_ENDPOINT_RX].address)
+
 uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 
 /* usb_lib headers */
@@ -143,7 +147,7 @@ static const serial_part_config serialPartConfigData = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN |
-                             CDCACM_ENDPOINT_MANAGEMENT), // PATCH
+                             0), // PATCH: CDCACM_ENDPOINT_MANAGEMENT
         .bmAttributes     = USB_EP_TYPE_INTERRUPT,
         .wMaxPacketSize   = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .bInterval        = 0xFF,
@@ -165,7 +169,7 @@ static const serial_part_config serialPartConfigData = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT |
-                             CDCACM_ENDPOINT_RX), // patch
+                             0), // patch: CDCACM_ENDPOINT_RX
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = 64, // patch
         .bInterval        = 0x00,
@@ -174,7 +178,7 @@ static const serial_part_config serialPartConfigData = {
     .DataInEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | CDCACM_ENDPOINT_TX), // PATCH
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | 0), // PATCH: CDCACM_ENDPOINT_TX
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = 64, // patch
         .bInterval        = 0x00,
@@ -209,9 +213,9 @@ static void getSerialPartDescriptor(uint8* out) {
     memcpy(out, &serialPartConfigData, sizeof(serial_part_config));
 
     // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += usbSerialPart.startEndpoint;
-    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += usbSerialPart.startEndpoint;
-    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += usbSerialPart.startEndpoint;
+    OUT_BYTE(serialPartConfigData, ManagementEndpoint.bEndpointAddress) += USB_CDCACM_MANAGEMENT_ENDP;
+    OUT_BYTE(serialPartConfigData, DataOutEndpoint.bEndpointAddress) += USB_CDCACM_RX_ENDP;
+    OUT_BYTE(serialPartConfigData, DataInEndpoint.bEndpointAddress) += USB_CDCACM_TX_ENDP;
 
     OUT_BYTE(serialPartConfigData, IAD.bFirstInterface) += usbSerialPart.startInterface;
     OUT_BYTE(serialPartConfigData, CCI_Interface.bInterfaceNumber) += usbSerialPart.startInterface;
@@ -363,7 +367,7 @@ uint32 composite_cdcacm_rx(uint8* buf, uint32 len)
 	uint32 rx_unread = (vcom_rx_head - tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
     // If buffer was emptied to a pre-set value, re-enable the RX endpoint
     if ( rx_unread <= 64 ) { // experimental value, gives the best performance
-        usb_set_ep_rx_stat(usbSerialPart.endpoints[CDCACM_ENDPOINT_RX].address, USB_EP_STAT_RX_VALID);
+        usb_set_ep_rx_stat(USB_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
 	}
     return n_copied;
 }
@@ -485,8 +489,8 @@ static void vcomDataTxCb(void)
 	vcom_tx_tail = tail; // store volatile variable
 flush_vcom:
 	// enable Tx endpoint
-    usb_set_ep_tx_count(usbSerialPart.endpoints[CDCACM_ENDPOINT_TX].address, tx_unsent);
-    usb_set_ep_tx_stat(usbSerialPart.endpoints[CDCACM_ENDPOINT_TX].address, USB_EP_STAT_TX_VALID);
+    usb_set_ep_tx_count(USB_CDCACM_TX_ENDP, tx_unsent);
+    usb_set_ep_tx_stat(USB_CDCACM_TX_ENDP, USB_EP_STAT_TX_VALID);
 }
 
 
@@ -494,7 +498,7 @@ static void vcomDataRxCb(void)
 {
 	uint32 head = vcom_rx_head; // load volatile variable
 
-	uint32 ep_rx_size = usb_get_ep_rx_count(usbSerialPart.endpoints[CDCACM_ENDPOINT_RX].address);
+	uint32 ep_rx_size = usb_get_ep_rx_count(USB_CDCACM_RX_ENDP);
 	// This copy won't overwrite unread bytes as long as there is 
 	// enough room in the USB Rx buffer for next packet
 	uint32 *src = usb_pma_ptr(usbSerialPart.endpoints[CDCACM_ENDPOINT_RX].pmaAddress);
@@ -516,7 +520,7 @@ static void vcomDataRxCb(void)
 	uint32 rx_unread = (head - vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 	// only enable further Rx if there is enough room to receive one more packet
 	if ( rx_unread < (CDC_SERIAL_RX_BUFFER_SIZE-rxEPSize) ) {
-		usb_set_ep_rx_stat(usbSerialPart.endpoints[CDCACM_ENDPOINT_RX].address, USB_EP_STAT_RX_VALID);
+		usb_set_ep_rx_stat(USB_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
 	}
 
     if (rx_hook) {

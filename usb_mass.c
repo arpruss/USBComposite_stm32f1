@@ -87,7 +87,7 @@ const mass_descriptor_config usbMassConfigDescriptor = {
   {
     .bLength = sizeof (usb_descriptor_endpoint),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_ENDPOINT,
-    .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | MASS_ENDPOINT_TX), // PATCH
+    .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | 0), // PATCH: USB_MASS_TX_ENDP
     .bmAttributes = USB_EP_TYPE_BULK,
     .wMaxPacketSize = MAX_BULK_PACKET_SIZE,
     .bInterval = 0,
@@ -97,7 +97,7 @@ const mass_descriptor_config usbMassConfigDescriptor = {
   {
     .bLength = sizeof (usb_descriptor_endpoint),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_ENDPOINT,
-    .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | MASS_ENDPOINT_RX), // PATCH
+    .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | 0), // PATCH: USB_MASS_RX_ENDP
     .bmAttributes = USB_EP_TYPE_BULK,
     .wMaxPacketSize = MAX_BULK_PACKET_SIZE,
     .bInterval = 1,
@@ -125,8 +125,8 @@ static void getMassPartDescriptor(uint8* out) {
     memcpy(out, &usbMassConfigDescriptor, sizeof(mass_descriptor_config));
     // patch to reflect where the part goes in the descriptor
     OUT_BYTE(usbMassConfigDescriptor, MASS_Interface.bInterfaceNumber) += usbMassPart.startInterface;
-    OUT_BYTE(usbMassConfigDescriptor, DataInEndpoint.bEndpointAddress) += usbMassPart.startEndpoint;
-    OUT_BYTE(usbMassConfigDescriptor, DataOutEndpoint.bEndpointAddress) += usbMassPart.startEndpoint;
+    OUT_BYTE(usbMassConfigDescriptor, DataInEndpoint.bEndpointAddress) += USB_MASS_TX_ENDP;
+    OUT_BYTE(usbMassConfigDescriptor, DataOutEndpoint.bEndpointAddress) += USB_MASS_RX_ENDP;
 }
 
 
