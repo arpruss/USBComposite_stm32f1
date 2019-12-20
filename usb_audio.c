@@ -30,10 +30,10 @@
 #define AUDIO_BUFFER_SIZE          256
 #define AUDIO_BUFFER_SIZE_MASK     (AUDIO_BUFFER_SIZE - 1)
 #define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
-#define AUDIO_ISO_EP_ADDRESS       usbAUDIOPart.endpoints[0].address
+#define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
 #define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
-#define AUDIO_ISO_BUF0_PMA_ADDRESS usbAUDIOPart.endpoints[0].pmaAddress
-#define AUDIO_ISO_BUF1_PMA_ADDRESS usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE
+#define AUDIO_ISO_BUF0_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress)
+#define AUDIO_ISO_BUF1_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE)
 
 /* Tx data */
 static volatile uint8 audioBufferTx[AUDIO_BUFFER_SIZE];
@@ -437,7 +437,7 @@ static void getAUDIOPartDescriptor2(uint8* out) {
     OUT_BYTE(audioPartConfigData2, AUDIO_Interface.bInterfaceNumber) += usbAUDIOPart.startInterface;
     if (usbAUDIOPart.endpoints == audioEndpointOUT) {
         OUT_16(audioPartConfigData2, AUDIO_Input.wTerminalType) = 0x0301 /* Generic Speaker */;
-        OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) += USB_DESCRIPTOR_ENDPOINT_OUT;
+        OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) = USB_DESCRIPTOR_ENDPOINT_OUT;
     }
     OUT_BYTE(audioPartConfigData2, AUDIO_Input.bNrChannels) = channels;
     if (channels == 2)
@@ -514,7 +514,7 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
         return 0; /* no data to send */
 
     while(usbGenericTransmitting >= 0);
-
+    
     uint32 head = audio_tx_head; /* load volatile variable */
     uint32 tx_unsent = (head - audio_tx_tail) & AUDIO_BUFFER_SIZE_MASK;
 
