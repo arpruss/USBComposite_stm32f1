@@ -33,7 +33,6 @@ typedef struct USBCompositePart {
     uint8 numInterfaces;
     uint8 numEndpoints;
 	uint8 startInterface;
-	uint8 startEndpoint;
     uint16 descriptorSize;
     void (*getPartDescriptor)(uint8* out);
     void (*usbInit)(void);

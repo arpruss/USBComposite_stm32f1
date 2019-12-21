@@ -200,7 +200,7 @@ static const usb_descriptor_config usbMIDIDescriptor_Config = {
         .bLength            = sizeof(usb_descriptor_endpoint),
         .bDescriptorType    = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress   = (USB_DESCRIPTOR_ENDPOINT_OUT |
-                             MIDI_ENDPOINT_RX), // PATCH
+                             0), // PATCH: USB_MIDI_RX_ENDP
         .bmAttributes       = USB_EP_TYPE_BULK,
         .wMaxPacketSize     = 64, // PATCH
         .bInterval          = 0x00,
@@ -217,7 +217,7 @@ static const usb_descriptor_config usbMIDIDescriptor_Config = {
     .DataInEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | MIDI_ENDPOINT_TX), // PATCH
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | 0), // PATCH: USB_MIDI_TX_ENDP
         .bmAttributes     = USB_EP_TYPE_BULK,
         .wMaxPacketSize   = 64, // PATCH
         .bInterval        = 0x00,
@@ -262,18 +262,6 @@ volatile uint8 myMidiID[] = { LEAFLABS_MMA_VENDOR_1,LEAFLABS_MMA_VENDOR_2,LEAFLA
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 #define OUT_16(s,v) *(uint16_t*)&OUT_BYTE(s,v) // OK on Cortex which can handle unaligned writes
 
-static void getMIDIPartDescriptor(uint8* out) {
-    memcpy(out, &usbMIDIDescriptor_Config, sizeof(usbMIDIDescriptor_Config));
-    // patch to reflect where the part goes in the descriptor
-    OUT_BYTE(usbMIDIDescriptor_Config, AC_Interface.bInterfaceNumber) += usbMIDIPart.startInterface;
-    OUT_BYTE(usbMIDIDescriptor_Config, MS_Interface.bInterfaceNumber) += usbMIDIPart.startInterface;
-    OUT_BYTE(usbMIDIDescriptor_Config, AC_CS_Interface.baInterfaceNr) += usbMIDIPart.startInterface;
-    OUT_BYTE(usbMIDIDescriptor_Config, DataOutEndpoint.bEndpointAddress) += usbMIDIPart.startEndpoint;
-    OUT_BYTE(usbMIDIDescriptor_Config, DataInEndpoint.bEndpointAddress) += usbMIDIPart.startEndpoint;
-    OUT_16(usbMIDIDescriptor_Config, DataInEndpoint.wMaxPacketSize) = usb_midi_txEPSize;
-    OUT_16(usbMIDIDescriptor_Config, DataOutEndpoint.wMaxPacketSize) = usb_midi_txEPSize;
-}
-
 static USBEndpointInfo midiEndpoints[2] = {
     {
         .callback = midiDataRxCb,
@@ -288,6 +276,18 @@ static USBEndpointInfo midiEndpoints[2] = {
         .tx = 1,
     }
 };
+
+static void getMIDIPartDescriptor(uint8* out) {
+    memcpy(out, &usbMIDIDescriptor_Config, sizeof(usbMIDIDescriptor_Config));
+    // patch to reflect where the part goes in the descriptor
+    OUT_BYTE(usbMIDIDescriptor_Config, AC_Interface.bInterfaceNumber) += usbMIDIPart.startInterface;
+    OUT_BYTE(usbMIDIDescriptor_Config, MS_Interface.bInterfaceNumber) += usbMIDIPart.startInterface;
+    OUT_BYTE(usbMIDIDescriptor_Config, AC_CS_Interface.baInterfaceNr) += usbMIDIPart.startInterface;
+    OUT_BYTE(usbMIDIDescriptor_Config, DataOutEndpoint.bEndpointAddress) += USB_MIDI_RX_ENDP;
+    OUT_BYTE(usbMIDIDescriptor_Config, DataInEndpoint.bEndpointAddress) += USB_MIDI_TX_ENDP;
+    OUT_16(usbMIDIDescriptor_Config, DataInEndpoint.wMaxPacketSize) = usb_midi_txEPSize;
+    OUT_16(usbMIDIDescriptor_Config, DataOutEndpoint.wMaxPacketSize) = usb_midi_txEPSize;
+}
 
 USBCompositePart usbMIDIPart = {
     .numInterfaces = 2,

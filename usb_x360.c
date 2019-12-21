@@ -1,4 +1,4 @@
-/******************************************************************************
+/*****************************f*************************************************
  * The MIT License
  *
  * Copyright (c) 2011 LeafLabs LLC.
@@ -246,14 +246,14 @@ static const usb_descriptor_config X360Descriptor_Config =
         .iInterface         = 0x00,
 	},
     
-    .unknown_descriptor1 = {
-        17,33,0,1,1,37,129/*PATCH*/,20,0,0,0,0,19,2/*PATCH*/,8,0,0,
+    .unknown_descriptor1 = { 
+        17,33,0,1,1,37,129/* PATCH 0x80 | USB_X360_TX_ENDP */,20,0,0,0,0,19,2/* was 2, now PATCH: USB_X360_RX_ENDP */,8,0,0,
     }, 
 	
 	.DataInEndpoint = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | X360_ENDPOINT_TX),//PATCH
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | 0),//PATCH: USB_X360_TX_ENDP
         .bmAttributes     = USB_EP_TYPE_INTERRUPT, 
         .wMaxPacketSize   = 0x20, 
         .bInterval        = 4, 
@@ -262,7 +262,7 @@ static const usb_descriptor_config X360Descriptor_Config =
     .DataOutEndpoint = {
         .bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
-        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | X360_ENDPOINT_RX),//PATCH
+        .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT | 0),//PATCH: USB_X360_RX_ENDP
         .bmAttributes     = USB_EP_TYPE_INTERRUPT, 
         .wMaxPacketSize   = 0x20, 
         .bInterval        = 8, 
@@ -290,10 +290,10 @@ static void getX360PartDescriptor(uint8* out) {
     memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
     // patch to reflect where the part goes in the descriptor
     OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += usbX360Part.startInterface;
-    OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += usbX360Part.startEndpoint;
-    OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += usbX360Part.startEndpoint;
+    OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += USB_X360_RX_ENDP;
+    OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += USB_X360_TX_ENDP;
+    OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[6]) = 0x80 | USB_X360_TX_ENDP;
     OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[13]) = USB_X360_RX_ENDP;
-    OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[6]) = 0x80|USB_X360_TX_ENDP;
 }
 
 USBCompositePart usbX360Part = {
@@ -343,12 +343,6 @@ void x360_set_led_callback(void (*callback)(uint8 pattern)) {
     usb_generic_disable();
 }*/
 
-void x360_putc(char ch) {
-    while (!x360_tx((uint8*)&ch, 1))
-        ;
-}
-
-
 /* This function is non-blocking.
  *
  * It copies data from a usercode buffer into the USB peripheral TX
@@ -366,7 +360,7 @@ uint32 x360_tx(const uint8* buf, uint32 len) {
 
     /* Queue bytes for sending. */
     if (len) {
-        usb_copy_to_pma(buf, len, GetEPTxAddr(USB_X360_TX_ENDP));//USB_X360_TX_ADDR);
+        usb_copy_to_pma(buf, len, USB_X360_TX_ADDR); // GetEPTxAddr(USB_X360_TX_ENDP));//USB_X360_TX_ADDR);
     }
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing
@@ -381,10 +375,6 @@ uint32 x360_tx(const uint8* buf, uint32 len) {
 
 uint8 x360_is_transmitting(void) {
     return transmitting;
-}
-
-uint16 x360_get_pending(void) {
-    return n_unsent_bytes;
 }
 
 static void x360DataRxCb(void)

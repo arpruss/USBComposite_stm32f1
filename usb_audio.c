@@ -30,7 +30,7 @@
 #define AUDIO_BUFFER_SIZE          256
 #define AUDIO_BUFFER_SIZE_MASK     (AUDIO_BUFFER_SIZE - 1)
 #define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
-#define AUDIO_ISO_EP_ADDRESS       usbAUDIOPart.endpoints[0].address
+#define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
 #define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
 #define AUDIO_ISO_BUF0_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress)
 #define AUDIO_ISO_BUF1_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE)
@@ -421,7 +421,7 @@ static void getAUDIOPartDescriptor(uint8* out) {
     }
     OUT_BYTE(audioPartConfigData, AUDIO_Alternate0.bInterfaceNumber) += usbAUDIOPart.startInterface;
     OUT_BYTE(audioPartConfigData, AUDIO_Alternate1.bInterfaceNumber) += usbAUDIOPart.startInterface;
-    OUT_BYTE(audioPartConfigData, AUDIO_Iso_EP.bEndpointAddress) += usbAUDIOPart.startEndpoint;
+    OUT_BYTE(audioPartConfigData, AUDIO_Iso_EP.bEndpointAddress) += AUDIO_ISO_EP_ADDRESS;
     OUT_BYTE(audioPartConfigData, AUDIO_Format_Type.bNrChannels) = channels;
     OUT_BYTE(audioPartConfigData, AUDIO_Format_Type.tSamFreq0) = AUDIO_SAMPLE_FREQ_0(sample_rate);
     OUT_BYTE(audioPartConfigData, AUDIO_Format_Type.tSamFreq1) = AUDIO_SAMPLE_FREQ_1(sample_rate);
@@ -444,7 +444,7 @@ static void getAUDIOPartDescriptor2(uint8* out) {
         OUT_32(audioPartConfigData2, AUDIO_Input.bmChannelConfig) = 0x00000003; /* Front Left, Front Right */
     OUT_BYTE(audioPartConfigData2, AUDIO_Alternate0.bInterfaceNumber) += usbAUDIOPart.startInterface;
     OUT_BYTE(audioPartConfigData2, AUDIO_Alternate1.bInterfaceNumber) += usbAUDIOPart.startInterface;
-    OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) += usbAUDIOPart.startEndpoint;
+    OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bEndpointAddress) += AUDIO_ISO_EP_ADDRESS;
     OUT_BYTE(audioPartConfigData2, AUDIO_AS_AC.bNrChannels) = channels;
     OUT_BYTE(audioPartConfigData2, AUDIO_Iso_EP.bmAttributes) |= 0x0C; /* synchronous */
     /* Used in conjunction with other attributes for bandwidth allocation calculation */
@@ -514,7 +514,7 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
         return 0; /* no data to send */
 
     while(usbGenericTransmitting >= 0);
-
+    
     uint32 head = audio_tx_head; /* load volatile variable */
     uint32 tx_unsent = (head - audio_tx_tail) & AUDIO_BUFFER_SIZE_MASK;
 

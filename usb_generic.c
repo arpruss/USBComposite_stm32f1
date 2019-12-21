@@ -32,6 +32,8 @@
  * place else. Nonportable bits really need to be factored out, and
  * the result made cleaner.
  */
+ 
+#define MATCHING_ENDPOINT_RANGES // make RX and TX endpoints fall in the same range for each part
 
 #include <string.h>
 #include <libmaple/libmaple_types.h>
@@ -207,7 +209,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
     unsigned numInterfaces = 0;
-    unsigned numEndpoints = 1;
+    unsigned numEndpointsRX = 1;
+    unsigned numEndpointsTX = 1;
     uint16 usbDescriptorSize = 0;
     uint16 pmaOffset = USB_EP0_RX_BUFFER_ADDRESS + USB_EP0_BUFFER_SIZE;
     
@@ -220,33 +223,50 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     for (unsigned i = 0 ; i < _numParts ; i++ ) {
         parts[i]->startInterface = numInterfaces;
         numInterfaces += parts[i]->numInterfaces;
-        if (numEndpoints + parts[i]->numEndpoints > 8) {
-            return 0;
-		}
         if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) {
             return 0;
 		}
-        parts[i]->startEndpoint = numEndpoints;
+        uint8 nrx = 0;
+        uint8 ntx = 0;
+        uint16 pma = 0;
         USBEndpointInfo* ep = parts[i]->endpoints;
+        for (unsigned j = 0; j < parts[i]->numEndpoints ; j++) {
+            if (ep[j].tx)
+                ntx++;
+            else
+                nrx++;
+            pma += ep[j].bufferSize;
+        }
+            
+        if (numEndpointsRX + nrx > 8 || numEndpointsTX + ntx > 8 || pmaOffset+pma > PMA_MEMORY_SIZE) {
+            return 0;
+		}
+
         for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
-            if (ep[j].bufferSize + pmaOffset > PMA_MEMORY_SIZE) { 
-                return 0;
-			}
             ep[j].pmaAddress = pmaOffset;
             pmaOffset += ep[j].bufferSize;
-            ep[j].address = numEndpoints;
             if (ep[j].callback == NULL)
                 ep[j].callback = NOP_Process;
             if (ep[j].tx) {
-                ep_int_in[numEndpoints - 1] = ep[j].callback;
+                ep[j].address = numEndpointsTX;
+                ep_int_in[numEndpointsTX-1] = ep[j].callback;
+                numEndpointsTX++;
             }
             else {
-                ep_int_out[numEndpoints - 1] = ep[j].callback;
+                ep[j].address = numEndpointsRX;
+                ep_int_out[numEndpointsRX-1] = ep[j].callback;
+                numEndpointsRX++;
             }
-            numEndpoints++;
         }
         parts[i]->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
+#ifdef MATCHING_ENDPOINT_RANGES        
+        // make sure endpoint numbers of different parts don't overlap between TX and RX
+        if (numEndpointsTX>numEndpointsRX)
+            numEndpointsRX=numEndpointsTX;
+        else
+            numEndpointsTX=numEndpointsRX;
+#endif
     }
     
     usbConfig.Config_Header = Base_Header;    
@@ -254,8 +274,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     usbConfig.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
     Config_Descriptor.Descriptor_Size = usbConfig.Config_Header.wTotalLength;
     
-    my_Device_Table.Total_Endpoint = numEndpoints;
-        
+    my_Device_Table.Total_Endpoint = numEndpointsTX+numEndpointsRX;
+    
     return 1;
 }
 

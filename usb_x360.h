@@ -54,17 +54,8 @@ extern "C" {
  */
 
 extern USBCompositePart usbX360Part;
-void x360_enable();
-void x360_disable();
-
-void   x360_putc(char ch);
 uint32 x360_tx(const uint8* buf, uint32 len);
-uint32 x360_rx(uint8* buf, uint32 len);
-uint32 x360_hid_peek(uint8* buf, uint32 len);
-uint32 x360_data_available(void); /* in RX buffer */
-uint16 x360_get_pending(void);
 uint8 x360_is_transmitting(void);
-void x360_set_rx_callback(void (*callback)(const uint8* buffer, uint32 size));
 void x360_set_rumble_callback(void (*callback)(uint8 left, uint8 right));
 void x360_set_led_callback(void (*callback)(uint8 pattern));
 
