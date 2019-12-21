@@ -343,12 +343,6 @@ void x360_set_led_callback(void (*callback)(uint8 pattern)) {
     usb_generic_disable();
 }*/
 
-void x360_putc(char ch) {
-    while (!x360_tx((uint8*)&ch, 1))
-        ;
-}
-
-
 /* This function is non-blocking.
  *
  * It copies data from a usercode buffer into the USB peripheral TX
@@ -381,10 +375,6 @@ uint32 x360_tx(const uint8* buf, uint32 len) {
 
 uint8 x360_is_transmitting(void) {
     return transmitting;
-}
-
-uint16 x360_get_pending(void) {
-    return n_unsent_bytes;
 }
 
 static void x360DataRxCb(void)
