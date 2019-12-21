@@ -247,7 +247,7 @@ static const usb_descriptor_config X360Descriptor_Config =
 	},
     
     .unknown_descriptor1 = {
-        17,33,0,1,1,37,129,20,0,0,0,0,19,2/*PATCH*/,8,0,0,
+        17,33,0,1,1,37,129/*PATCH*/,20,0,0,0,0,19,2/*PATCH*/,8,0,0,
     }, 
 	
 	.DataInEndpoint = {
@@ -293,6 +293,7 @@ static void getX360PartDescriptor(uint8* out) {
     OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += usbX360Part.startEndpoint;
     OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += usbX360Part.startEndpoint;
     OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[13]) = USB_X360_RX_ENDP;
+    OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[6]) = 0x80|USB_X360_TX_ENDP;
 }
 
 USBCompositePart usbX360Part = {
