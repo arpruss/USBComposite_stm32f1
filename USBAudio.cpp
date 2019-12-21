@@ -17,7 +17,6 @@
 #include "USBComposite.h"
 
 #include <stdint.h>
-#include "usb_audio.h"
 
 static bool enabledAUDIO = false;
 
