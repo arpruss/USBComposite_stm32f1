@@ -32,6 +32,8 @@
  * place else. Nonportable bits really need to be factored out, and
  * the result made cleaner.
  */
+ 
+#define MATCHING_ENDPOINT_RANGES // make RX and TX endpoints fall in the same range for each part
 
 #include <string.h>
 #include <libmaple/libmaple_types.h>
@@ -228,7 +230,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
         uint8 ntx = 0;
         uint16 pma = 0;
         USBEndpointInfo* ep = parts[i]->endpoints;
-        for (unsigned j ; j <= parts[i]->numEndpoints ; j++) {
+        for (unsigned j = 0; j < parts[i]->numEndpoints ; j++) {
             if (ep[j].tx)
                 ntx++;
             else
@@ -258,11 +260,13 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
         }
         parts[i]->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
         usbDescriptorSize += parts[i]->descriptorSize;
+#ifdef MATCHING_ENDPOINT_RANGES        
         // make sure endpoint numbers of different parts don't overlap between TX and RX
         if (numEndpointsTX>numEndpointsRX)
             numEndpointsRX=numEndpointsTX;
         else
             numEndpointsTX=numEndpointsRX;
+#endif
     }
     
     usbConfig.Config_Header = Base_Header;    
