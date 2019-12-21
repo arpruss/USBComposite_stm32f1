@@ -116,18 +116,6 @@ typedef struct {
     uint8_t  iClockSource;
 } __packed audio_clock_source_descriptor;
 
-/* Clock Selector Descriptor */
-typedef struct {
-    uint8_t  bLength;
-    uint8_t  bDescriptorType;
-    uint8_t  bDescriptorSubtype;
-    uint8_t  bClockID;
-    uint8_t  bNrInPins;
-    uint8_t  baCSourceID;
-    uint8_t  bmControls;
-    uint8_t  iClockSelector;
-} __packed audio_clock_selector_descriptor;
-
 /* Input Terminal Audio Class Descriptor v1 */
 typedef struct {
     uint8_t  bLength;
