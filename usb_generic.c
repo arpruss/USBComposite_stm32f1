@@ -135,7 +135,6 @@ static DEVICE my_Device_Table = {
 };
 
 /* Unicode language identifier: 0x0409 is US English */
-/* FIXME move to Wirish */
 static const usb_descriptor_string usbHIDDescriptor_LangID = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(1),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
