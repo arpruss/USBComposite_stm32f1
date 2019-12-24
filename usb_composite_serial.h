@@ -64,8 +64,6 @@ extern USBCompositePart usbSerialPart;
 
 
 
-#define USBHID_CDCACM_CTRL_ENDP            0
-
 typedef struct
 {
 	uint8_t bLength;
