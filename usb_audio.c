@@ -514,7 +514,7 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
         return 0; /* no data to send */
 
     while(usbGenericTransmitting >= 0);
-    
+
     uint32 head = audio_tx_head; /* load volatile variable */
     uint32 tx_unsent = (head - audio_tx_tail) & AUDIO_BUFFER_SIZE_MASK;
 

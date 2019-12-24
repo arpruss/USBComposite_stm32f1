@@ -26,9 +26,6 @@ public:
     void begin(uint16 type = MIC_STEREO, uint16 sampleRate = 24000);
     void begin(USBCompositeSerial serial, uint16 type = MIC_STEREO, uint16 sampleRate = 24000);
     void end(void);
-    void setTXPacketSize(uint32 size=AUDIO_MAX_EP_BUFFER_SIZE) {
-        txPacketSize = size;
-    }
     void setPacketCallback(void (*callback)(uint8 size));
     uint32 write(const uint8* buffer, uint32 length);
     uint32 read(uint8* buffer, uint32 length);
