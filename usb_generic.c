@@ -220,16 +220,17 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     
     usbDescriptorSize = 0;
     for (unsigned i = 0 ; i < _numParts ; i++ ) {
-        parts[i]->startInterface = numInterfaces;
-        numInterfaces += parts[i]->numInterfaces;
-        if (usbDescriptorSize + parts[i]->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) {
+        USBCompositePart* part = parts[i];
+        part->startInterface = numInterfaces;
+        numInterfaces += part->numInterfaces;
+        if (usbDescriptorSize + part->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) {
             return 0;
 		}
         uint8 nrx = 0;
         uint8 ntx = 0;
         uint16 pma = 0;
-        USBEndpointInfo* ep = parts[i]->endpoints;
-        for (unsigned j = 0; j < parts[i]->numEndpoints ; j++) {
+        USBEndpointInfo* ep = part->endpoints;
+        for (unsigned j = 0; j < part->numEndpoints ; j++) {
             if (ep[j].tx)
                 ntx++;
             else
@@ -241,7 +242,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
             return 0;
 		}
 
-        for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
+        for (unsigned j = 0 ; j < part->numEndpoints ; j++) {
             ep[j].pmaAddress = pmaOffset;
             pmaOffset += ep[j].bufferSize;
             if (ep[j].callback == NULL)
@@ -257,8 +258,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
                 numEndpointsRX++;
             }
         }
-        parts[i]->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
-        usbDescriptorSize += parts[i]->descriptorSize;
+        part->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
+        usbDescriptorSize += part->descriptorSize;
 #ifdef MATCHING_ENDPOINT_RANGES        
         // make sure endpoint numbers of different parts don't overlap between TX and RX
         if (numEndpointsTX>numEndpointsRX)
