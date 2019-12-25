@@ -168,4 +168,6 @@ Each plugin contributes the following count towards the maximum of seven:
 
 * USB Audio: 1 (= 1 TX or 1 RX depending on mode)
 
-When combining plugins, make sure the contribution does not exceed 7, though with the above list of plugins you can't exceed that.
+* USB Multi Serial: 2 per port (= 2 TX, 1 RX)
+
+When combining plugins, make sure the contribution does not exceed 7.
