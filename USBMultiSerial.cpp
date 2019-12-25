@@ -25,59 +25,19 @@
 
 #include "usb_composite_serial.h"
 
-#define USB_TIMEOUT 50
-
-#if defined(SERIAL_USB)
-static void rxHook0(unsigned, void*);
-static void ifaceSetupHook0(unsigned, void*);
-#endif
-
-bool USBMultiSerial::init(USBMultiSerial* me) {
-    if (me->numPorts > USB_MULTI_SERIAL_MAX_PORTS)
-        return false;
-    multi_serial_initialize_port_data(me->numPorts);
-    for (uint8 i=0; i<me->numPorts; i++) {
-        multi_serial_setTXEPSize(i, me->ports[i].txPacketSize);
-        multi_serial_setRXEPSize(i, me->ports[i].rxPacketSize);
-    }
-#if defined(SERIAL_USB)
-    multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_RX, rxHook0);
-    multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook0);
-#endif
-	return true;
-}
-
-bool USBMultiSerial::begin() {
-	if (!enabled) {
-		USBComposite.clear();
-		if (!registerComponent())
-            return false;
-		USBComposite.begin();
-		enabled = true;
-	}
-    return true;
-}
-
-void USBMultiSerial::end() {
-	if (enabled) {
-		USBComposite.end();
-		enabled = false;
-	}
-}
-
-size_t USBMultiSerial::USBSerialPort::write(uint8 ch) {
+size_t USBSerialPort::write(uint8 ch) {
 size_t n = 0;
     this->write(&ch, 1);
 		return n;
 }
 
-size_t USBMultiSerial::USBSerialPort::write(const char *str) {
+size_t USBSerialPort::write(const char *str) {
 size_t n = 0;
     this->write((const uint8*)str, strlen(str));
 	return n;
 }
 
-size_t USBMultiSerial::USBSerialPort::write(const uint8 *buf, uint32 len)
+size_t USBSerialPort::write(const uint8 *buf, uint32 len)
 {
     size_t n = 0;
 
@@ -93,11 +53,11 @@ size_t USBMultiSerial::USBSerialPort::write(const uint8 *buf, uint32 len)
 	return n;
 }
 
-int USBMultiSerial::USBSerialPort::available(void) {
+int USBSerialPort::available(void) {
     return multi_serial_data_available(port);
 }
 
-int USBMultiSerial::USBSerialPort::peek(void)
+int USBSerialPort::peek(void)
 {
     uint8 b;
 	if (multi_serial_peek(port, &b, 1)==1)
@@ -110,11 +70,7 @@ int USBMultiSerial::USBSerialPort::peek(void)
 	}
 }
 
-bool USBMultiSerial::registerComponent() {
-	return USBComposite.add(&usbMultiSerialPart, this, (USBPartInitializer)&USBMultiSerial::init);
-}
-
-void USBMultiSerial::USBSerialPort::flush(void)
+void USBSerialPort::flush(void)
 {
 /*Roger Clark. Rather slow method. Need to improve this */
     uint8 b;
@@ -125,7 +81,7 @@ void USBMultiSerial::USBSerialPort::flush(void)
     return;
 }
 
-uint32 USBMultiSerial::USBSerialPort::read(uint8 * buf, uint32 len) {
+uint32 USBSerialPort::read(uint8 * buf, uint32 len) {
     uint32 rxed = 0;
     while (rxed < len) {
         rxed += multi_serial_rx(port, buf + rxed, len - rxed);
@@ -135,7 +91,7 @@ uint32 USBMultiSerial::USBSerialPort::read(uint8 * buf, uint32 len) {
 }
 
 /* Blocks forever until 1 byte is received */
-int USBMultiSerial::USBSerialPort::read(void) {
+int USBSerialPort::read(void) {
     uint8 b;
 	/*
 	    this->read(&b, 1);
@@ -152,24 +108,23 @@ int USBMultiSerial::USBSerialPort::read(void) {
 	}
 }
 
-uint8 USBMultiSerial::USBSerialPort::pending(void) {
+uint8 USBSerialPort::pending(void) {
     return multi_serial_get_pending(port);
 }
 
-uint8 USBMultiSerial::USBSerialPort::isConnected(void) {
+uint8 USBSerialPort::isConnected(void) {
     return usb_is_connected(USBLIB) && usb_is_configured(USBLIB) && multi_serial_get_dtr(port);
 }
 
-uint8 USBMultiSerial::USBSerialPort::getDTR(void) {
+uint8 USBSerialPort::getDTR(void) {
     return multi_serial_get_dtr(port);
 }
 
-uint8 USBMultiSerial::USBSerialPort::getRTS(void) {
+uint8 USBSerialPort::getRTS(void) {
     return multi_serial_get_rts(port);
 }
 
 #if defined(SERIAL_USB)
-
 enum reset_state_t {
     DTR_UNSET,
     DTR_HIGH,
@@ -179,7 +134,7 @@ enum reset_state_t {
 
 static reset_state_t reset_state = DTR_UNSET;
 
-static void ifaceSetupHook0(unsigned hook, void *requestvp) {
+void usb_multi_serial_ifaceSetupHook0(unsigned hook, void *requestvp) {
     (void)hook;
     const uint8 port = 0;
     uint8 request = *(uint8*)requestvp;
@@ -223,7 +178,7 @@ static void wait_reset(void) {
 #define STACK_TOP 0x20000800
 #define EXC_RETURN 0xFFFFFFF9
 #define DEFAULT_CPSR 0x61000000
-static void rxHook0(unsigned hook, void *ignored) {
+void usb_multi_serial_rxHook0(unsigned hook, void *ignored) {
     (void)hook;
     (void)ignored;
     const uint8 port = 0;
@@ -277,6 +232,4 @@ static void rxHook0(unsigned hook, void *ignored) {
         }
     }
 }
-
 #endif
-
