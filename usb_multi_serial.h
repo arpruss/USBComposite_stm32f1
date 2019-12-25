@@ -46,7 +46,7 @@ extern "C" {
 #define USB_MULTI_SERIAL_MAX_PORTS 3
 #define USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE 44
 
-void multi_serial_initialize_port_data(uint8 numPorts);
+void multi_serial_initialize_port_data(uint8 numPorts, uint8* buffers);
 
 extern USBCompositePart usbMultiSerialPart;
 
@@ -59,8 +59,8 @@ uint32 multi_serial_tx(uint8 port, const uint8* buf, uint32 len);
 uint32 multi_serial_rx(uint8 port, uint8* buf, uint32 len);
 uint32 multi_serial_peek(uint8 port, uint8* buf, uint32 len);
 uint32 multi_serial_peek_ex(uint8 port, uint8* buf, uint32 offset, uint32 len);
-void multi_serial_setTXEPSize(uint8 port, uint32_t size);
-void multi_serial_setRXEPSize(uint8 port, uint32_t size);
+void multi_serial_setTXEPSize(uint8 port, uint16_t size);
+void multi_serial_setRXEPSize(uint8 port, uint16_t size);
 
 uint32 multi_serial_data_available(uint8 port); /* in RX buffer */
 uint16 multi_serial_get_pending(uint8 port);

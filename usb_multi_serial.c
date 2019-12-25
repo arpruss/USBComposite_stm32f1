@@ -82,14 +82,14 @@ static void vcomDataRxCb2(void);
 
 static volatile struct port_data {
     /* Received data */
-    uint8 vcomBufferRx[CDC_SERIAL_RX_BUFFER_SIZE];
+    uint8* vcomBufferRx;
     /* Write index to vcomBufferRx */
     uint32 vcom_rx_head;
     /* Read index from vcomBufferRx */
     uint32 vcom_rx_tail;
 
     // Tx data
-    uint8 vcomBufferTx[CDC_SERIAL_TX_BUFFER_SIZE];
+    uint8* vcomBufferTx;
     // Write index to vcomBufferTx
     uint32 vcom_tx_head;
     // Read index from vcomBufferTx
@@ -333,14 +333,14 @@ static void getSerialPartDescriptor(uint8* _out) {
     }
 }
 
-void multi_serial_setTXEPSize(uint8 port, uint32_t size) {
+void multi_serial_setTXEPSize(uint8 port, uint16_t size) {
     if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+0].bufferSize = size;
     ports[port].txEPSize = size;
 }
 
-void multi_serial_setRXEPSize(uint8 port, uint32_t size) {
+void multi_serial_setRXEPSize(uint8 port, uint16_t size) {
     if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+2].bufferSize = size;
@@ -365,7 +365,8 @@ USBCompositePart usbMultiSerialPart = {
 #define CDC_SERIAL_TX_BUFFER_SIZE	256 // must be power of 2
 #define CDC_SERIAL_TX_BUFFER_SIZE_MASK (CDC_SERIAL_TX_BUFFER_SIZE-1)
 
-void multi_serial_initialize_port_data(uint8 _numPorts) {
+// buffers must hold enough space for all the rx and tx buffers
+void multi_serial_initialize_port_data(uint8 _numPorts, uint8* buffers) {
     numPorts = _numPorts;
     
     for (uint8 i=0; i<numPorts; i++) {
@@ -374,8 +375,10 @@ void multi_serial_initialize_port_data(uint8 _numPorts) {
         p->line_coding.bCharFormat = USBHID_CDCACM_STOP_BITS_1;
         p->line_coding.bParityType = USBHID_CDCACM_PARITY_NONE;
         p->line_coding.bDataBits = 8;
-        p->txEPSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE;
-        p->rxEPSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE;
+        p->vcomBufferTx = buffers;
+        buffers += p->txEPSize;
+        p->vcomBufferRx = buffers;
+        buffers += p->rxEPSize;
     }
     
     usbMultiSerialPart.numInterfaces = NUM_INTERFACES * numPorts;

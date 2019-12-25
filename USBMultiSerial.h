@@ -51,9 +51,10 @@ public:
     }    
 };
 
-template<const uint8 numPorts=3,const unsigned bufferSize=USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE>class USBMultiSerial {
+template<const uint8 numPorts=3,const uint32 bufferSize=USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE>class USBMultiSerial {
 private:
 	bool enabled = false;
+    uint8 buffers[numPorts*2*bufferSize];
 public:
     bool begin() {
         if (!enabled) {
@@ -78,11 +79,11 @@ public:
     }
 
     static bool init(USBMultiSerial<numPorts,bufferSize>* me) {
-        multi_serial_initialize_port_data(numPorts);
         for (uint8 i=0; i<numPorts; i++) {
             multi_serial_setTXEPSize(i, bufferSize);
             multi_serial_setRXEPSize(i, bufferSize);
         }
+        multi_serial_initialize_port_data(numPorts, me->buffers);
 #if defined(SERIAL_USB)
         multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_RX, usb_multi_serial_rxHook0);
         multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_IFACE_SETUP, usb_multi_serial_ifaceSetupHook0);
