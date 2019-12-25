@@ -105,7 +105,6 @@ void composite_cdcacm_setRXEPSize(uint32_t size);
 
 uint32 composite_cdcacm_data_available(void); /* in RX buffer */
 uint16 composite_cdcacm_get_pending(void);
-uint8 usb_is_transmitting(void);
 
 uint8 composite_cdcacm_get_dtr(void);
 uint8 composite_cdcacm_get_rts(void);

@@ -1,0 +1,74 @@
+#ifndef _MULTI_SERIAL_H_
+#define _MULTI_SERIAL_H_
+
+#include "usb_multi_serial.h"
+
+class USBMultiSerial {
+private:
+	bool enabled = false;
+    uint8 numPorts = 3; //USB_MULTI_SERIAL_MAX_PORTS;
+public:
+	bool begin();
+	void end();
+	bool registerComponent();
+    void setNumberOfPorts(uint8 portCount) {
+        numPorts = portCount;
+    }
+
+	static bool init(USBMultiSerial* me);
+
+	operator bool() { return true; } // Roger Clark. This is needed because in cardinfo.ino it does if (!Serial) . It seems to be a work around for the Leonardo that we needed to implement just to be compliant with the API
+
+    class USBSerialPort : public Stream {
+    public:
+        uint32 txPacketSize = 44;
+        uint32 rxPacketSize = 44;
+        uint8 port;
+        virtual int available(void);// Changed to virtual
+
+        uint32 read(uint8 * buf, uint32 len);
+       // uint8  read(void);
+
+        // Roger Clark. added functions to support Arduino 1.0 API
+        virtual int peek(void);
+        virtual int read(void);
+        int availableForWrite(void);
+        virtual void flush(void);	
+        
+        size_t write(uint8);
+        size_t write(const char *str);
+        size_t write(const uint8*, uint32);
+
+        uint8 getRTS();
+        uint8 getDTR();
+        uint8 isConnected();
+        uint8 pending();
+        
+        void setRXPacketSize(uint32 size=64) {
+            rxPacketSize = size;
+        }
+
+        void setTXPacketSize(uint32 size=64) {
+            txPacketSize = size;
+        }
+        
+        USBSerialPort(uint8 _port) {
+            port = _port;
+        }
+        
+    };
+    
+    USBSerialPort port0;
+    USBSerialPort port1;
+    USBSerialPort port2;
+    USBSerialPort* ports[3];
+
+    USBMultiSerial() : port0(0), port1(1), port2(2) {
+        ports[0] = &port0;
+        ports[1] = &port1;
+        ports[2] = &port2;
+    }
+};
+
+extern USBCompositeSerial CompositeSerial;
+#endif
