@@ -69,6 +69,7 @@ bool USBMultiSerial::begin() {
 		USBComposite.begin();
 		enabled = true;
 	}
+    return true;
 }
 
 void USBMultiSerial::end() {
