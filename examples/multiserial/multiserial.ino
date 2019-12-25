@@ -1,9 +1,8 @@
 #include <USBComposite.h>
 
-USBMultiSerial ms;
+USBMultiSerial<2> ms;
 
 void setup() {
-  ms.setNumberOfPorts(2);
   ms.begin();
 }
 
