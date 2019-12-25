@@ -30,10 +30,6 @@
 #if defined(SERIAL_USB)
 static void rxHook0(unsigned, void*);
 static void ifaceSetupHook0(unsigned, void*);
-static void rxHook1(unsigned, void*);
-static void ifaceSetupHook1(unsigned, void*);
-static void rxHook2(unsigned, void*);
-static void ifaceSetupHook2(unsigned, void*);
 #endif
 
 bool USBMultiSerial::init(USBMultiSerial* me) {
@@ -45,18 +41,8 @@ bool USBMultiSerial::init(USBMultiSerial* me) {
         multi_serial_setRXEPSize(i, me->ports[i].rxPacketSize);
     }
 #if defined(SERIAL_USB)
-    if (me->numPorts>0) {
-        multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_RX, rxHook0);
-        multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook0);
-        if (me->numPorts>1) {
-            multi_serial_set_hooks(1, USBHID_CDCACM_HOOK_RX, rxHook1);
-            multi_serial_set_hooks(1, USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook1);
-            if (me->numPorts>2) {
-                multi_serial_set_hooks(1, USBHID_CDCACM_HOOK_RX, rxHook2);
-                multi_serial_set_hooks(1, USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook2);
-            }
-        }
-    }
+    multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_RX, rxHook0);
+    multi_serial_set_hooks(0, USBHID_CDCACM_HOOK_IFACE_SETUP, ifaceSetupHook0);
 #endif
 	return true;
 }
@@ -193,8 +179,9 @@ enum reset_state_t {
 
 static reset_state_t reset_state = DTR_UNSET;
 
-static void ifaceSetupHook_general(uint8 port, unsigned hook, void *requestvp) {
+static void ifaceSetupHook0(unsigned hook, void *requestvp) {
     (void)hook;
+    const uint8 port = 0;
     uint8 request = *(uint8*)requestvp;
 
         // Ignore requests we're not interested in.
@@ -226,17 +213,6 @@ static void ifaceSetupHook_general(uint8 port, unsigned hook, void *requestvp) {
 	}
 }
 
-static void ifaceSetupHook0(unsigned hook, void *requestvp) {
-    ifaceSetupHook_general(0, hook, requestvp);
-}
-
-static void ifaceSetupHook1(unsigned hook, void *requestvp) {
-    ifaceSetupHook_general(0, hook, requestvp);
-}
-
-static void ifaceSetupHook2(unsigned hook, void *requestvp) {
-    ifaceSetupHook_general(0, hook, requestvp);
-}
 
 #define RESET_DELAY 100000
 static void wait_reset(void) {
@@ -247,9 +223,10 @@ static void wait_reset(void) {
 #define STACK_TOP 0x20000800
 #define EXC_RETURN 0xFFFFFFF9
 #define DEFAULT_CPSR 0x61000000
-static void rxHook_general(uint8 port, unsigned hook, void *ignored) {
+static void rxHook0(unsigned hook, void *ignored) {
     (void)hook;
     (void)ignored;
+    const uint8 port = 0;
     /* FIXME this is mad buggy; we need a new reset sequence. E.g. NAK
      * after each RX means you can't reset if any bytes are waiting. */
     if (reset_state == DTR_NEGEDGE) {
@@ -299,18 +276,6 @@ static void rxHook_general(uint8 port, unsigned hook, void *ignored) {
             ASSERT_FAULT(0);
         }
     }
-}
-
-static void rxHook0(unsigned hook, void *ignored) {
-    rxHook_general(0, hook, ignored);
-}
-
-static void rxHook1(unsigned hook, void *ignored) {
-    rxHook_general(1, hook, ignored);
-}
-
-static void rxHook2(unsigned hook, void *ignored) {
-    rxHook_general(2, hook, ignored);
 }
 
 #endif
