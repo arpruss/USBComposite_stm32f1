@@ -52,21 +52,20 @@ public:
             txPacketSize = size;
         }
         
-        USBSerialPort(uint8 _port) {
+        void setPort(uint8 _port) {
             port = _port;
+        }
+        
+        uint8 getPort(void) {
+            return port;
         }
         
     };
     
-    USBSerialPort port0;
-    USBSerialPort port1;
-    USBSerialPort port2;
-    USBSerialPort* ports[3];
+    USBSerialPort ports[3];
 
-    USBMultiSerial() : port0(0), port1(1), port2(2) {
-        ports[0] = &port0;
-        ports[1] = &port1;
-        ports[2] = &port2;
+    USBMultiSerial() {
+        for (uint8 i=0;i<3;i++) ports[i].setPort(i);
     }
 };
 

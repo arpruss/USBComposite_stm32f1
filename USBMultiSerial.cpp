@@ -41,8 +41,8 @@ bool USBMultiSerial::init(USBMultiSerial* me) {
         return false;
     multi_serial_initialize_port_data(me->numPorts);
     for (uint8 i=0; i<me->numPorts; i++) {
-        multi_serial_setTXEPSize(i, me->ports[i]->txPacketSize);
-        multi_serial_setRXEPSize(i, me->ports[i]->rxPacketSize);
+        multi_serial_setTXEPSize(i, me->ports[i].txPacketSize);
+        multi_serial_setRXEPSize(i, me->ports[i].rxPacketSize);
     }
 #if defined(SERIAL_USB)
     if (me->numPorts>0) {
