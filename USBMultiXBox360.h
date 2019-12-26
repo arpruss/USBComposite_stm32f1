@@ -25,7 +25,7 @@
 
 class USBXBox360Controller {
 private:
-	uint8_t xbox360_Report[20] = {0,0x14};//    3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
+	uint8_t xbox360_Report[20] = {0,0x14};
     uint32 controller;
     bool manualReport = false;
 	void safeSendReport(void);
@@ -49,7 +49,6 @@ public:
 	void YRight(int16_t val);
 	void sliderLeft(uint8_t val);
 	void sliderRight(uint8_t val);
-	void hat(int16_t dir);
     void setLEDCallback(void (*callback)(uint8 pattern));
     void setRumbleCallback(void (*callback)(uint8 left, uint8 right));
 };

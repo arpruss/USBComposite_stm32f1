@@ -96,7 +96,6 @@ typedef struct
 #define USB_X360_RX_ENDP(i) x360Endpoints[(i)*NUM_ENDPOINTS+X360_ENDPOINT_RX].address
 #define USB_X360_TX_ENDP(i) x360Endpoints[(i)*NUM_ENDPOINTS+X360_ENDPOINT_TX].address
 
-//u16 GetEPTxAddr(u8 bEpNum);
 static void usb_multi_x360_clear(void);
 
 static uint32 numControllers = USB_X360_MAX_CONTROLLERS;
@@ -345,26 +344,6 @@ USBCompositePart usbMultiX360Part = {
     .clear = usb_multi_x360_clear
 };
 
-#define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
-
-static void getX360PartDescriptor(uint8* out) {
-    for(uint32 i=0; i<numControllers; i++) {
-        memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
-        // patch to reflect where the part goes in the descriptor
-        OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += usbMultiX360Part.startInterface+NUM_INTERFACES*i;
-        OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += USB_X360_RX_ENDP(i);
-        OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += USB_X360_TX_ENDP(i);
-        OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[6]) = 0x80 | USB_X360_TX_ENDP(i);
-        OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[13]) = USB_X360_RX_ENDP(i);
-        out += sizeof(X360Descriptor_Config);
-    }
-}
-
-
-/*
- * Etc.
- */
-
 volatile struct controller_data {
     uint32 ProtocolValue;
     uint8* hidBufferRx;
@@ -373,6 +352,28 @@ volatile struct controller_data {
     void (*rumble_callback)(uint8 left, uint8 right);
     void (*led_callback)(uint8 pattern);
 } controllers[USB_X360_MAX_CONTROLLERS] = {{0}};
+
+#define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
+
+static void getX360PartDescriptor(uint8* out) {
+    for(uint32 i=0; i<numControllers; i++) {
+        memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
+        // patch to reflect where the part goes in the descriptor
+        OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += usbMultiX360Part.startInterface+NUM_INTERFACES*i;
+        uint8 rx_endp = USB_X360_RX_ENDP(i);
+        uint8 tx_endp = USB_X360_TX_ENDP(i);
+        OUT_BYTE(X360Descriptor_Config, DataOutEndpoint.bEndpointAddress) += rx_endp;
+        OUT_BYTE(X360Descriptor_Config, DataInEndpoint.bEndpointAddress) += tx_endp;
+        OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[6]) = 0x80 | tx_endp;
+        OUT_BYTE(X360Descriptor_Config, unknown_descriptor1[13]) = rx_endp;
+        out += sizeof(X360Descriptor_Config);
+    }
+}
+
+
+/*
+ * Etc.
+ */
 
 static void usb_multi_x360_clear(void) {
     memset((void*)controllers, 0, sizeof controllers);
@@ -482,6 +483,7 @@ static void x360DataRxCb(uint32 controller)
 
 static void x360DataTxCb(uint32 controller) {
     volatile struct controller_data* c = &controllers[controller];
+    
     c->n_unsent_bytes = 0;
     c->transmitting = 0;
 }
