@@ -27,8 +27,8 @@
 #define RANGE                      0x02
 #define CLOCK_SOURCE_ID            0x10
 #define AUDIO_INTERFACE_OFFSET     0x00
-#define AUDIO_BUFFER_SIZE          256
-#define AUDIO_BUFFER_SIZE_MASK     (AUDIO_BUFFER_SIZE - 1)
+#define IO_BUFFER_SIZE              256
+#define IO_BUFFER_SIZE_MASK         (IO_BUFFER_SIZE - 1)
 #define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
 #define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
 #define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
@@ -36,13 +36,13 @@
 #define AUDIO_ISO_BUF1_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE)
 
 /* Tx data */
-static volatile uint8 audioBufferTx[AUDIO_BUFFER_SIZE];
+static volatile uint8 audioBufferTx[IO_BUFFER_SIZE];
 /* Write index to audioBufferTx */
 static volatile uint32 audio_tx_head = 0;
 /* Read index from audioBufferTx */
 static volatile uint32 audio_tx_tail = 0;
 /* Rx data */
-static volatile uint8 audioBufferRx[AUDIO_BUFFER_SIZE];
+static volatile uint8 audioBufferRx[IO_BUFFER_SIZE];
 /* Write index to audioBufferRx */
 static volatile uint32 audio_rx_head = 0;
 /* Read index from audioBufferRx */
@@ -516,11 +516,11 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
     while(usbGenericTransmitting >= 0);
 
     uint32 head = audio_tx_head; /* load volatile variable */
-    uint32 tx_unsent = (head - audio_tx_tail) & AUDIO_BUFFER_SIZE_MASK;
+    uint32 tx_unsent = (head - audio_tx_tail) & IO_BUFFER_SIZE_MASK;
 
     /* We can only put bytes in the buffer if there is place */
-    if (len > (AUDIO_BUFFER_SIZE - tx_unsent - 1) ) {
-        len = (AUDIO_BUFFER_SIZE - tx_unsent - 1);
+    if (len > (IO_BUFFER_SIZE - tx_unsent - 1) ) {
+        len = (IO_BUFFER_SIZE - tx_unsent - 1);
     }
 
     if (len == 0)
@@ -530,7 +530,7 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
     uint16 i;
     for (i = 0; i < len; i++) {
         audioBufferTx[head] = buf[i];
-        head = (head + 1) & AUDIO_BUFFER_SIZE_MASK;
+        head = (head + 1) & IO_BUFFER_SIZE_MASK;
     }
     audio_tx_head = head; /* store volatile variable */
 
@@ -544,14 +544,14 @@ uint32 audio_rx_peek(uint8* buf, uint32 len)
 {
     unsigned i;
     uint32 tail = audio_rx_tail;
-    uint32 rx_unread = (audio_rx_head - tail) & AUDIO_BUFFER_SIZE_MASK;
+    uint32 rx_unread = (audio_rx_head - tail) & IO_BUFFER_SIZE_MASK;
 
     if (len > rx_unread)
         len = rx_unread;
 
     for (i = 0; i < len; i++) {
         buf[i] = audioBufferRx[tail];
-        tail = (tail + 1) & AUDIO_BUFFER_SIZE_MASK;
+        tail = (tail + 1) & IO_BUFFER_SIZE_MASK;
     }
 
     return len;
@@ -570,7 +570,7 @@ uint32 usb_audio_read_rx_data(uint8* buf, uint32 len)
 
     /* Mark bytes as read. */
     uint16 tail = audio_rx_tail; /* load volatile variable */
-    tail = (tail + n_copied) & AUDIO_BUFFER_SIZE_MASK;
+    tail = (tail + n_copied) & IO_BUFFER_SIZE_MASK;
     audio_rx_tail = tail; /* store volatile variable */
 
     return n_copied;
@@ -597,7 +597,7 @@ static void audioDataTxCb(void)
     unsigned i;
     for (i = 0; i < buffer_size; i++) {
         val = audioBufferTx[tail];
-        tail = (tail + 1) & AUDIO_BUFFER_SIZE_MASK;
+        tail = (tail + 1) & IO_BUFFER_SIZE_MASK;
         if (i & 1) {
             *dst++ = tmp | (val << 8);
         } else {
@@ -643,13 +643,13 @@ static void audioDataRxCb(void)
             val = tmp & 0xFF;
         }
         audioBufferRx[head] = val;
-        head = (head + 1) & AUDIO_BUFFER_SIZE_MASK;
+        head = (head + 1) & IO_BUFFER_SIZE_MASK;
     }
 
     if (ep_rx_size & 1) {
         val = *src & 0xFF;
         audioBufferRx[head] = val;
-        head = (head + 1) & AUDIO_BUFFER_SIZE_MASK;
+        head = (head + 1) & IO_BUFFER_SIZE_MASK;
     }
 
     audio_rx_head = head; /* store volatile variable */
