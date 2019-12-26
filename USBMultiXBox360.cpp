@@ -24,7 +24,7 @@
 #include <libmaple/nvic.h>
 #include <libmaple/usb.h>
 #include "USBComposite.h" 
-#include "usb_x360.h"
+#include "usb_multi_x360.h"
 
 bool USBXBox360Controller::wait() {
     uint32_t t=millis();
