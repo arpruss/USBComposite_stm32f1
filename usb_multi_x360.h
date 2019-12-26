@@ -56,11 +56,11 @@ extern "C" {
  */
 
 extern USBCompositePart usbMultiX360Part;
-uint32 usb_multi_x360_tx(uint8 controller, const uint8* buf, uint32 len);
-uint8 usb_multi_x360_is_transmitting(uint8 controller);
-void usb_multi_x360_set_rumble_callback(uint8 controller, void (*callback)(uint8 left, uint8 right));
-void usb_multi_x360_set_led_callback(uint8 controller, void (*callback)(uint8 pattern));
-void usb_multi_x360_initialize_controller_data(uint8 _numControllers, uint8* buffers);
+uint32 usb_multi_x360_tx(uint32 controller, const uint8* buf, uint32 len);
+uint8 usb_multi_x360_is_transmitting(uint32 controller);
+void usb_multi_x360_set_rumble_callback(uint32 controller, void (*callback)(uint8 left, uint8 right));
+void usb_multi_x360_set_led_callback(uint32 controller, void (*callback)(uint8 pattern));
+void usb_multi_x360_initialize_controller_data(uint32 _numControllers, uint8* buffers);
 
 #ifdef __cplusplus
 }

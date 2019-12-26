@@ -46,7 +46,7 @@ extern "C" {
 #define USB_MULTI_SERIAL_MAX_PORTS 3
 #define USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE 44
 
-void multi_serial_initialize_port_data(uint8 numPorts, uint8* buffers);
+void multi_serial_initialize_port_data(uint32 numPorts, uint8* buffers);
 
 extern USBCompositePart usbMultiSerialPart;
 
@@ -54,34 +54,34 @@ extern USBCompositePart usbMultiSerialPart;
  * CDC ACM interface
  */
 
-void   multi_serial_putc(uint8 port, char ch);
-uint32 multi_serial_tx(uint8 port, const uint8* buf, uint32 len);
-uint32 multi_serial_rx(uint8 port, uint8* buf, uint32 len);
-uint32 multi_serial_peek(uint8 port, uint8* buf, uint32 len);
-uint32 multi_serial_peek_ex(uint8 port, uint8* buf, uint32 offset, uint32 len);
-void multi_serial_setTXEPSize(uint8 port, uint16_t size);
-void multi_serial_setRXEPSize(uint8 port, uint16_t size);
+void   multi_serial_putc(uint32 port, char ch);
+uint32 multi_serial_tx(uint32 port, const uint8* buf, uint32 len);
+uint32 multi_serial_rx(uint32 port, uint8* buf, uint32 len);
+uint32 multi_serial_peek(uint32 port, uint8* buf, uint32 len);
+uint32 multi_serial_peek_ex(uint32 port, uint8* buf, uint32 offset, uint32 len);
+void multi_serial_setTXEPSize(uint32 port, uint16_t size);
+void multi_serial_setRXEPSize(uint32 port, uint16_t size);
 
-uint32 multi_serial_data_available(uint8 port); /* in RX buffer */
-uint16 multi_serial_get_pending(uint8 port);
+uint32 multi_serial_data_available(uint32 port); /* in RX buffer */
+uint16 multi_serial_get_pending(uint32 port);
 
-uint8 multi_serial_get_dtr(uint8 port);
-uint8 multi_serial_get_rts(uint8 port);
+uint8 multi_serial_get_dtr(uint32 port);
+uint8 multi_serial_get_rts(uint32 port);
 
 /* Retrieve a copy of the current line coding structure. */
-void multi_serial_get_line_coding(uint8, composite_cdcacm_line_coding*);
+void multi_serial_get_line_coding(uint32, composite_cdcacm_line_coding*);
 
 /* Line coding conveniences. */
-int multi_serial_get_baud(uint8 port);        /* dwDTERate */
-int multi_serial_get_stop_bits(uint8 port);   /* bCharFormat */
-int multi_serial_get_parity(uint8 port);      /* bParityType */
-int multi_serial_get_n_data_bits(uint8 port); /* bDataBits */
+int multi_serial_get_baud(uint32 port);        /* dwDTERate */
+int multi_serial_get_stop_bits(uint32 port);   /* bCharFormat */
+int multi_serial_get_parity(uint32 port);      /* bParityType */
+int multi_serial_get_n_data_bits(uint32 port); /* bDataBits */
 
 /*
  * Hack: hooks for bootloader reset signalling
  */
 
-void multi_serial_set_hooks(uint8 port, unsigned hook_flags, void (*hook)(unsigned, void*));
+void multi_serial_set_hooks(uint32 port, unsigned hook_flags, void (*hook)(unsigned, void*));
 
 #define multi_serial_remove_hooks(port, hook_flags) multi_serial_remove_hooks(port, hook_flags, 0)
 

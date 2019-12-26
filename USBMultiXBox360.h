@@ -26,13 +26,13 @@
 class USBXBox360Controller {
 private:
 	uint8_t xbox360_Report[20] = {0,0x14};//    3,0,0,0,0,0x0F,0x20,0x80,0x00,0x02,0x08,0x20,0x80};
-    uint8 controller;
+    uint32 controller;
     bool manualReport = false;
 	void safeSendReport(void);
 	void sendReport(void);
     bool wait(void);
 public:
-    void setController(uint8 c) {
+    void setController(uint32 c) {
         controller = c;
     }
 	void send(void);
@@ -54,7 +54,7 @@ public:
     void setRumbleCallback(void (*callback)(uint8 left, uint8 right));
 };
 
-template<const uint8 numControllers=1>class USBMultiXBox360 {
+template<const uint32 numControllers=1>class USBMultiXBox360 {
 private:
     bool enabled;
     uint8 buffers[USB_X360_BUFFER_SIZE_PER_CONTROLLER * numControllers];

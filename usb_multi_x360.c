@@ -99,10 +99,10 @@ typedef struct
 //u16 GetEPTxAddr(u8 bEpNum);
 static void usb_multi_x360_clear(void);
 
-static uint8 numControllers = USB_X360_MAX_CONTROLLERS;
+static uint32 numControllers = USB_X360_MAX_CONTROLLERS;
 
-static void x360DataRxCb(uint8 controller);
-static void x360DataTxCb(uint8 controller);
+static void x360DataRxCb(uint32 controller);
+static void x360DataTxCb(uint32 controller);
 static void x360DataTxCb0(void) { x360DataTxCb(0); }
 static void x360DataRxCb0(void) { x360DataRxCb(0); }
 static void x360DataTxCb1(void) { x360DataTxCb(1); }
@@ -348,7 +348,7 @@ USBCompositePart usbMultiX360Part = {
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
 static void getX360PartDescriptor(uint8* out) {
-    for(uint8 i=0; i<numControllers; i++) {
+    for(uint32 i=0; i<numControllers; i++) {
         memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
         // patch to reflect where the part goes in the descriptor
         OUT_BYTE(X360Descriptor_Config, HID_Interface.bInterfaceNumber) += usbMultiX360Part.startInterface+NUM_INTERFACES*i;
@@ -379,10 +379,10 @@ static void usb_multi_x360_clear(void) {
     numControllers = USB_X360_MAX_CONTROLLERS;
 }
 
-void usb_multi_x360_initialize_controller_data(uint8 _numControllers, uint8* buffers) {
+void usb_multi_x360_initialize_controller_data(uint32 _numControllers, uint8* buffers) {
     numControllers = _numControllers;
     
-    for (uint8 i=0; i<numControllers; i++) {
+    for (uint32 i=0; i<numControllers; i++) {
         volatile struct controller_data* c = &controllers[i];
         c->hidBufferRx = buffers;
         buffers += USB_X360_RX_EPSIZE;
@@ -400,15 +400,15 @@ void usb_multi_x360_initialize_controller_data(uint8 _numControllers, uint8* buf
  * HID interface
  */
 
-void usb_multi_x360_set_rumble_callback(uint8 controller, void (*callback)(uint8 left, uint8 right)) {
+void usb_multi_x360_set_rumble_callback(uint32 controller, void (*callback)(uint8 left, uint8 right)) {
     controllers[controller].rumble_callback = callback;
 }
 
-void usb_multi_x360_set_led_callback(uint8 controller, void (*callback)(uint8 pattern)) {
+void usb_multi_x360_set_led_callback(uint32 controller, void (*callback)(uint8 pattern)) {
     controllers[controller].led_callback = callback;
 }
 
-uint8 usb_multi_x360_is_transmitting(uint8 controller) {
+uint8 usb_multi_x360_is_transmitting(uint32 controller) {
     return controllers[controller].transmitting;
 }
 
@@ -416,7 +416,7 @@ uint8 usb_multi_x360_is_transmitting(uint8 controller) {
  *
  * It copies data from a usercode buffer into the USB peripheral TX
  * buffer, and returns the number of bytes copied. */
-uint32 usb_multi_x360_tx(uint8 controller, const uint8* buf, uint32 len) {
+uint32 usb_multi_x360_tx(uint32 controller, const uint8* buf, uint32 len) {
     volatile struct controller_data* c = &controllers[controller];
     
     /* Last transmission hasn't finished, so abort. */
@@ -444,7 +444,7 @@ uint32 usb_multi_x360_tx(uint8 controller, const uint8* buf, uint32 len) {
     return len;
 }
 
-static void x360DataRxCb(uint8 controller)
+static void x360DataRxCb(uint32 controller)
 {
     volatile struct controller_data* c = &controllers[controller];
         
@@ -480,14 +480,14 @@ static void x360DataRxCb(uint8 controller)
  * Callbacks
  */
 
-static void x360DataTxCb(uint8 controller) {
+static void x360DataTxCb(uint32 controller) {
     volatile struct controller_data* c = &controllers[controller];
     c->n_unsent_bytes = 0;
     c->transmitting = 0;
 }
 
 
-static uint8* HID_GetProtocolValue(uint8 controller, uint16 Length){
+static uint8* HID_GetProtocolValue(uint32 controller, uint16 Length){
 	if (Length == 0){
 		pInformation->Ctrl_Info.Usb_wLength = 1;
 		return NULL;
@@ -542,7 +542,7 @@ static RESULT x360NoDataSetup(uint8 request) {
 	if (pInformation->USBwIndex0 >= X360_INTERFACE_NUMBER && pInformation->USBwIndex0 < X360_INTERFACE_NUMBER+numControllers*NUM_INTERFACES && 
         (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 		&& (request == SET_PROTOCOL)){
-        uint8 controller = (pInformation->USBwIndex0 - X360_INTERFACE_NUMBER) / NUM_INTERFACES;
+        uint32 controller = (pInformation->USBwIndex0 - X360_INTERFACE_NUMBER) / NUM_INTERFACES;
 		uint8 wValue0 = pInformation->USBwValue0;
 		controllers[controller].ProtocolValue = wValue0;
 		return USB_SUCCESS;

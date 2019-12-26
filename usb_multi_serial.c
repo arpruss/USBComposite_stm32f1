@@ -102,8 +102,8 @@ static volatile struct port_data {
     uint32_t rxEPSize;
 } ports[USB_MULTI_SERIAL_MAX_PORTS] = {{0}};
 
-static void vcomDataTxCb(uint8 port);
-static void vcomDataRxCb(uint8 port);
+static void vcomDataTxCb(uint32 port);
+static void vcomDataRxCb(uint32 port);
 
 static void vcomDataTxCb0(void) {
     vcomDataTxCb(0);
@@ -130,7 +130,7 @@ static void vcomDataRxCb2(void) {
 }
 
 
-static uint8 numPorts = 3; 
+static uint32 numPorts = 3; 
 
 static void usb_multi_serial_clear(void) {
     memset((void*)ports, 0, sizeof ports);
@@ -336,14 +336,14 @@ static void getSerialPartDescriptor(uint8* _out) {
     }
 }
 
-void multi_serial_setTXEPSize(uint8 port, uint16_t size) {
+void multi_serial_setTXEPSize(uint32 port, uint16_t size) {
     if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+0].bufferSize = size;
     ports[port].txEPSize = size;
 }
 
-void multi_serial_setRXEPSize(uint8 port, uint16_t size) {
+void multi_serial_setRXEPSize(uint32 port, uint16_t size) {
     if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+2].bufferSize = size;
@@ -370,10 +370,10 @@ USBCompositePart usbMultiSerialPart = {
 #define CDC_SERIAL_TX_BUFFER_SIZE_MASK (CDC_SERIAL_TX_BUFFER_SIZE-1)
 
 // buffers must hold enough space for all the rx and tx buffers
-void multi_serial_initialize_port_data(uint8 _numPorts, uint8* buffers) {
+void multi_serial_initialize_port_data(uint32 _numPorts, uint8* buffers) {
     numPorts = _numPorts;
     
-    for (uint8 i=0; i<numPorts; i++) {
+    for (uint32 i=0; i<numPorts; i++) {
         volatile struct port_data* p = &ports[i];
         p->line_coding.dwDTERate = 115200;
         p->line_coding.bCharFormat = USBHID_CDCACM_STOP_BITS_1;
@@ -394,7 +394,7 @@ void multi_serial_initialize_port_data(uint8 _numPorts, uint8* buffers) {
 
 /* DTR in bit 0, RTS in bit 1. */
 
-void multi_serial_set_hooks(uint8 port, unsigned hook_flags, void (*hook)(unsigned, void*)) {
+void multi_serial_set_hooks(uint32 port, unsigned hook_flags, void (*hook)(unsigned, void*)) {
     volatile struct port_data* p = &ports[port];
     if (hook_flags & USBHID_CDCACM_HOOK_RX) {
         p->rx_hook = hook;
@@ -404,7 +404,7 @@ void multi_serial_set_hooks(uint8 port, unsigned hook_flags, void (*hook)(unsign
     }
 }
 
-void multi_serial_putc(uint8 port, char ch) {
+void multi_serial_putc(uint32 port, char ch) {
     while (!multi_serial_tx(port, (uint8*)&ch, 1))
         ;
 }
@@ -413,7 +413,7 @@ void multi_serial_putc(uint8 port, char ch) {
  *
  * It copies data from a user buffer into the USB peripheral TX
  * buffer, and returns the number of bytes copied. */
-uint32 multi_serial_tx(uint8 port, const uint8* buf, uint32 len)
+uint32 multi_serial_tx(uint32 port, const uint8* buf, uint32 len)
 {
 	if (len==0) return 0; // no data to send
     
@@ -447,12 +447,12 @@ uint32 multi_serial_tx(uint8 port, const uint8* buf, uint32 len)
 
 
 
-uint32 multi_serial_data_available(uint8 port) {
+uint32 multi_serial_data_available(uint32 port) {
     volatile struct port_data* p = &ports[port];
     return (p->vcom_rx_head - p->vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 }
 
-uint16 multi_serial_get_pending(uint8 port) {
+uint16 multi_serial_get_pending(uint32 port) {
     volatile struct port_data* p = &ports[port];
     return (p->vcom_tx_head - p->vcom_tx_tail) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
 }
@@ -461,7 +461,7 @@ uint16 multi_serial_get_pending(uint8 port) {
  *
  * Copies up to len bytes from our private data buffer (*NOT* the PMA)
  * into buf and deq's the FIFO. */
-uint32 multi_serial_rx(uint8 port, uint8* buf, uint32 len)
+uint32 multi_serial_rx(uint32 port, uint8* buf, uint32 len)
 {
     volatile struct port_data* p = &ports[port];
     /* Copy bytes to buffer. */
@@ -483,7 +483,7 @@ uint32 multi_serial_rx(uint8 port, uint8* buf, uint32 len)
 /* Non-blocking byte lookahead.
  *
  * Looks at unread bytes without marking them as read. */
-uint32 multi_serial_peek(uint8 port, uint8* buf, uint32 len)
+uint32 multi_serial_peek(uint32 port, uint8* buf, uint32 len)
 {
     volatile struct port_data* p = &ports[port];
     unsigned i;
@@ -502,7 +502,7 @@ uint32 multi_serial_peek(uint8 port, uint8* buf, uint32 len)
     return len;
 }
 
-uint32 multi_serial_peek_ex(uint8 port, uint8* buf, uint32 offset, uint32 len)
+uint32 multi_serial_peek_ex(uint32 port, uint8* buf, uint32 offset, uint32 len)
 {
     volatile struct port_data* p = &ports[port];
     unsigned i;
@@ -522,7 +522,7 @@ uint32 multi_serial_peek_ex(uint8 port, uint8* buf, uint32 offset, uint32 len)
 }
 
 /* Roger Clark. Added. for Arduino 1.0 API support of Serial.peek() */
-int multi_serial_peek_char(uint8 port) 
+int multi_serial_peek_char(uint32 port) 
 {
     if (multi_serial_data_available(port) == 0) 
 	{
@@ -532,15 +532,15 @@ int multi_serial_peek_char(uint8 port)
     return ports[port].vcomBufferRx[ports[port].vcom_rx_tail];
 }
 
-uint8 multi_serial_get_dtr(uint8 port) {
+uint8 multi_serial_get_dtr(uint32 port) {
     return ((ports[port].line_dtr_rts & USBHID_CDCACM_CONTROL_LINE_DTR) != 0);
 }
 
-uint8 multi_serial_get_rts(uint8 port) {
+uint8 multi_serial_get_rts(uint32 port) {
     return ((ports[port].line_dtr_rts & USBHID_CDCACM_CONTROL_LINE_RTS) != 0);
 }
 
-void multi_serial_get_line_coding(uint8 port, composite_cdcacm_line_coding *ret) {
+void multi_serial_get_line_coding(uint32 port, composite_cdcacm_line_coding *ret) {
     volatile struct port_data* p = &ports[port];
     ret->dwDTERate = p->line_coding.dwDTERate;
     ret->bCharFormat = p->line_coding.bCharFormat;
@@ -548,26 +548,26 @@ void multi_serial_get_line_coding(uint8 port, composite_cdcacm_line_coding *ret)
     ret->bDataBits = p->line_coding.bDataBits;
 }
 
-int multi_serial_get_baud(uint8 port) {
+int multi_serial_get_baud(uint32 port) {
     return ports[port].line_coding.dwDTERate;
 }
 
-int multi_serial_get_stop_bits(uint8 port) {
+int multi_serial_get_stop_bits(uint32 port) {
     return ports[port].line_coding.bCharFormat;
 }
 
-int multi_serial_get_parity(uint8 port) {
+int multi_serial_get_parity(uint32 port) {
     return ports[port].line_coding.bParityType;
 }
 
-int multi_serial_get_n_data_bits(uint8 port) {
+int multi_serial_get_n_data_bits(uint32 port) {
     return ports[port].line_coding.bDataBits;
 }
 
 /*
  * Callbacks
  */
-static void vcomDataTxCb(uint8 port)
+static void vcomDataTxCb(uint32 port)
 {
     volatile struct port_data* p = &ports[port];
 	uint32 tail = p->vcom_tx_tail; // load volatile variable
@@ -606,7 +606,7 @@ flush_vcom:
 }
 
 
-static void vcomDataRxCb(uint8 port)
+static void vcomDataRxCb(uint32 port)
 {
     volatile struct port_data* p = &ports[port];
 	uint32 head = p->vcom_rx_head; // load volatile variable
@@ -641,7 +641,7 @@ static void vcomDataRxCb(uint8 port)
     }
 }
 
-static uint8* vcomGetSetLineCoding(uint8 port, uint16 length) {
+static uint8* vcomGetSetLineCoding(uint32 port, uint16 length) {
     if (length == 0) {
         pInformation->Ctrl_Info.Usb_wLength = sizeof(struct composite_cdcacm_line_coding);
     }
@@ -664,7 +664,7 @@ static uint8* (*vcomGetSetLineCodings[])(uint16) = { vcomGetSetLineCoding0, vcom
 
 static void serialUSBReset(void) {
     //VCOM
-    for (uint8 port = 0; port<numPorts; port++) {
+    for (uint32 port = 0; port<numPorts; port++) {
         volatile struct port_data* p = &ports[port];
         p->vcom_rx_head = 0;
         p->vcom_rx_tail = 0;
@@ -685,7 +685,7 @@ static RESULT serialUSBDataSetup(uint8 request) {
     
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
 		is_management_interface(pInformation->USBwIndex0)) {
-            uint8 port = (pInformation->USBwIndex0 - usbMultiSerialPart.startInterface) / NUM_INTERFACES;
+            uint32 port = (pInformation->USBwIndex0 - usbMultiSerialPart.startInterface) / NUM_INTERFACES;
             switch (request) {
             case USBHID_CDCACM_GET_LINE_CODING:
                 CopyRoutine = vcomGetSetLineCodings[port];
@@ -718,7 +718,7 @@ static RESULT serialUSBNoDataSetup(uint8 request) {
     
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
         is_management_interface(pInformation->USBwIndex0)) { 
-            uint8 port = (pInformation->USBwIndex0 - usbMultiSerialPart.startInterface) / NUM_INTERFACES;
+            uint32 port = (pInformation->USBwIndex0 - usbMultiSerialPart.startInterface) / NUM_INTERFACES;
             volatile struct port_data* p = &ports[port];
             switch(request) {
                 case USBHID_CDCACM_SET_COMM_FEATURE:
