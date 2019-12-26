@@ -18,6 +18,7 @@
 #include "usb_lib_globals.h"
 #include "usb_reg_map.h"
 #include "libmaple/usb.h"
+#include <string.h>
 
 #include "usb_audio.h"
 
@@ -49,7 +50,6 @@ static volatile uint32 audio_rx_head = 0;
 static volatile uint32 audio_rx_tail = 0;
 static uint8 usbAudioReceiving;
 
-static uint32 ProtocolValue = 0;
 static uint8  clock_valid = 1;
 static uint16 sample_rate;
 static uint8  buffer_size;
@@ -689,6 +689,7 @@ static void audioUSBReset(void) {
 }
 
 static RESULT audioUSBDataSetup(uint8 request) {
+    (void)request;
 	uint8_t *(*CopyRoutine)(uint16_t) = NULL;
 	switch (pInformation->USBbmRequestType) {
 		case 0x21:
@@ -709,6 +710,7 @@ static RESULT audioUSBDataSetup(uint8 request) {
 }
 
 static RESULT audioUSBNoDataSetup(uint8 request) {
+    (void)request;
     return USB_UNSUPPORT;
 }
 
