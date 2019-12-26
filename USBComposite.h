@@ -8,7 +8,6 @@
 
 #include <USBCompositeSerial.h>
 #include <USBHID.h>
-#include <USBXBox360.h>
 #include <USBMassStorage.h>
 #include <USBMIDI.h>
 #include <USBAudio.h>

@@ -30,12 +30,16 @@ Plugin classes included in the library:
 ```
 USBHID
 USBMIDI
-USBXBox360
+USBMultiXBox360<n>
 USBMassStorage
 USBCompositeSerial
+USBMultiSerial<n>
 ```
 
-To use them, you need to create instances of them. Currently, only one instance of each plugin class
+There is also a convenience USBXBox360 class which functions basically like USBMultiXBox360<1>, and
+cannot be composited with USBMultiXBox360.
+
+To use the plugins, you need to create instances of them. NOTE: Only one instance of each plugin class
 can be created.
 
 If you want to make a simple (non-composite) USB device, you can create an instance of the plugin class
@@ -164,7 +168,7 @@ Each plugin contributes the following count towards the maximum of seven:
 
 * USB MIDI: 1 (= 1 TX, 1 RX)
 
-* XBox360 Controller: 1 (= 1 TX, 1 RX)
+* XBox360 Controller: 1 per controller (= 1 TX, 1 RX)
 
 * USB Audio: 1 (= 1 TX or 1 RX depending on mode)
 

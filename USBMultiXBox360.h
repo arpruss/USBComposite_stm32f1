@@ -23,9 +23,24 @@
 #include "usb_generic.h"
 #include "usb_multi_x360.h"
 
+typedef struct {
+    uint8_t reportID;
+    uint8_t length;
+    uint16_t buttons;
+    uint8_t sliderLeft;
+    uint8_t sliderRight;
+    int16_t x;
+    int16_t y;
+    int16_t rx;
+    int16_t ry;
+    uint8 unused[6];
+} __packed XBox360Report_t;
+
+static_assert(sizeof(XBox360Report_t)==20, "Wrong endianness/packing!");
+
 class USBXBox360Controller {
 private:
-	uint8_t xbox360_Report[20] = {0,0x14};
+    XBox360Report_t report = {0,20,0,0,0,0,0,0,0,{0}};
     uint32 controller;
     bool manualReport = false;
 	void safeSendReport(void);
@@ -51,9 +66,13 @@ public:
 	void sliderRight(uint8_t val);
     void setLEDCallback(void (*callback)(uint8 pattern));
     void setRumbleCallback(void (*callback)(uint8 left, uint8 right));
+    
+    USBXBox360Controller(uint32 _controller=0) {
+        controller = _controller;
+    }
 };
 
-template<const uint32 numControllers=1>class USBMultiXBox360 {
+template<const uint32 numControllers=4>class USBMultiXBox360 {
 private:
     bool enabled;
     uint8 buffers[USB_X360_BUFFER_SIZE_PER_CONTROLLER * numControllers];
@@ -85,13 +104,50 @@ public:
             enabled = false;
             USBComposite.end();
         }
-    };
-    
+    };    
     
     USBXBox360Controller controllers[numControllers];
 
     USBMultiXBox360() {
         for (uint8 i=0;i<numControllers;i++) controllers[i].setController(i);
+    }
+};
+
+class USBXBox360 : public USBXBox360Controller {
+private:
+    bool enabled;
+    uint8 buffers[USB_X360_BUFFER_SIZE_PER_CONTROLLER];
+    
+public:    
+    static bool init(USBXBox360* me) {
+        usb_multi_x360_initialize_controller_data(1, me->buffers);
+        USBComposite.setVendorId(0x045e);
+        USBComposite.setProductId(0x028e);
+        return true;
+    };
+
+    bool registerComponent() {
+        return USBComposite.add(&usbMultiX360Part, this, (USBPartInitializer)&USBXBox360::init);
+    };
+
+    void begin(void){
+        if(!enabled){
+            USBComposite.clear();
+            registerComponent();
+            USBComposite.begin();
+
+            enabled = true;
+        }
+    };
+
+    void end() {
+        if (enabled) {
+            enabled = false;
+            USBComposite.end();
+        }
+    };    
+    
+    USBXBox360() : USBXBox360Controller(0) {
     }
 };
 

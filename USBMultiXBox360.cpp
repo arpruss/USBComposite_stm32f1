@@ -33,7 +33,7 @@ bool USBXBox360Controller::wait() {
 }
 
 void USBXBox360Controller::sendReport(void){
-	usb_multi_x360_tx(controller, xbox360_Report, sizeof(xbox360_Report));
+	usb_multi_x360_tx(controller, (uint8*)&report, sizeof(report));
 
     if(wait()) {
 	/* flush out to avoid having the pc wait for more data */
@@ -76,80 +76,68 @@ void USBXBox360Controller::send() {
     
 void USBXBox360Controller::button(uint8_t button, bool val){
 	button--;
-	uint8_t mask = (1 << (button & 7));
+	uint16_t mask = (1 << button);
 	if (val) {
-		if (button < 8) xbox360_Report[2] |= mask;
-		else if (button < 16) xbox360_Report[3] |= mask;
+        report.buttons |= mask;
 	} else {
-		mask = ~mask;
-		if (button < 8) xbox360_Report[2] &= mask;
-		else if (button < 16) xbox360_Report[3] &= mask;
+		report.buttons &= ~mask;
 	}
 	
     safeSendReport();
 }
 
 void USBXBox360Controller::buttons(uint16_t buttons){
-    xbox360_Report[2] = buttons & 0xFF;
-    xbox360_Report[3] = buttons >> 8;
+    report.buttons = buttons;
 	
     safeSendReport();
 }
 
 void USBXBox360Controller::X(int16_t val){
-	xbox360_Report[6] = val;
-    xbox360_Report[7] = (uint16)val >> 8;
+    report.x = val;
 		
     safeSendReport();
 }
 
 void USBXBox360Controller::Y(int16_t val){
-	xbox360_Report[8] = val;
-    xbox360_Report[9] = (uint16)val >> 8;
+    report.y = val;
 		
     safeSendReport();
 }
 
 void USBXBox360Controller::XRight(int16_t val){
-	xbox360_Report[0xA] = val;
-    xbox360_Report[0xB] = (uint16)val >> 8;
+    report.rx = val;
 		
     safeSendReport();
 }
 
 void USBXBox360Controller::YRight(int16_t val){
-	xbox360_Report[0xC] = val;
-    xbox360_Report[0xD] = (uint16)val >> 8;
+    report.ry = val;
 		
     safeSendReport();
 }
 
 void USBXBox360Controller::position(int16_t x, int16_t y){
-	xbox360_Report[6] = x;
-    xbox360_Report[7] = (uint16)x >> 8;
-	xbox360_Report[8] = y;
-    xbox360_Report[9] = (uint16)y >> 8;
+    report.x = x;
+    report.y = y;
 		
     safeSendReport();
 }
 
 void USBXBox360Controller::positionRight(int16_t x, int16_t y){
-	xbox360_Report[0xA] = x;
-    xbox360_Report[0xB] = (uint16)x >> 8;
-	xbox360_Report[0xC] = y;
-    xbox360_Report[0xD] = (uint16)y >> 8;
+    report.rx = x;
+    report.ry = y;
 		
     safeSendReport();
 }
 
 void USBXBox360Controller::sliderLeft(uint8_t val){
-	xbox360_Report[4] = val;
+    report.sliderLeft = val;
 	
     safeSendReport();
 }
 
 void USBXBox360Controller::sliderRight(uint8_t val){
-	xbox360_Report[5] = val;
+    report.sliderRight = val;
 	
     safeSendReport();
 }
