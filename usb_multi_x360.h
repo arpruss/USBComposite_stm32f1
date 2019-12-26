@@ -24,8 +24,8 @@
  * SOFTWARE.
  *****************************************************************************/
 
-#ifndef _USB_X360_H
-#define _USB_X360_H
+#ifndef _USB_MULTI_X360_H
+#define _USB_MULTI_X360_H
 
 #include <libmaple/libmaple_types.h>
 #include <libmaple/gpio.h>
@@ -46,20 +46,21 @@ extern "C" {
  * Endpoint configuration
  */
 
- #define USB_X360_MAX_CONTROLLERS        4
- 
+#define USB_X360_MAX_CONTROLLERS        4
 #define USB_X360_TX_EPSIZE            0x20
 #define USB_X360_RX_EPSIZE            0x20
+#define USB_X360_BUFFER_SIZE_PER_CONTROLLER USB_X360_RX_EPSIZE 
 
 /*
  * HID interface
  */
 
-extern USBCompositePart usb_multi_x360_part;
+extern USBCompositePart usbMultiX360Part;
 uint32 usb_multi_x360_tx(uint8 controller, const uint8* buf, uint32 len);
 uint8 usb_multi_x360_is_transmitting(uint8 controller);
 void usb_multi_x360_set_rumble_callback(uint8 controller, void (*callback)(uint8 left, uint8 right));
 void usb_multi_x360_set_led_callback(uint8 controller, void (*callback)(uint8 pattern));
+void usb_multi_x360_initialize_controller_data(uint8 _numControllers, uint8* buffers);
 
 #ifdef __cplusplus
 }

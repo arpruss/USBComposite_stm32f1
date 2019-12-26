@@ -99,7 +99,7 @@ typedef struct
 //u16 GetEPTxAddr(u8 bEpNum);
 static void usb_multi_x360_clear(void);
 
-static uint8 numControllers;
+static uint8 numControllers = USB_X360_MAX_CONTROLLERS;
 
 static void x360DataRxCb(uint8 controller);
 static void x360DataTxCb(uint8 controller);
@@ -333,9 +333,9 @@ static USBEndpointInfo x360Endpoints[NUM_ENDPOINTS*USB_X360_MAX_CONTROLLERS] = {
 static void getX360PartDescriptor(uint8* _out);
 
 USBCompositePart usbMultiX360Part = {
-    .numInterfaces = NUM_INTERFACES,
+    .numInterfaces = USB_X360_MAX_CONTROLLERS * NUM_INTERFACES,
     .numEndpoints = sizeof(x360Endpoints)/sizeof(*x360Endpoints),
-    .descriptorSize = sizeof(X360Descriptor_Config),
+    .descriptorSize = USB_X360_MAX_CONTROLLERS * sizeof(X360Descriptor_Config),
     .getPartDescriptor = getX360PartDescriptor,
     .usbInit = NULL,
     .usbReset = x360Reset,
@@ -347,8 +347,7 @@ USBCompositePart usbMultiX360Part = {
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
 
-static void getX360PartDescriptor(uint8* _out) {
-    uint8* out = _out;
+static void getX360PartDescriptor(uint8* out) {
     for(uint8 i=0; i<numControllers; i++) {
         memcpy(out, &X360Descriptor_Config, sizeof(X360Descriptor_Config));
         // patch to reflect where the part goes in the descriptor
@@ -380,7 +379,7 @@ static void usb_multi_x360_clear(void) {
     numControllers = USB_X360_MAX_CONTROLLERS;
 }
 
-void multi_serial_initialize_controller_data(uint8 _numControllers, uint8* buffers) {
+void usb_multi_x360_initialize_controller_data(uint8 _numControllers, uint8* buffers) {
     numControllers = _numControllers;
     
     for (uint8 i=0; i<numControllers; i++) {
