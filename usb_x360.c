@@ -94,8 +94,9 @@ typedef struct
 
 u16 GetEPTxAddr(u8 bEpNum);
 
-static uint32 ProtocolValue;
+static uint32 ProtocolValue = 0;
 
+static void x360_clear(void);
 static void x360DataTxCb(void);
 static void x360DataRxCb(void);
 static void (*x360_rumble_callback)(uint8 left, uint8 right);
@@ -305,6 +306,7 @@ USBCompositePart usbX360Part = {
     .usbReset = x360Reset,
     .usbDataSetup = x360DataSetup,
     .usbNoDataSetup = x360NoDataSetup,
+    .clear = x360_clear,
     .endpoints = x360Endpoints
 };
 
@@ -335,6 +337,12 @@ void x360_set_rumble_callback(void (*callback)(uint8 left, uint8 right)) {
 
 void x360_set_led_callback(void (*callback)(uint8 pattern)) {
     x360_led_callback = callback;
+}
+
+static void x360_clear(void) {
+    x360_rumble_callback = NULL;
+    x360_led_callback = NULL;
+    ProtocolValue = 0;
 }
 
 /*void x360_disable(void) {

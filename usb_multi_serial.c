@@ -100,7 +100,7 @@ static volatile struct port_data {
     void (*iface_setup_hook)(unsigned, void*);
     uint32_t txEPSize;
     uint32_t rxEPSize;
-} ports[USB_MULTI_SERIAL_MAX_PORTS];
+} ports[USB_MULTI_SERIAL_MAX_PORTS] = {{0}};
 
 static void vcomDataTxCb(uint8 port);
 static void vcomDataRxCb(uint8 port);
@@ -130,14 +130,17 @@ static void vcomDataRxCb2(void) {
 }
 
 
+static uint8 numPorts = 3; 
 
+static void usb_multi_serial_clear(void) {
+    memset((void*)ports, 0, sizeof ports);
+    numPorts = USB_MULTI_SERIAL_MAX_PORTS;
+}
 
 
 /*
  * Descriptors
  */
-
-static uint8 numPorts = 3; 
 
 typedef struct {
     //CDCACM
@@ -356,6 +359,7 @@ USBCompositePart usbMultiSerialPart = {
     .usbReset = serialUSBReset,
     .usbDataSetup = serialUSBDataSetup,
     .usbNoDataSetup = serialUSBNoDataSetup,
+    .clear = usb_multi_serial_clear,
     .endpoints = serialEndpoints
 };
 

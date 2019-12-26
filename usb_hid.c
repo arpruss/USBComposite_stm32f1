@@ -55,6 +55,7 @@ static uint32 txEPSize = 64;
 
 static void hidDataTxCb(void);
 static void hidUSBReset(void);
+static void usb_hid_clear(void);
 static RESULT hidUSBDataSetup(uint8 request);
 static RESULT hidUSBNoDataSetup(uint8 request);
 //static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
@@ -164,6 +165,7 @@ USBCompositePart usbHIDPart = {
     .usbNoDataSetup = hidUSBNoDataSetup,
     .usbClearFeature = NULL,
     .usbSetConfiguration = NULL,
+    .clear = usb_hid_clear,
     .endpoints = hidEndpoints
 };
 
@@ -291,6 +293,12 @@ void usb_hid_clear_buffers(uint8 type) {
             hidBuffers[i].buffer = NULL;
         }
     }
+}
+
+static void usb_hid_clear(void) {
+    ProtocolValue = 0;
+    usb_hid_clear_buffers(HID_REPORT_TYPE_OUTPUT);
+    usb_hid_clear_buffers(HID_REPORT_TYPE_FEATURE);
 }
 
 uint8 usb_hid_add_buffer(uint8 type, volatile HIDBuffer_t* buf) {

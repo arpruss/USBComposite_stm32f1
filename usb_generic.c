@@ -438,6 +438,10 @@ void usb_generic_disable(void) {
     Device_Table = saved_Device_Table;
     Device_Property = saved_Device_Property;
     User_Standard_Requests = saved_User_Standard_Requests;    
+    
+    for (uint32 i=0; i < numParts; i++)
+        if (parts[i]->clear)
+            parts[i]->clear();
 }
 
 static RESULT usbDataSetup(uint8 request) {
