@@ -44,7 +44,6 @@ private:
     uint32 controller;
     bool manualReport = false;
 	void safeSendReport(void);
-	void sendReport(void);
     bool wait(void);
 public:
     void setController(uint32 c) {

@@ -14,17 +14,8 @@
 ** SOFTWARE.
 */
 
-/**
- * @brief USB HID Keyboard device 
- */
-
 #include <Arduino.h>
-#include <string.h>
-#include <stdint.h>
-#include <libmaple/nvic.h>
-#include <libmaple/usb.h>
 #include "USBComposite.h" 
-#include "usb_multi_x360.h"
 
 bool USBXBox360Controller::wait() {
     uint32_t t=millis();
@@ -32,12 +23,14 @@ bool USBXBox360Controller::wait() {
     return ! usb_multi_x360_is_transmitting(controller);
 }
 
-void USBXBox360Controller::sendReport(void){
-	usb_multi_x360_tx(controller, (uint8*)&report, sizeof(report));
+void USBXBox360Controller::send(void){
+    if (wait()) {
+        usb_multi_x360_tx(controller, (uint8*)&report, sizeof(report));
 
-    if(wait()) {
-	/* flush out to avoid having the pc wait for more data */
-        usb_multi_x360_tx(controller, NULL, 0);
+        if(wait()) {
+        /* flush out to avoid having the pc wait for more data */
+            usb_multi_x360_tx(controller, NULL, 0);
+        }
     }
 }
 
@@ -63,17 +56,10 @@ bool USBXBox360Controller::getManualReportMode() {
 }
 
 void USBXBox360Controller::safeSendReport() {	
-    if (!manualReport) {
-        if (wait())
-            sendReport();
-    }
+    if (!manualReport) 
+        send();
 }
 
-void USBXBox360Controller::send() {
-    if (wait())
-        sendReport();
-}
-    
 void USBXBox360Controller::button(uint8_t button, bool val){
 	uint16_t mask = (1 << (button-1));
 	if (val) {
