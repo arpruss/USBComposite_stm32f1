@@ -541,7 +541,7 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
 					CopyRoutine = HID_GetReportDescriptor;
 				} 					
     			break;
-    		case GET_PROTOCOL: // TODO: check for interface number?
+    		case GET_PROTOCOL:
     			CopyRoutine = HID_GetProtocolValue;
     			break;
 		}
