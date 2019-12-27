@@ -75,8 +75,7 @@ void USBXBox360Controller::send() {
 }
     
 void USBXBox360Controller::button(uint8_t button, bool val){
-	button--;
-	uint16_t mask = (1 << button);
+	uint16_t mask = (1 << (button-1));
 	if (val) {
         report.buttons |= mask;
 	} else {

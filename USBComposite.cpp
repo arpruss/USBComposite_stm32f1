@@ -1,4 +1,6 @@
 #include "USBComposite.h"
+#undef true
+#undef false
 #include <Arduino.h>
 
 #define DEFAULT_VENDOR_ID  0x1EAF

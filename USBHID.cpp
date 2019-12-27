@@ -27,8 +27,6 @@
 #include <string.h>
 #include <libmaple/iwdg.h>
 
-#include <wirish.h>
-
 /*
  * USB HID interface
  */

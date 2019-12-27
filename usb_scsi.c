@@ -73,6 +73,7 @@ void scsi_inquiry_cmd(uint8_t lun) {
 }
 
 void scsi_request_sense_cmd(uint8_t lun) {
+  (void)lun;
   uint8_t requestSenseDataLength;
   if (usb_mass_CBW.CB[4] <= SCSI_REQUEST_SENSE_DATA_LEN) {
     requestSenseDataLength = usb_mass_CBW.CB[4];
@@ -83,14 +84,17 @@ void scsi_request_sense_cmd(uint8_t lun) {
 }
 
 void scsi_start_stop_unit_cmd(uint8_t lun) {
+  (void)lun;
   usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
 }
 
 void scsi_mode_sense6_cmd(uint8_t lun) {
+  (void)lun;
   usb_mass_transfer_data_request(SCSI_modeSense6Data, SCSI_MODE_SENSE6_DATA_LEN);
 }
 
 void scsi_mode_sense10_cmd(uint8_t lun) {
+  (void)lun;
   usb_mass_transfer_data_request(SCSI_modeSense10Data, SCSI_MODE_SENSE10_DATA_LEN);
 }
 
@@ -184,6 +188,7 @@ void scsi_test_unit_ready_cmd(uint8_t lun) {
 }
 
 void scsi_verify10_cmd(uint8_t lun) {
+  (void)lun;
   if ((usb_mass_CBW.dDataLength == 0) && !(usb_mass_CBW.CB[1] & SCSI_BLKVFY))/* BLKVFY not set*/ {
     usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
   } else {
@@ -205,11 +210,13 @@ void scsi_format_cmd(uint8_t lun) {
 }
 
 void scsi_set_sense_data(uint8_t lun, uint8_t sensKey, uint8_t asc) {
+  (void)lun;
   SCSI_senseData[2] = sensKey;
   SCSI_senseData[12] = asc;
 }
 
 void scsi_invalid_cmd(uint8_t lun) {
+  (void)lun;
   if (usb_mass_CBW.dDataLength == 0) {
     usb_mass_bot_abort(BOT_DIR_IN);
   } else {

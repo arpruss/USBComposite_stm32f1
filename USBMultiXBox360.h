@@ -74,7 +74,7 @@ public:
 
 template<const uint32 numControllers=4>class USBMultiXBox360 {
 private:
-    bool enabled;
+    bool enabled = false;
     uint8 buffers[USB_X360_BUFFER_SIZE_PER_CONTROLLER * numControllers];
     
 public:    
@@ -115,7 +115,7 @@ public:
 
 class USBXBox360 : public USBXBox360Controller {
 private:
-    bool enabled;
+    bool enabled = false;
     uint8 buffers[USB_X360_BUFFER_SIZE_PER_CONTROLLER];
     
 public:    

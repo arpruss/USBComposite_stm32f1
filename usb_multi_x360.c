@@ -432,7 +432,7 @@ uint32 usb_multi_x360_tx(uint32 controller, const uint8* buf, uint32 len) {
 
     /* Queue bytes for sending. */
     if (len) {
-        usb_copy_to_pma(buf, len, USB_X360_TX_ADDR(controller)); // GetEPTxAddr(USB_X360_TX_ENDP));//USB_X360_TX_ADDR);
+        usb_copy_to_pma(buf, len, USB_X360_TX_ADDR(controller));
     }
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing
@@ -449,13 +449,17 @@ static void x360DataRxCb(uint32 controller)
 {
     volatile struct controller_data* c = &controllers[controller];
         
-	uint32 ep_rx_size = usb_get_ep_rx_count(USB_X360_RX_ENDP(controller));
+    uint32 rx_endp = USB_X360_RX_ENDP(controller);
+	uint32 ep_rx_size = usb_get_ep_rx_count(rx_endp);
 	// This copy won't overwrite unread bytes as long as there is 
 	// enough room in the USB Rx buffer for next packet
 	uint32 *src = usb_pma_ptr(USB_X360_RX_ADDR(controller));
     uint16 tmp = 0;
 	uint8 val;
 	uint32 i;
+    
+    volatile uint8* hidBufferRx = c->hidBufferRx;
+    
 	for (i = 0; i < ep_rx_size; i++) {
 		if (i&1) {
 			val = tmp>>8;
@@ -463,18 +467,18 @@ static void x360DataRxCb(uint32 controller)
 			tmp = *src++;
 			val = tmp&0xFF;
 		}
-		c->hidBufferRx[i] = val;
+		hidBufferRx[i] = val;
 	}
     
     if (ep_rx_size == 3) {
-        if (c->led_callback != NULL && c->hidBufferRx[0] == 1 && c->hidBufferRx[1] == 3)
-            c->led_callback(c->hidBufferRx[2]);
+        if (c->led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
+            c->led_callback(hidBufferRx[2]);
     }
     else if (ep_rx_size == 8) {
-        if (c->rumble_callback != NULL && c->hidBufferRx[0] == 0 && c->hidBufferRx[1] == 8)
-            c->rumble_callback(c->hidBufferRx[3],c->hidBufferRx[4]);
+        if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 8)
+            c->rumble_callback(hidBufferRx[3],hidBufferRx[4]);
     }
-    usb_set_ep_rx_stat(USB_X360_RX_ENDP(controller), USB_EP_STAT_RX_VALID);
+    usb_set_ep_rx_stat(rx_endp, USB_EP_STAT_RX_VALID);
 }
 
 /*
@@ -524,6 +528,7 @@ static RESULT x360DataSetup(uint8 request) {
 	  /*** GET_PROTOCOL ***/
 	else 
 #endif            
+    
         if(pInformation->USBwIndex0 >= X360_INTERFACE_NUMBER && pInformation->USBwIndex0 < X360_INTERFACE_NUMBER+numControllers*NUM_INTERFACES && 
             (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 			 && request == GET_PROTOCOL){
@@ -545,8 +550,7 @@ static RESULT x360NoDataSetup(uint8 request) {
         (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 		&& (request == SET_PROTOCOL)){
         uint32 controller = (pInformation->USBwIndex0 - X360_INTERFACE_NUMBER) / NUM_INTERFACES;
-		uint8 wValue0 = pInformation->USBwValue0;
-		controllers[controller].ProtocolValue = wValue0;
+		controllers[controller].ProtocolValue = pInformation->USBwValue0;
 		return USB_SUCCESS;
 	}else{
 		return USB_UNSUPPORT;
