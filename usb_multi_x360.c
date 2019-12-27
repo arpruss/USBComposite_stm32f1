@@ -112,8 +112,8 @@ static void x360DataTxCb3(void) { x360DataTxCb(3); }
 static void x360DataRxCb3(void) { x360DataRxCb(3); }
 
 static void x360Reset(void);
-static RESULT x360DataSetup(uint8 request);
-static RESULT x360NoDataSetup(uint8 request);
+static RESULT x360DataSetup(uint8 request, uint8 interface);
+static RESULT x360NoDataSetup(uint8 request, uint8 interface);
 
 /*
  * Descriptors
@@ -509,14 +509,13 @@ static uint8* HID_GetProtocolValue3(uint16 n) { return HID_GetProtocolValue(3, n
 
 static uint8* (*HID_GetProtocolValues[USB_X360_MAX_CONTROLLERS])(uint16 Length) = { HID_GetProtocolValue0, HID_GetProtocolValue1, HID_GetProtocolValue2, HID_GetProtocolValue3 };
 
-static RESULT x360DataSetup(uint8 request) {
+static RESULT x360DataSetup(uint8 request, uint8 interface) {
     uint8* (*CopyRoutine)(uint16) = 0;
 	
 #if 0			
 	if (request == GET_DESCRIPTOR
-        && pInformation->USBwIndex0 == X360_INTERFACE_NUMBER && 
-		&& (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))
-		&& (pInformation->USBwIndex0 == 0)){
+        && pInformation->USBwIndex0 == X360_INTERFACE_NUMBER?? && 
+		&& (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))){
 		if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
 			CopyRoutine = HID_GetReportDescriptor;
 		} else 
@@ -529,13 +528,10 @@ static RESULT x360DataSetup(uint8 request) {
 	else 
 #endif            
     
-        if(pInformation->USBwIndex0 >= X360_INTERFACE_NUMBER && pInformation->USBwIndex0 < X360_INTERFACE_NUMBER+numControllers*NUM_INTERFACES && 
-            (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
-			 && request == GET_PROTOCOL){
-		CopyRoutine = HID_GetProtocolValues[(pInformation->USBwIndex0 - X360_INTERFACE_NUMBER) / NUM_INTERFACES];
+    if((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) && request == GET_PROTOCOL) {
+        CopyRoutine = HID_GetProtocolValues[interface / NUM_INTERFACES];
 	}
-	
-	if (CopyRoutine == NULL){
+    else {
 		return USB_UNSUPPORT;
 	}
 
@@ -545,12 +541,10 @@ static RESULT x360DataSetup(uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT x360NoDataSetup(uint8 request) {
-	if (pInformation->USBwIndex0 >= X360_INTERFACE_NUMBER && pInformation->USBwIndex0 < X360_INTERFACE_NUMBER+numControllers*NUM_INTERFACES && 
-        (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
+static RESULT x360NoDataSetup(uint8 request, uint8 interface) {
+	if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
 		&& (request == SET_PROTOCOL)){
-        uint32 controller = (pInformation->USBwIndex0 - X360_INTERFACE_NUMBER) / NUM_INTERFACES;
-		controllers[controller].ProtocolValue = pInformation->USBwValue0;
+		controllers[interface / NUM_INTERFACES].ProtocolValue = pInformation->USBwValue0;
 		return USB_SUCCESS;
 	}else{
 		return USB_UNSUPPORT;

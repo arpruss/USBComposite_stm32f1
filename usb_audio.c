@@ -30,7 +30,7 @@
 #define AUDIO_INTERFACE_OFFSET     0x00
 #define IO_BUFFER_SIZE              256
 #define IO_BUFFER_SIZE_MASK         (IO_BUFFER_SIZE - 1)
-#define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
+//#define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
 #define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
 #define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
 #define AUDIO_ISO_BUF0_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress)
@@ -72,8 +72,8 @@ static srr_data sample_rate_range = {
 static void audioDataTxCb(void);
 static void audioDataRxCb(void);
 static void audioUSBReset(void);
-static RESULT audioUSBDataSetup(uint8 request);
-static RESULT audioUSBNoDataSetup(uint8 request);
+static RESULT audioUSBDataSetup(uint8 request, uint8 interface);
+static RESULT audioUSBNoDataSetup(uint8 request, uint8 interface);
 static uint8_t *audio_get(uint16_t Length);
 static uint8_t *audio_set(uint16_t Length);
 static void (*packet_callback)(uint8) = 0;
@@ -688,7 +688,8 @@ static void audioUSBReset(void) {
     }
 }
 
-static RESULT audioUSBDataSetup(uint8 request) {
+static RESULT audioUSBDataSetup(uint8 request, uint8 interface) {
+    (void)interface;
     (void)request;
 	uint8_t *(*CopyRoutine)(uint16_t) = NULL;
 	switch (pInformation->USBbmRequestType) {
@@ -709,8 +710,9 @@ static RESULT audioUSBDataSetup(uint8 request) {
 	return USB_SUCCESS;
 }
 
-static RESULT audioUSBNoDataSetup(uint8 request) {
+static RESULT audioUSBNoDataSetup(uint8 request, uint8 interface) {
     (void)request;
+    (void)interface;
     return USB_UNSUPPORT;
 }
 

@@ -40,8 +40,8 @@ typedef struct USBCompositePart {
     void (*usbSetConfiguration)(void);
     void (*usbClearFeature)(void);
     void (*clear)(void);
-    RESULT (*usbDataSetup)(uint8 request);
-    RESULT (*usbNoDataSetup)(uint8 request);
+    RESULT (*usbDataSetup)(uint8 request, uint8 interface);
+    RESULT (*usbNoDataSetup)(uint8 request, uint8 interface);
     USBEndpointInfo* endpoints;
 } USBCompositePart;
 

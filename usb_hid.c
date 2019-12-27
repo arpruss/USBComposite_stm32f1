@@ -56,8 +56,8 @@ static uint32 txEPSize = 64;
 static void hidDataTxCb(void);
 static void hidUSBReset(void);
 static void usb_hid_clear(void);
-static RESULT hidUSBDataSetup(uint8 request);
-static RESULT hidUSBNoDataSetup(uint8 request);
+static RESULT hidUSBDataSetup(uint8 request, uint8 interface);
+static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface);
 //static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
 static uint8* HID_GetReportDescriptor(uint16 Length);
 static uint8* HID_GetProtocolValue(uint16 Length);
@@ -477,12 +477,10 @@ static uint8* HID_GetFeature(uint16 length) {
     return (uint8*)currentHIDBuffer->buffer + wOffset;
 }
 
-static RESULT hidUSBDataSetup(uint8 request) {
+static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
+    (void)interface; // only one interface
     uint8* (*CopyRoutine)(uint16) = 0;
 	
-	if (pInformation->USBwIndex0 != HID_INTERFACE_NUMBER)
-		return USB_UNSUPPORT;
-    
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         switch (request) {
         case SET_REPORT:
@@ -559,9 +557,8 @@ static RESULT hidUSBDataSetup(uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT hidUSBNoDataSetup(uint8 request) {
-	if (pInformation->USBwIndex0 != HID_INTERFACE_NUMBER)
-		return USB_UNSUPPORT;
+static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface) {
+    (void)interface; // only one interface
     
     RESULT ret = USB_UNSUPPORT;
     

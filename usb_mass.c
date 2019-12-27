@@ -23,8 +23,8 @@ static void usb_mass_bot_cbw_decode();
 
 static void usb_mass_set_configuration();
 static void usb_mass_clear_feature();
-static RESULT usb_mass_data_setup(uint8 request);
-static RESULT usb_mass_no_data_setup(uint8 request);
+static RESULT usb_mass_data_setup(uint8 request, uint8 interface);
+static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface);
 static void usb_mass_reset();
 static uint8_t* usb_mass_get_max_lun(uint16_t Length);
 static void usb_mass_in(void);
@@ -32,9 +32,8 @@ static void usb_mass_out(void);
 uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize);
 uint32_t usb_mass_sil_read(uint8_t* pBufferPointer);
 
-#define MASS_INTERFACE_OFFSET 	0x00
-#define MASS_INTERFACE_NUMBER (MASS_INTERFACE_OFFSET+usbMassPart.startInterface)
-
+//#define MASS_INTERFACE_OFFSET 	0x00
+//#define MASS_INTERFACE_NUMBER (MASS_INTERFACE_OFFSET+usbMassPart.startInterface)
 
 #define LUN_DATA_LENGTH            1
 
@@ -175,13 +174,14 @@ static void usb_mass_clear_feature(void) {
   }
 }
 
-static RESULT usb_mass_data_setup(uint8 request) {
+static RESULT usb_mass_data_setup(uint8 request, uint8 interface) {
+    (void)interface; // only one interface
   uint8_t * (*copy_routine)(uint16_t);
 
   copy_routine = NULL;
   if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
           && (request == REQUEST_GET_MAX_LUN) && (pInformation->USBwValue == 0)
-          && (pInformation->USBwIndex == MASS_INTERFACE_NUMBER) && (pInformation->USBwLength == 0x01)) {
+          && (pInformation->USBwLength == 0x01)) {
     copy_routine = usb_mass_get_max_lun;
   } else {
     return USB_UNSUPPORT;
@@ -207,10 +207,11 @@ static uint8_t* usb_mass_get_max_lun(uint16_t length) {
   }
 }
 
-static RESULT usb_mass_no_data_setup(uint8 request) {
+static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface) {
+    (void)interface; // only one interface
   if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
           && (request == REQUEST_MASS_STORAGE_RESET) && (pInformation->USBwValue == 0)
-          && (pInformation->USBwIndex == MASS_INTERFACE_NUMBER) && (pInformation->USBwLength == 0x00)) {
+          && (pInformation->USBwLength == 0x00)) {
 
     /* Initialize Endpoint 1 */
     ClearDTOG_TX(USB_MASS_TX_ENDP);

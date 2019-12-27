@@ -71,8 +71,8 @@
 #include "usb_def.h"
 
 static void serialUSBReset(void);
-static RESULT serialUSBDataSetup(uint8 request);
-static RESULT serialUSBNoDataSetup(uint8 request);
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface);
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface);
 static void vcomDataTxCb0(void);
 static void vcomDataRxCb0(void);
 static void vcomDataTxCb1(void);
@@ -673,19 +673,11 @@ static void serialUSBReset(void) {
     }
 }
 
-uint8 is_management_interface(uint16 n) {
-    if (n < usbMultiSerialPart.startInterface || n >= usbMultiSerialPart.startInterface + NUM_INTERFACES * numPorts)
-        return 0;
-    n -= usbMultiSerialPart.startInterface;
-    return n % 2 == CCI_INTERFACE_OFFSET;
-}
-
-static RESULT serialUSBDataSetup(uint8 request) {
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
-		is_management_interface(pInformation->USBwIndex0)) {
-            uint32 port = (pInformation->USBwIndex0 - usbMultiSerialPart.startInterface) / NUM_INTERFACES;
+    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
+            uint32 port = interface / NUM_INTERFACES;
             switch (request) {
             case USBHID_CDCACM_GET_LINE_CODING:
                 CopyRoutine = vcomGetSetLineCodings[port];
@@ -713,13 +705,11 @@ static RESULT serialUSBDataSetup(uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT serialUSBNoDataSetup(uint8 request) {
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface) {
     RESULT ret = USB_UNSUPPORT;
     
-	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
-        is_management_interface(pInformation->USBwIndex0)) { 
-            uint32 port = (pInformation->USBwIndex0 - usbMultiSerialPart.startInterface) / NUM_INTERFACES;
-            volatile struct port_data* p = &ports[port];
+	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
+            volatile struct port_data* p = &ports[interface / NUM_INTERFACES];
             switch(request) {
                 case USBHID_CDCACM_SET_COMM_FEATURE:
                     /* We support set comm. feature, but don't handle it. */

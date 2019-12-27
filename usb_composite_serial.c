@@ -60,15 +60,15 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 #include "usb_def.h"
 
 static void serialUSBReset(void);
-static RESULT serialUSBDataSetup(uint8 request);
-static RESULT serialUSBNoDataSetup(uint8 request);
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface);
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface);
 static void vcomDataTxCb(void);
 static void vcomDataRxCb(void);
 
 #define NUM_SERIAL_ENDPOINTS       3
 #define CCI_INTERFACE_OFFSET 	0x00
 #define DCI_INTERFACE_OFFSET 	0x01
-#define SERIAL_MANAGEMENT_INTERFACE_NUMBER (CCI_INTERFACE_OFFSET+usbSerialPart.startInterface)
+//#define SERIAL_MANAGEMENT_INTERFACE_NUMBER (CCI_INTERFACE_OFFSET+usbSerialPart.startInterface)
 
 /*
  * Descriptors
@@ -543,11 +543,11 @@ static void serialUSBReset(void) {
     vcom_tx_tail = 0;
 }
 
-static RESULT serialUSBDataSetup(uint8 request) {
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
     if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
-		pInformation->USBwIndex0 == SERIAL_MANAGEMENT_INTERFACE_NUMBER) {        
+		interface == CCI_INTERFACE_OFFSET) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
             CopyRoutine = vcomGetSetLineCoding;
@@ -575,11 +575,11 @@ static RESULT serialUSBDataSetup(uint8 request) {
     return USB_SUCCESS;
 }
 
-static RESULT serialUSBNoDataSetup(uint8 request) {
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface) {
     RESULT ret = USB_UNSUPPORT;
     
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
-		pInformation->USBwIndex0 == SERIAL_MANAGEMENT_INTERFACE_NUMBER) { 
+		interface == CCI_INTERFACE_OFFSET) { 
         switch(request) {
             case USBHID_CDCACM_SET_COMM_FEATURE:
 	            /* We support set comm. feature, but don't handle it. */

@@ -208,6 +208,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
     unsigned numInterfaces = 0;
+
     unsigned numEndpointsRX = 1;
     unsigned numEndpointsTX = 1;
     uint16 usbDescriptorSize = 0;
@@ -445,33 +446,34 @@ void usb_generic_disable(void) {
 }
 
 static RESULT usbDataSetup(uint8 request) {
-    uint8* (*CopyRoutine)(uint16) = 0;
-    
 	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT) && request == GET_DESCRIPTOR &&
         pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
-            CopyRoutine = usbGetConfigDescriptor;
+            
+        pInformation->Ctrl_Info.CopyData = usbGetConfigDescriptor;
+        pInformation->Ctrl_Info.Usb_wOffset = 0;
+        usbGetConfigDescriptor(0);
+        return USB_SUCCESS;        
     }
-
-	if (CopyRoutine == NULL){
+    else {
+        uint8 interface  = pInformation->USBwIndex0;
         for (unsigned i = 0 ; i < numParts ; i++) {
-            RESULT r = parts[i]->usbDataSetup(request);
-            if (USB_UNSUPPORT != r)
-                return r;
+            USBCompositePart* p = parts[i];
+            if (p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
+                return parts[i]->usbDataSetup(request, interface - p->startInterface);
         }
+
         return USB_UNSUPPORT;
     }
     
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
 }
 
 static RESULT usbNoDataSetup(uint8 request) {
+    uint8 interface  = pInformation->USBwIndex0;
+    
     for (unsigned i = 0 ; i < numParts ; i++) {
-        RESULT r = parts[i]->usbNoDataSetup(request);
-        if (USB_UNSUPPORT != r)
-            return r;
+        USBCompositePart* p = parts[i];
+        if (p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
+            return parts[i]->usbNoDataSetup(request, interface - p->startInterface);
     }
 
     return USB_UNSUPPORT;

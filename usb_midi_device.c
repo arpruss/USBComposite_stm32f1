@@ -35,6 +35,7 @@
  */
 
 #include <string.h>
+
 #include "usb_generic.h"
 #include "usb_midi_device.h"
 #include <MidiSpecs.h>
@@ -57,8 +58,8 @@ static void midiDataTxCb(void);
 static void midiDataRxCb(void);
 
 static void usbMIDIReset(void);
-static RESULT usbMIDIDataSetup(uint8 request);
-static RESULT usbMIDINoDataSetup(uint8 request);
+static RESULT usbMIDIDataSetup(uint8 request, uint8 interface);
+static RESULT usbMIDINoDataSetup(uint8 request, uint8 interface);
 
 #define MIDI_ENDPOINT_RX 0
 #define MIDI_ENDPOINT_TX 1
@@ -443,7 +444,8 @@ static void usbMIDIReset(void) {
     rx_offset = 0;
 }
 
-static RESULT usbMIDIDataSetup(uint8 request) {
+static RESULT usbMIDIDataSetup(uint8 request, uint8 interface) {
+    (void)interface; //unused
     (void)request;//unused
 #if 0
     uint8* (*CopyRoutine)(uint16) = 0;
@@ -463,8 +465,9 @@ static RESULT usbMIDIDataSetup(uint8 request) {
     return USB_UNSUPPORT;
 }
 
-static RESULT usbMIDINoDataSetup(uint8 request) {
+static RESULT usbMIDINoDataSetup(uint8 request, uint8 interface) {
     (void)request;//unused
+    (void)interface; // unused
 #if 0    
     RESULT ret = USB_UNSUPPORT;
 
