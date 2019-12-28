@@ -46,12 +46,13 @@ private:
     bool manualReport = false;
 	void safeSendReport(void);
     bool wait(void);
-    void sendData(const void* data, uint32 length);
+    bool connected = false;
+    bool sendData(const void* data, uint32 length);
 public:
     void setController(uint32 c) {
         controller = c;
     }
-    void connect(bool state);
+    bool connect(bool state);
 	void send(void);
     void setManualReportMode(bool manualReport);
     bool getManualReportMode();

@@ -23,7 +23,7 @@ bool USBXBox360WController::wait() {
     return ! x360w_is_transmitting(controller);
 }
 
-void USBXBox360WController::sendData(const void* data, uint32 length){
+bool USBXBox360WController::sendData(const void* data, uint32 length){
     if (wait()) {
         x360w_tx(controller, (uint8*)data, length);
 
@@ -31,10 +31,14 @@ void USBXBox360WController::sendData(const void* data, uint32 length){
         /* flush out to avoid having the pc wait for more data */
             x360w_tx(controller, NULL, 0);
         }
+        return true;
     }
+    return false;
 }
 
 void USBXBox360WController::send(void){
+    if (!connected)
+        connect(true);
     report.header[0] = 0x00;
     report.header[1] = 0x01;
     report.header[2] = 0x00;
@@ -44,13 +48,15 @@ void USBXBox360WController::send(void){
 
 const uint8 startup[] = {0x00,0x0F,0x00,0xF0,0xF0,0xCC,0x42,0xAF,0x3C,0x60,0xAC,0x24,0xFB,0x50,0x00,0x05,0x13,0xE7,0x20,0x1D,0x30,0x03,0x40,0x01,0x50,0x01,0xFF,0xFF,0xFF };
 
-void USBXBox360WController::connect(bool state) {
+bool USBXBox360WController::connect(bool state) {
     report.header[0] = 0x08;
     report.header[1] = state ? 0x80 : 0x00;
-    sendData(&report.header, 2);
-    if (state) {
-        sendData(startup, 29);
-    }
+    if (!sendData(&report.header, 2))
+        return false;
+    if (state && !sendData(startup, 29))
+        return false;
+    connected = state;
+    return true;
 }
 
 void USBXBox360WController::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {

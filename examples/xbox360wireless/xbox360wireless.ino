@@ -18,6 +18,8 @@ void setup() {
   digitalWrite(LED, 1);
   x360.begin();
   x360.controllers[0].setRumbleCallback(rumble);
+  // the next two lines are not necessary as the library will
+  // autoconnect when data is sent
   for(int i=0; i<2 ; i++) x360.controllers[i].connect(true);  
   for(int i=2; i<4 ; i++) x360.controllers[i].connect(false);
   x360.controllers[0].buttons(0);
