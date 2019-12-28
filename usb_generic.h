@@ -45,6 +45,7 @@ typedef struct USBCompositePart {
     USBEndpointInfo* endpoints;
 } USBCompositePart;
 
+void usb_generic_set_disconnect_delay(uint32 delay);
 void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
 void usb_generic_disable(void);

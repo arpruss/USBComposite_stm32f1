@@ -54,6 +54,9 @@ public:
     bool begin(void);
     void end(void);
     void clear();
+    void setDisconnectDelay(uint32 delay=512) {
+        usb_generic_set_disconnect_delay(delay);
+    }
     bool isReady() {
         return enabled && usb_is_connected(USBLIB) && usb_is_configured(USBLIB);    
     }

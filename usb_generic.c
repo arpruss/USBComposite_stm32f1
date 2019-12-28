@@ -72,6 +72,7 @@ static uint8* usbGetConfigDescriptor(uint16 length);
 static uint8* usbGetDeviceDescriptor(uint16 length);
 static void usbSetConfiguration(void);
 static void usbSetDeviceAddress(void);
+static uint32 disconnect_delay = 512;
 
 #define LEAFLABS_ID_VENDOR                0x1EAF
 #define MAPLE_ID_PRODUCT                  0x0024 // was 0x0024
@@ -327,7 +328,7 @@ void usb_generic_enable(void) {
     gpio_set_mode(GPIOA, 12, GPIO_OUTPUT_PP);
     gpio_write_bit(GPIOA, 12, 0);
 
-    for(volatile unsigned int i=0;i<512;i++);// Only small delay seems to be needed
+    for(volatile unsigned int i=0;i<disconnect_delay;i++);// Only small delay seems to be needed
     gpio_set_mode(GPIOA, 12, GPIO_INPUT_FLOATING);
 #endif			
 
@@ -345,6 +346,10 @@ void usb_generic_enable(void) {
     
     /* Initialize the USB peripheral. */
     usb_init_usblib(USBLIB, ep_int_in, ep_int_out); 
+}
+
+void usb_generic_set_disconnect_delay(uint32 delay) {
+    disconnect_delay = delay;
 }
 
 static void usbInit(void) {
