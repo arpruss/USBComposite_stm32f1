@@ -170,6 +170,8 @@ Each plugin contributes the following count towards the maximum of seven:
 
 * XBox360 Controller: 1 per controller (= 1 TX, 1 RX)
 
+* XBox360 Wireless Controller: 1 per controller (= 1 TX, 1 RX)
+
 * USB Audio: 1 (= 1 TX or 1 RX depending on mode)
 
 * USB Multi Serial: 2 per port (= 2 TX, 1 RX)
