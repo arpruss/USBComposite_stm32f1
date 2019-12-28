@@ -6,9 +6,11 @@
 
 - MIDI over USB
 
-- XBox360 controller (only controller-to-host is currently supported)
+- XBox360 wired/wireless controllers
 
 - Mass storage
+
+- USB Audio (unidirectional, but both directions are supported)
 
 ## Basic concepts
 
@@ -31,6 +33,7 @@ Plugin classes included in the library:
 USBHID
 USBMIDI
 USBMultiXBox360<n>
+USBXBox360W<n>
 USBMassStorage
 USBCompositeSerial
 USBMultiSerial<n>
