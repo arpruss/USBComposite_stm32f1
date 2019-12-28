@@ -344,7 +344,7 @@ USBCompositePart usbMultiX360Part = {
     .clear = usb_multi_x360_clear
 };
 
-volatile struct controller_data {
+static volatile struct controller_data {
     uint32 ProtocolValue;
     uint8* hidBufferRx;
     uint32 n_unsent_bytes;
