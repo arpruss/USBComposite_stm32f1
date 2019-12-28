@@ -220,7 +220,7 @@ const uint8_t hid_report_descriptor[] = {
 typedef struct {
 //    usb_descriptor_config_header Config_Header;
     usb_descriptor_interface     HID_Interface;
-    uint8                        unknown_descriptor1[17];
+    uint8                        unknown_descriptor1[20];
     usb_descriptor_endpoint      DataInEndpoint;
     usb_descriptor_endpoint      DataOutEndpoint;
 } __packed usb_descriptor_config;
@@ -251,12 +251,13 @@ static const usb_descriptor_config X360WDescriptor_Config =
         .bNumEndpoints      = 0x02,  
         .bInterfaceClass    = 0xFF, 
         .bInterfaceSubClass = 0x5D,
-        .bInterfaceProtocol = 0x01, 
+        .bInterfaceProtocol = 129, 
         .iInterface         = 0x00,
 	},
     
     .unknown_descriptor1 = { 
-        17,33,0,1,1,37,129/* PATCH 0x80 | USB_X360W_TX_ENDP */,20,0,0,0,0,19,2/* was 2, now PATCH: USB_X360W_RX_ENDP */,8,0,0,
+//        17,33,0,1,1,37,129/* PATCH 0x80 | USB_X360W_TX_ENDP */,20,0,0,0,0,19,2/* was 2, now PATCH: USB_X360W_RX_ENDP */,8,0,0,
+        0x14,0x22,0x00,0x01,0x13,0x81/* PATCH 0x80 | USB_X360W_TX_ENDP */,0x1d,0x00,0x17,0x01,0x02,0x08,0x13,0x01/* PATCH: USB_X360W_RX_ENDP */,0x0c,0x00,0x0c,0x01,0x02,0x08
     }, 
 	
 	.DataInEndpoint = {
@@ -364,7 +365,7 @@ static void getX360WPartDescriptor(uint8* out) {
         uint8 tx_endp = USB_X360W_TX_ENDP(i);
         OUT_BYTE(X360WDescriptor_Config, DataOutEndpoint.bEndpointAddress) += rx_endp;
         OUT_BYTE(X360WDescriptor_Config, DataInEndpoint.bEndpointAddress) += tx_endp;
-        OUT_BYTE(X360WDescriptor_Config, unknown_descriptor1[6]) = 0x80 | tx_endp;
+        OUT_BYTE(X360WDescriptor_Config, unknown_descriptor1[5]) = 0x80 | tx_endp;
         OUT_BYTE(X360WDescriptor_Config, unknown_descriptor1[13]) = rx_endp;
         out += sizeof(X360WDescriptor_Config);
     }
@@ -471,7 +472,7 @@ static void x360WDataRxCb(uint32 controller)
 	
     }
     // TODO: this isn't right for wireless
-    if (ep_rx_size == 3) {
+    /*if (ep_rx_size == 3) {
         if (c->led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
             c->led_callback(hidBufferRx[2]);
     }
@@ -479,14 +480,13 @@ static void x360WDataRxCb(uint32 controller)
         if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 8)
             c->rumble_callback(hidBufferRx[3],hidBufferRx[4]);
     } 
-    /*
+    else  */
     if (ep_rx_size == 12) {
         if (c->led_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 0)
             c->led_callback(hidBufferRx[3]);
         if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 1)
             c->rumble_callback(hidBufferRx[5],hidBufferRx[6]);
     } 
-    */
     usb_set_ep_rx_stat(rx_endp, USB_EP_STAT_RX_VALID);
 }
 
