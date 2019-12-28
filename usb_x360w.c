@@ -468,8 +468,9 @@ static void x360WDataRxCb(uint32 controller)
 			val = tmp&0xFF;
 		}
 		hidBufferRx[i] = val;
-	}
-    
+	
+    }
+    // TODO: this isn't right for wireless
     if (ep_rx_size == 3) {
         if (c->led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
             c->led_callback(hidBufferRx[2]);
@@ -477,7 +478,15 @@ static void x360WDataRxCb(uint32 controller)
     else if (ep_rx_size == 8) {
         if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 8)
             c->rumble_callback(hidBufferRx[3],hidBufferRx[4]);
-    }
+    } 
+    /*
+    if (ep_rx_size == 12) {
+        if (c->led_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 0)
+            c->led_callback(hidBufferRx[3]);
+        if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 1)
+            c->rumble_callback(hidBufferRx[5],hidBufferRx[6]);
+    } 
+    */
     usb_set_ep_rx_stat(rx_endp, USB_EP_STAT_RX_VALID);
 }
 
