@@ -159,6 +159,9 @@ public:
 #define XBOX_DLEFT 3
 #define XBOX_DRIGHT 4
 #define XBOX_START 5
+#define XBOX_BACK 6
+#define XBOX_L3 7
+#define XBOX_R3 8
 #define XBOX_LSHOULDER 9
 #define XBOX_RSHOULDER 10
 #define XBOX_GUIDE  11
