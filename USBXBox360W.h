@@ -49,6 +49,9 @@ private:
     bool connected = false;
     bool sendData(const void* data, uint32 length);
 public:
+    bool isConnected() {
+        return connected;
+    }
     void setController(uint32 c) {
         controller = c;
     }
