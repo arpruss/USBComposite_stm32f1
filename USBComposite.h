@@ -66,7 +66,6 @@ public:
 extern USBCompositeDevice USBComposite;
 
 #include <USBMultiSerial.h>
-#include <USBMultiXBox360.h>
-#include <USBXBox360w.h>
+#include <USBXBox360.h>
 #endif
         

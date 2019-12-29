@@ -17,25 +17,6 @@
 #include <Arduino.h>
 #include "USBComposite.h" 
 
-bool USBXBox360WController::wait() {
-    uint32_t t=millis();
-	while (x360w_is_transmitting(controller) != 0 && (millis()-t)<500) ;
-    return ! x360w_is_transmitting(controller);
-}
-
-bool USBXBox360WController::sendData(const void* data, uint32 length){
-    if (wait()) {
-        x360w_tx(controller, (uint8*)data, length);
-
-        if(wait()) {
-        /* flush out to avoid having the pc wait for more data */
-            x360w_tx(controller, NULL, 0);
-        }
-        return true;
-    }
-    return false;
-}
-
 void USBXBox360WController::send(void){
     if (!connected)
         connect(true);
@@ -49,35 +30,30 @@ void USBXBox360WController::send(void){
 const uint8 startup[] = {0x00,0x0F,0x00,0xF0,0xF0,0xCC,0x42,0xAF,0x3C,0x60,0xAC,0x24,0xFB,0x50,0x00,0x05,0x13,0xE7,0x20,0x1D,0x30,0x03,0x40,0x01,0x50,0x01,0xFF,0xFF,0xFF };
 
 bool USBXBox360WController::connect(bool state) {
+    delay(250);
     report.header[0] = 0x08;
     report.header[1] = state ? 0x80 : 0x00;
     if (!sendData(&report.header, 2))
         return false;
+    delay(250);
     if (state && !sendData(startup, 29))
         return false;
+    delay(250);
     connected = state;
     return true;
 }
 
 void USBXBox360WController::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {
-    x360w_set_rumble_callback(controller,callback);
+    x360_set_rumble_callback(controller,callback);
 }
 
 void USBXBox360WController::setLEDCallback(void (*callback)(uint8 pattern)) {
-    x360w_set_led_callback(controller, callback);
+    x360_set_led_callback(controller, callback);
 }
 
 void USBXBox360WController::stop(void){
 	setRumbleCallback(NULL);
 	setLEDCallback(NULL);
-}
-
-void USBXBox360WController::setManualReportMode(bool mode) {
-    manualReport = mode;
-}
-
-bool USBXBox360WController::getManualReportMode() {
-    return manualReport;
 }
 
 void USBXBox360WController::safeSendReport() {	

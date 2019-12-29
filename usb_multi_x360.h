@@ -36,30 +36,6 @@ extern "C" {
 #endif
 
 
-/*
- * Descriptors, etc.
- */
- 
-//extern const uint8_t hid_report_descriptor[];
-
-/*
- * Endpoint configuration
- */
-
-#define USB_X360_MAX_CONTROLLERS        4
-#define USB_X360_TX_EPSIZE            0x20
-#define USB_X360_RX_EPSIZE            0x20
-#define USB_X360_BUFFER_SIZE_PER_CONTROLLER USB_X360_RX_EPSIZE 
-
-/*
- * HID interface
- */
-
-extern USBCompositePart usbMultiX360Part;
-uint32 usb_multi_x360_tx(uint32 controller, const uint8* buf, uint32 len);
-uint8 usb_multi_x360_is_transmitting(uint32 controller);
-void usb_multi_x360_set_rumble_callback(uint32 controller, void (*callback)(uint8 left, uint8 right));
-void usb_multi_x360_set_led_callback(uint32 controller, void (*callback)(uint8 pattern));
 void usb_multi_x360_initialize_controller_data(uint32 _numControllers, uint8* buffers);
 
 #ifdef __cplusplus

@@ -32,15 +32,14 @@ Plugin classes included in the library:
 ```
 USBHID
 USBMIDI
-USBMultiXBox360<n>
-USBXBox360W<n>
+USBMultiXBox360<n> / USBXBox360 / USBXBox360W<n>
 USBMassStorage
 USBCompositeSerial
 USBMultiSerial<n>
 ```
 
-There is also a convenience USBXBox360 class which functions basically like USBMultiXBox360<1>, and
-cannot be composited with USBMultiXBox360.
+**NOTE:** Only one of USBMultiXBox360<n> / USBXBox360 / USBXBox360W<n> can be registered at a time:
+they cannot be composited together.
 
 To use the plugins, you need to create instances of them. NOTE: Only one instance of each plugin class
 can be created.

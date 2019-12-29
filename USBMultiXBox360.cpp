@@ -17,42 +17,21 @@
 #include <Arduino.h>
 #include "USBComposite.h" 
 
-bool USBXBox360Controller::wait() {
-    uint32_t t=millis();
-	while (usb_multi_x360_is_transmitting(controller) != 0 && (millis()-t)<500) ;
-    return ! usb_multi_x360_is_transmitting(controller);
-}
-
 void USBXBox360Controller::send(void){
-    if (wait()) {
-        usb_multi_x360_tx(controller, (uint8*)&report, sizeof(report));
-
-        if(wait()) {
-        /* flush out to avoid having the pc wait for more data */
-            usb_multi_x360_tx(controller, NULL, 0);
-        }
-    }
+    sendData((uint8*)&report, sizeof(report));
 }
 
 void USBXBox360Controller::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {
-    usb_multi_x360_set_rumble_callback(controller,callback);
+    x360_set_rumble_callback(controller,callback);
 }
 
 void USBXBox360Controller::setLEDCallback(void (*callback)(uint8 pattern)) {
-    usb_multi_x360_set_led_callback(controller, callback);
+    x360_set_led_callback(controller, callback);
 }
 
 void USBXBox360Controller::stop(void){
 	setRumbleCallback(NULL);
 	setLEDCallback(NULL);
-}
-
-void USBXBox360Controller::setManualReportMode(bool mode) {
-    manualReport = mode;
-}
-
-bool USBXBox360Controller::getManualReportMode() {
-    return manualReport;
 }
 
 void USBXBox360Controller::safeSendReport() {	
