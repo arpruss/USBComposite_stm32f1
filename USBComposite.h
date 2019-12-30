@@ -55,6 +55,7 @@ public:
     void end(void);
     void clear();
     void setDisconnectDelay(uint32 delay=512) {
+        // this is not in any sort of recognizable unit: rather, the delay is currently coded as a tight loop
         usb_generic_set_disconnect_delay(delay);
     }
     bool isReady() {
