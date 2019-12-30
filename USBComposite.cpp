@@ -113,7 +113,7 @@ bool USBCompositeDevice::begin() {
         return false;
     usb_generic_enable();
     enabled = true;  
-    delay(250); // seems to be helpful sometimes
+    delay(500); // seems to be helpful sometimes
     return true;
 }
 
