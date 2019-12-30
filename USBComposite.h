@@ -32,7 +32,7 @@ typedef void(*USBPartStopper)(void*);
 
 class USBCompositeDevice {
 private:
-	bool enabled = false;
+    bool enabled = false;
     bool haveSerialNumber = false;
     uint8_t iManufacturer[USB_DESCRIPTOR_STRING_LEN(USB_MAX_MANUFACTURER_LENGTH)];
     uint8_t iProduct[USB_DESCRIPTOR_STRING_LEN(USB_MAX_PRODUCT_LENGTH)];
@@ -40,12 +40,12 @@ private:
     uint16 vendorId;
     uint16 productId;
     USBCompositePart* parts[USB_COMPOSITE_MAX_PARTS];
-	USBPartInitializer init[USB_COMPOSITE_MAX_PARTS];
-	USBPartStopper stop[USB_COMPOSITE_MAX_PARTS];
-	void* plugin[USB_COMPOSITE_MAX_PARTS];
+    USBPartInitializer init[USB_COMPOSITE_MAX_PARTS];
+    USBPartStopper stop[USB_COMPOSITE_MAX_PARTS];
+    void* plugin[USB_COMPOSITE_MAX_PARTS];
     uint32 numParts;
 public:
-	USBCompositeDevice(void); 
+    USBCompositeDevice(void); 
     void setVendorId(uint16 vendor=0);
     void setProductId(uint16 product=0);
     void setManufacturerString(const char* manufacturer=NULL);
