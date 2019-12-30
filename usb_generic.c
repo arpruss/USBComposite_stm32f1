@@ -239,6 +239,9 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
                 nrx++;
             pma += ep[j].bufferSize;
         }
+        
+        if (pmaOffset+pma > PMA_MEMORY_SIZE)
+            gpio_write_bit(GPIOC, 13, 0);
             
         if (numEndpointsRX + nrx > 8 || numEndpointsTX + ntx > 8 || pmaOffset+pma > PMA_MEMORY_SIZE) {
             return 0;
