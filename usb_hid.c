@@ -491,6 +491,16 @@ static uint8_t *HID_GetHIDDescriptor(uint16_t Length)
   return Standard_GetDescriptorData(Length, &HID_Hid_Descriptor);
 }
 
+static uint8* HID_GetProtocolValue(uint16 Length){
+	if (Length == 0){
+		pInformation->Ctrl_Info.Usb_wLength = 1;
+		return NULL;
+	} else {
+		return (uint8 *)(&ProtocolValue);
+	}
+}
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     (void)interface; // only one interface
     uint8* (*CopyRoutine)(uint16) = 0;
@@ -589,14 +599,5 @@ static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestTyp
         }
     }
     return ret;
-}
-
-static uint8* HID_GetProtocolValue(uint16 Length){
-	if (Length == 0){
-		pInformation->Ctrl_Info.Usb_wLength = 1;
-		return NULL;
-	} else {
-		return (uint8 *)(&ProtocolValue);
-	}
 }
 
