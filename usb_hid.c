@@ -56,8 +56,8 @@ static uint32 txEPSize = 64;
 static void hidDataTxCb(void);
 static void hidUSBReset(void);
 static void usb_hid_clear(void);
-static RESULT hidUSBDataSetup(uint8 request, uint8 interface);
-static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface);
+static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
+static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex);
 //static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting);
 static uint8* HID_GetReportDescriptor(uint16 Length);
 static uint8* HID_GetProtocolValue(uint16 Length);
@@ -491,15 +491,15 @@ static uint8_t *HID_GetHIDDescriptor(uint16_t Length)
   return Standard_GetDescriptorData(Length, &HID_Hid_Descriptor);
 }
 
-static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
+static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     (void)interface; // only one interface
     uint8* (*CopyRoutine)(uint16) = 0;
 	
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
+    if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         switch (request) {
         case SET_REPORT:
-			if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
-				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, pInformation->USBwValue0);
+			if (wValue1 == HID_REPORT_TYPE_FEATURE) {
+				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, wValue0);
 				
 				if (buffer == NULL) {
 					return USB_UNSUPPORT;
@@ -514,8 +514,8 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
 					CopyRoutine = HID_Set;        
 				}
 			}
-			else if (pInformation->USBwValue1 == HID_REPORT_TYPE_OUTPUT) {
-				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_OUTPUT, pInformation->USBwValue0);
+			else if (wValue1 == HID_REPORT_TYPE_OUTPUT) {
+				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_OUTPUT, wValue0);
 					
 				if (buffer == NULL) {
 					return USB_UNSUPPORT;
@@ -532,8 +532,8 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
 			}
             break;
         case GET_REPORT:
-            if (pInformation->USBwValue1 == HID_REPORT_TYPE_FEATURE) {
-				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, pInformation->USBwValue0);
+            if (wValue1 == HID_REPORT_TYPE_FEATURE) {
+				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, wValue0);
 				
 				if (buffer == NULL || buffer->state == HID_BUFFER_EMPTY) {
 					return USB_UNSUPPORT;
@@ -548,13 +548,13 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
         }
     }
 	
-	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
+	if(requestType == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
     	switch (request){
     		case GET_DESCRIPTOR:
-				if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
+				if (wValue1 == REPORT_DESCRIPTOR){
 					CopyRoutine = HID_GetReportDescriptor;
 				} 		
-				else if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
+				else if (wValue1 == HID_DESCRIPTOR_TYPE){
 					CopyRoutine = HID_GetHIDDescriptor;
 				} 		
 			
@@ -575,7 +575,7 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
     return USB_SUCCESS;
 }
 
-static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface) {
+static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
     (void)interface; // only one interface
     
     RESULT ret = USB_UNSUPPORT;
@@ -583,7 +583,7 @@ static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface) {
 	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         switch(request) {
             case SET_PROTOCOL:
-                ProtocolValue = pInformation->USBwValue0;
+                ProtocolValue = wValue0;
                 ret = USB_SUCCESS;
                 break;
         }
@@ -591,13 +591,6 @@ static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface) {
     return ret;
 }
 
-/*
-static RESULT HID_SetProtocol(void){
-	uint8 wValue0 = pInformation->USBwValue0;
-	ProtocolValue = wValue0;
-	return USB_SUCCESS;
-}
-*/
 static uint8* HID_GetProtocolValue(uint16 Length){
 	if (Length == 0){
 		pInformation->Ctrl_Info.Usb_wLength = 1;

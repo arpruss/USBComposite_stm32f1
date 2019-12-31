@@ -58,8 +58,6 @@ static void midiDataTxCb(void);
 static void midiDataRxCb(void);
 
 static void usbMIDIReset(void);
-static RESULT usbMIDIDataSetup(uint8 request, uint8 interface);
-static RESULT usbMIDINoDataSetup(uint8 request, uint8 interface);
 
 #define MIDI_ENDPOINT_RX 0
 #define MIDI_ENDPOINT_TX 1
@@ -297,8 +295,8 @@ USBCompositePart usbMIDIPart = {
     .getPartDescriptor = getMIDIPartDescriptor,
     .usbInit = NULL,
     .usbReset = usbMIDIReset,
-    .usbDataSetup = usbMIDIDataSetup,
-    .usbNoDataSetup = usbMIDINoDataSetup,
+    .usbDataSetup = NULL,
+    .usbNoDataSetup = NULL,
     .endpoints = midiEndpoints
 };
 
@@ -444,39 +442,6 @@ static void usbMIDIReset(void) {
     rx_offset = 0;
 }
 
-static RESULT usbMIDIDataSetup(uint8 request, uint8 interface) {
-    (void)interface; //unused
-    (void)request;//unused
-#if 0
-    uint8* (*CopyRoutine)(uint16) = 0;
-
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
-    }
-
-    if (CopyRoutine == NULL) {
-        return USB_UNSUPPORT;
-    }
-
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
-#endif
-    return USB_UNSUPPORT;
-}
-
-static RESULT usbMIDINoDataSetup(uint8 request, uint8 interface) {
-    (void)request;//unused
-    (void)interface; // unused
-#if 0    
-    RESULT ret = USB_UNSUPPORT;
-
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
-    }
-    return ret;
-#endif    
-    return USB_UNSUPPORT;
-}
 
 // .............THIS IS NOT WORKING YET................
 // send debugging information to 

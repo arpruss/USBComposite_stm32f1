@@ -79,6 +79,8 @@ static uint32 disconnect_delay = 500; // in microseconds
 #define USB_DEVICE_CLASS              	  0x00
 #define USB_DEVICE_SUBCLASS	           	  0x00
 #define DEVICE_PROTOCOL					  0x01
+#define REQUEST_TYPE                      0b01100000u
+#define REQUEST_RECIPIENT                 0b00011111u
 
 static usb_descriptor_device usbGenericDescriptor_Device =
   {                                                                     
@@ -453,12 +455,14 @@ void usb_generic_disable(void) {
 }
 
 static RESULT usbDataSetup(uint8 request) {
-    if (Type_Recipient & INTERFACE_RECIPIENT) {
+    if ((Type_Recipient & REQUEST_RECIPIENT) == INTERFACE_RECIPIENT) {
         uint8 interface  = pInformation->USBwIndex0;
         for (unsigned i = 0 ; i < numParts ; i++) {
             USBCompositePart* p = parts[i];
-            if (p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
-                return parts[i]->usbDataSetup(request, interface - p->startInterface);
+            if (p->usbDataSetup && p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
+                // uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength
+                return parts[i]->usbDataSetup(request, interface - p->startInterface, pInformation->USBbmRequestType, pInformation->USBwValue0, 
+                    pInformation->USBwValue1, pInformation->USBwIndex, pInformation->USBwLength);
         }
     }
 
@@ -467,12 +471,16 @@ static RESULT usbDataSetup(uint8 request) {
 }
 
 static RESULT usbNoDataSetup(uint8 request) {
-    uint8 interface  = pInformation->USBwIndex0;
-    
-    for (unsigned i = 0 ; i < numParts ; i++) {
-        USBCompositePart* p = parts[i];
-        if (p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
-            return parts[i]->usbNoDataSetup(request, interface - p->startInterface);
+    if ((Type_Recipient & REQUEST_RECIPIENT) == INTERFACE_RECIPIENT) {
+        uint8 interface  = pInformation->USBwIndex0;
+        
+        for (unsigned i = 0 ; i < numParts ; i++) {
+            USBCompositePart* p = parts[i];
+            // uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength
+            if (p->usbNoDataSetup && p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
+                return parts[i]->usbNoDataSetup(request, interface - p->startInterface, pInformation->USBbmRequestType, pInformation->USBwValue0, 
+                    pInformation->USBwValue1, pInformation->USBwIndex);
+        }
     }
 
     return USB_UNSUPPORT;

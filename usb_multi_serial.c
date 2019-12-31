@@ -71,8 +71,8 @@
 #include "usb_def.h"
 
 static void serialUSBReset(void);
-static RESULT serialUSBDataSetup(uint8 request, uint8 interface);
-static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface);
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex);
 static void vcomDataTxCb0(void);
 static void vcomDataRxCb0(void);
 static void vcomDataTxCb1(void);
@@ -673,10 +673,11 @@ static void serialUSBReset(void) {
     }
 }
 
-static RESULT serialUSBDataSetup(uint8 request, uint8 interface) {
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
+    if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
             uint32 port = interface / NUM_INTERFACES;
             switch (request) {
             case USBHID_CDCACM_GET_LINE_CODING:
@@ -705,10 +706,10 @@ static RESULT serialUSBDataSetup(uint8 request, uint8 interface) {
     return USB_SUCCESS;
 }
 
-static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface) {
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
     RESULT ret = USB_UNSUPPORT;
     
-	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
+	if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
             volatile struct port_data* p = &ports[interface / NUM_INTERFACES];
             switch(request) {
                 case USBHID_CDCACM_SET_COMM_FEATURE:
@@ -717,9 +718,9 @@ static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface) {
                     break;
                 case USBHID_CDCACM_SET_CONTROL_LINE_STATE:
                     /* Track changes to DTR and RTS. */
-                    p->line_dtr_rts = (pInformation->USBwValues.bw.bb0 &
+                    p->line_dtr_rts = wValue0 &
                                         (USBHID_CDCACM_CONTROL_LINE_DTR |
-                                         USBHID_CDCACM_CONTROL_LINE_RTS));
+                                         USBHID_CDCACM_CONTROL_LINE_RTS);
                     ret = USB_SUCCESS;
                     break;
             }

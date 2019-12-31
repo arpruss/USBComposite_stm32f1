@@ -107,8 +107,8 @@ static void x360DataTxCb3(void) { x360DataTxCb(3); }
 static void x360DataRxCb3(void) { x360DataRxCb(3); }
 
 static void x360Reset(void);
-static RESULT x360DataSetup(uint8 request, uint8 interface);
-static RESULT x360NoDataSetup(uint8 request, uint8 interface);
+static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
+static RESULT x360NoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex);
 
 /*
  * Descriptors
@@ -434,26 +434,21 @@ static uint8* HID_GetProtocolValue3(uint16 n) { return HID_GetProtocolValue(3, n
 
 static uint8* (*HID_GetProtocolValues[USB_X360_MAX_CONTROLLERS])(uint16 Length) = { HID_GetProtocolValue0, HID_GetProtocolValue1, HID_GetProtocolValue2, HID_GetProtocolValue3 };
 
-static RESULT x360DataSetup(uint8 request, uint8 interface) {
+
+static void x360Reset(void) {
+      /* Reset the RX/TX state */
+    for (uint8 i = 0 ; i < x360_num_controllers ; i++) {
+        volatile struct controller_data* c = &controllers[i];
+        c->n_unsent_bytes = 0;
+        c->transmitting = 0;
+    }
+}
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     uint8* (*CopyRoutine)(uint16) = 0;
 	
-#if 0			
-	if (request == GET_DESCRIPTOR
-        && pInformation->USBwIndex0 == X360_INTERFACE_NUMBER?? && 
-		&& (Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT))){
-		if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
-			CopyRoutine = HID_GetReportDescriptor;
-		} else 
-        if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
-			CopyRoutine = HID_GetHIDDescriptor;
-		}
-		
-	} /* End of GET_DESCRIPTOR */
-	  /*** GET_PROTOCOL ***/
-	else 
-#endif            
-    
-    if((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) && request == GET_PROTOCOL) {
+    if(requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == GET_PROTOCOL) {
         CopyRoutine = HID_GetProtocolValues[interface / NUM_INTERFACES];
 	}
     else {
@@ -466,21 +461,11 @@ static RESULT x360DataSetup(uint8 request, uint8 interface) {
     return USB_SUCCESS;
 }
 
-static RESULT x360NoDataSetup(uint8 request, uint8 interface) {
-	if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
-		&& (request == SET_PROTOCOL)){
-		controllers[interface / NUM_INTERFACES].ProtocolValue = pInformation->USBwValue0;
+static RESULT x360NoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
+	if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == SET_PROTOCOL) {
+		controllers[interface / NUM_INTERFACES].ProtocolValue = wValue0;
 		return USB_SUCCESS;
 	}else{
 		return USB_UNSUPPORT;
 	}
-}
-
-static void x360Reset(void) {
-      /* Reset the RX/TX state */
-    for (uint8 i = 0 ; i < x360_num_controllers ; i++) {
-        volatile struct controller_data* c = &controllers[i];
-        c->n_unsent_bytes = 0;
-        c->transmitting = 0;
-    }
 }

@@ -72,8 +72,7 @@ static srr_data sample_rate_range = {
 static void audioDataTxCb(void);
 static void audioDataRxCb(void);
 static void audioUSBReset(void);
-static RESULT audioUSBDataSetup(uint8 request, uint8 interface);
-static RESULT audioUSBNoDataSetup(uint8 request, uint8 interface);
+static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
 static uint8_t *audio_get(uint16_t Length);
 static uint8_t *audio_set(uint16_t Length);
 static void (*packet_callback)(uint8) = 0;
@@ -457,7 +456,7 @@ USBCompositePart usbAUDIOPart = {
     .usbInit = NULL,
     .usbReset = audioUSBReset,
     .usbDataSetup = audioUSBDataSetup,
-    .usbNoDataSetup = audioUSBNoDataSetup,
+    .usbNoDataSetup = NULL,
     .usbClearFeature = NULL,
     .usbSetConfiguration = NULL
 };
@@ -688,34 +687,6 @@ static void audioUSBReset(void) {
     }
 }
 
-static RESULT audioUSBDataSetup(uint8 request, uint8 interface) {
-    (void)interface;
-    (void)request;
-	uint8_t *(*CopyRoutine)(uint16_t) = NULL;
-	switch (pInformation->USBbmRequestType) {
-		case 0x21:
-			CopyRoutine = audio_set;
-			break;
-		case 0xA1:
-			CopyRoutine = audio_get;
-			break;
-		default:
-			return USB_UNSUPPORT;
-	}
-
-	pInformation->Ctrl_Info.CopyData = CopyRoutine;
-	pInformation->Ctrl_Info.Usb_wOffset = 0;
-	(*CopyRoutine)(0);
-
-	return USB_SUCCESS;
-}
-
-static RESULT audioUSBNoDataSetup(uint8 request, uint8 interface) {
-    (void)request;
-    (void)interface;
-    return USB_UNSUPPORT;
-}
-
 uint8_t *audio_set(uint16_t Length) {
     if (!Length) {
         pInformation->Ctrl_Info.Usb_wLength = pInformation->USBwLengths.w;
@@ -756,3 +727,25 @@ uint8_t *audio_get(uint16_t Length) {
 
     return NULL;
 }
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
+	uint8_t *(*CopyRoutine)(uint16_t) = NULL;
+	switch (requestType) {
+		case 0x21:
+			CopyRoutine = audio_set;
+			break;
+		case 0xA1:
+			CopyRoutine = audio_get;
+			break;
+		default:
+			return USB_UNSUPPORT;
+	}
+
+	pInformation->Ctrl_Info.CopyData = CopyRoutine;
+	pInformation->Ctrl_Info.Usb_wOffset = 0;
+	(*CopyRoutine)(0);
+
+	return USB_SUCCESS;
+}
+

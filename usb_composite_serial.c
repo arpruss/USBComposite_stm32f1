@@ -60,8 +60,8 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 #include "usb_def.h"
 
 static void serialUSBReset(void);
-static RESULT serialUSBDataSetup(uint8 request, uint8 interface);
-static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface);
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex);
 static void vcomDataTxCb(void);
 static void vcomDataRxCb(void);
 
@@ -543,11 +543,10 @@ static void serialUSBReset(void) {
     vcom_tx_tail = 0;
 }
 
-static RESULT serialUSBDataSetup(uint8 request, uint8 interface) {
+static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
-    if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
-		interface == CCI_INTERFACE_OFFSET) {        
+    if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
             CopyRoutine = vcomGetSetLineCoding;
@@ -575,11 +574,10 @@ static RESULT serialUSBDataSetup(uint8 request, uint8 interface) {
     return USB_SUCCESS;
 }
 
-static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface) {
+static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
     RESULT ret = USB_UNSUPPORT;
     
-	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT) &&
-		interface == CCI_INTERFACE_OFFSET) { 
+	if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) { 
         switch(request) {
             case USBHID_CDCACM_SET_COMM_FEATURE:
 	            /* We support set comm. feature, but don't handle it. */
@@ -587,7 +585,7 @@ static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface) {
 	            break;
 	        case USBHID_CDCACM_SET_CONTROL_LINE_STATE:
 	            /* Track changes to DTR and RTS. */
-                line_dtr_rts = (pInformation->USBwValues.bw.bb0 &
+                line_dtr_rts = (wValue0 &
                                     (USBHID_CDCACM_CONTROL_LINE_DTR |
                                      USBHID_CDCACM_CONTROL_LINE_RTS));
                 ret = USB_SUCCESS;

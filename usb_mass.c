@@ -23,8 +23,8 @@ static void usb_mass_bot_cbw_decode();
 
 static void usb_mass_set_configuration();
 static void usb_mass_clear_feature();
-static RESULT usb_mass_data_setup(uint8 request, uint8 interface);
-static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface);
+static RESULT usb_mass_data_setup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
+static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex);
 static void usb_mass_reset();
 static uint8_t* usb_mass_get_max_lun(uint16_t Length);
 static void usb_mass_in(void);
@@ -174,14 +174,13 @@ static void usb_mass_clear_feature(void) {
   }
 }
 
-static RESULT usb_mass_data_setup(uint8 request, uint8 interface) {
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static RESULT usb_mass_data_setup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     (void)interface; // only one interface
   uint8_t * (*copy_routine)(uint16_t);
 
   copy_routine = NULL;
-  if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
-          && (request == REQUEST_GET_MAX_LUN) && (pInformation->USBwValue == 0)
-          && (pInformation->USBwLength == 0x01)) {
+  if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_GET_MAX_LUN && wValue0 == 0 && wValue1 == 0 && wLength == 0x01) {
     copy_routine = usb_mass_get_max_lun;
   } else {
     return USB_UNSUPPORT;
@@ -207,11 +206,8 @@ static uint8_t* usb_mass_get_max_lun(uint16_t length) {
   }
 }
 
-static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface) {
-    (void)interface; // only one interface
-  if ((Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT))
-          && (request == REQUEST_MASS_STORAGE_RESET) && (pInformation->USBwValue == 0)
-          && (pInformation->USBwLength == 0x00)) {
+static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
+  if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_MASS_STORAGE_RESET && wValue0 == 0 && wValue1 == 0) {
 
     /* Initialize Endpoint 1 */
     ClearDTOG_TX(USB_MASS_TX_ENDP);
