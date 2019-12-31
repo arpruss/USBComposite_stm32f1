@@ -46,7 +46,7 @@
 #define HID_BUFFER_MODE_OUTPUT  2
 
 #define HID_BUFFER_EMPTY    0 
-#define HID_BUFFER_UNREAD   1
+#define HID_BUFFER_UNREAD   USB_CONTROL_DONE
 #define HID_BUFFER_READ     2
 
 extern USBCompositePart usbHIDPart;
@@ -56,7 +56,6 @@ typedef struct HIDBuffer_t {
     uint16_t bufferSize; // this should match HID_BUFFER_SIZE
     uint8_t  reportID;
     uint8_t  mode;
-    uint16_t currentDataSize;
     uint8_t  state; // HID_BUFFER_EMPTY, etc.
 #ifdef __cplusplus
     inline HIDBuffer_t(volatile uint8_t* _buffer=NULL, uint16_t _bufferSize=0, uint8_t _reportID=0, uint8_t _mode=0) {

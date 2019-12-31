@@ -6,6 +6,8 @@ typedef unsigned char u8;
 #include <usb_core.h>
 #include <libmaple/usb.h>
 
+#define USB_CONTROL_DONE 1
+
 #define PMA_MEMORY_SIZE 512
 #define MAX_USB_DESCRIPTOR_DATA_SIZE 200
 
@@ -48,6 +50,8 @@ typedef struct USBCompositePart {
 void usb_generic_set_disconnect_delay(uint32 delay);
 void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
+void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
+void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
 void usb_generic_disable(void);
 void usb_generic_enable(void);
 extern volatile int8 usbGenericTransmitting;

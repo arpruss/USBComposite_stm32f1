@@ -543,6 +543,7 @@ static void serialUSBReset(void) {
     vcom_tx_tail = 0;
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     uint8* (*CopyRoutine)(uint16) = 0;
     

@@ -74,12 +74,19 @@ static void usbSetConfiguration(void);
 static void usbSetDeviceAddress(void);
 static uint32 disconnect_delay = 500; // in microseconds
 
+static volatile uint8* control_tx_buffer = NULL;
+static uint16 control_tx_length = 0;
+static volatile uint8* control_tx_done = NULL;
+static volatile uint8* control_rx_buffer = NULL;
+static uint16 control_rx_length = 0;
+static volatile uint8* control_rx_done = NULL;
+
 #define LEAFLABS_ID_VENDOR                0x1EAF
 #define MAPLE_ID_PRODUCT                  0x0024 // was 0x0024
 #define USB_DEVICE_CLASS              	  0x00
 #define USB_DEVICE_SUBCLASS	           	  0x00
 #define DEVICE_PROTOCOL					  0x01
-#define REQUEST_TYPE                      0b01100000u
+//#define REQUEST_TYPE                      0b01100000u
 #define REQUEST_RECIPIENT                 0b00011111u
 
 static usb_descriptor_device usbGenericDescriptor_Device =
@@ -422,6 +429,8 @@ static void usbReset(void) {
     }
     
     usbGenericTransmitting = -1;
+    control_rx_length = 0;
+    control_tx_length = 0;
     
     USBLIB->state = USB_ATTACHED;
     SetDeviceAddress(0);
@@ -452,6 +461,63 @@ void usb_generic_disable(void) {
     for (uint32 i=0; i < numParts; i++)
         if (parts[i]->clear)
             parts[i]->clear();
+}
+
+static uint8* control_data_tx(uint16 length) {
+    unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
+    
+    if (length == 0) {
+        pInformation->Ctrl_Info.Usb_wLength = control_tx_length - wOffset;
+        return NULL;
+    }
+
+    if (control_tx_done && pInformation->USBwLengths.w <= wOffset + pInformation->Ctrl_Info.PacketSize)
+        *control_tx_done = USB_CONTROL_DONE; // this may be a bit premature, but it's our best try
+
+    return (uint8*)control_tx_buffer + wOffset;
+}
+
+void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done) {
+    control_tx_buffer = buffer;
+    control_tx_length = length;
+    control_tx_done = done;
+    pInformation->Ctrl_Info.CopyData = control_data_tx;
+    pInformation->Ctrl_Info.Usb_wOffset = 0;
+    control_data_tx(0);
+}
+
+static uint8* control_data_rx(uint16 length) {
+    unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
+    
+    if (length ==0) {
+        uint16 len = pInformation->USBwLengths.w;
+        if (len > control_tx_length)
+            len = control_tx_length;
+        
+        if (wOffset < len) { 
+            pInformation->Ctrl_Info.Usb_wLength = len - wOffset;
+        }
+        else {
+            pInformation->Ctrl_Info.Usb_wLength = 0; 
+        }
+
+        return NULL;
+    }
+    
+    if (control_rx_done && pInformation->USBwLengths.w <= wOffset + pInformation->Ctrl_Info.PacketSize) {
+        *control_rx_done = USB_CONTROL_DONE; // this may be a bit premature, but it's our best try
+    }
+    
+    return (uint8*)control_rx_buffer + wOffset;
+}
+
+void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done) {
+    control_rx_buffer = buffer;
+    control_rx_length = length;
+    control_rx_done = done;
+    pInformation->Ctrl_Info.CopyData = control_data_rx;
+    pInformation->Ctrl_Info.Usb_wOffset = 0;
+    control_data_rx(0);
 }
 
 static RESULT usbDataSetup(uint8 request) {
