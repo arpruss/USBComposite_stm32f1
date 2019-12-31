@@ -91,7 +91,7 @@ public:
         return true;
     };
 
-	operator bool() { return true; } // Roger Clark. This is needed because in cardinfo.ino it does if (!Serial) . It seems to be a work around for the Leonardo that we needed to implement just to be compliant with the API
+	operator bool() { return USBComposite.isReady(); } 
     
     USBSerialPort ports[numPorts];
 

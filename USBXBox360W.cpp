@@ -30,15 +30,15 @@ void USBXBox360WController::send(void){
 const uint8 startup[] = {0x00,0x0F,0x00,0xF0,0xF0,0xCC,0x42,0xAF,0x3C,0x60,0xAC,0x24,0xFB,0x50,0x00,0x05,0x13,0xE7,0x20,0x1D,0x30,0x03,0x40,0x01,0x50,0x01,0xFF,0xFF,0xFF };
 
 bool USBXBox360WController::connect(bool state) {
-    delay(250);
+//    delay(250);
     report.header[0] = 0x08;
     report.header[1] = state ? 0x80 : 0x00;
     if (!sendData(&report.header, 2))
         return false;
-    delay(250);
+//    delay(250);
     if (state && !sendData(startup, 29))
         return false;
-    delay(250);
+//    delay(250);
     connected = state;
     return true;
 }

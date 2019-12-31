@@ -4,6 +4,7 @@ USBMultiSerial<2> ms;
 
 void setup() {
   ms.begin();
+  while (!USBComposite);
 }
 
 void loop() {

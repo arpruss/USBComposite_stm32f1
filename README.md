@@ -60,6 +60,11 @@ Of course, you may need to do some further configuring of the plugins (e.g., if 
 you may want to do `USBHID.setReportDescriptor(HID_KEYBOARD)`) or of the `USBComposite` device
 before the `USBComposite.begin()` call.
 
+After starting up USBComposite, it's a good idea to wait for it to become ready before sending any data:
+```
+while(!USBComposite);
+```
+
 Finally, there are a number of classes that implement particular protocols for the `USBHID` class plugin.
 These are:
 ```

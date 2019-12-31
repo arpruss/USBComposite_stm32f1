@@ -6,12 +6,6 @@
 #include "usb_generic.h"
 //#include <libmaple/usb.h>
 
-#include <USBCompositeSerial.h>
-#include <USBHID.h>
-#include <USBMassStorage.h>
-#include <USBMIDI.h>
-#include <USBAudio.h>
-
 #define USB_MAX_PRODUCT_LENGTH 32
 #define USB_MAX_MANUFACTURER_LENGTH 32
 #define USB_MAX_SERIAL_NUMBER_LENGTH  20
@@ -59,12 +53,20 @@ public:
     }
     bool isReady() {
         return enabled && usb_is_connected(USBLIB) && usb_is_configured(USBLIB);    
+    }   
+    operator bool() { 
+        return isReady(); 
     }
     bool add(USBCompositePart* part, void* plugin, USBPartInitializer init = NULL, USBPartStopper stop = NULL);
 };
 
 extern USBCompositeDevice USBComposite;
 
+#include <USBCompositeSerial.h>
+#include <USBHID.h>
+#include <USBMassStorage.h>
+#include <USBMIDI.h>
+#include <USBAudio.h>
 #include <USBMultiSerial.h>
 #include <USBXBox360.h>
 #endif

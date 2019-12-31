@@ -17,6 +17,7 @@ void setup() {
   pinMode(LED, OUTPUT);
   digitalWrite(LED, 1);
   x360.begin();
+  while (!USBComposite);
   x360.controllers[0].setRumbleCallback(rumble);
   // the next two lines are not necessary as the library will
   // autoconnect when data is sent

@@ -91,6 +91,7 @@ void setup() {
   HID.setReportDescriptor(signedJoyReportDescriptor,sizeof(signedJoyReportDescriptor));
   HID.registerComponent();
   USBComposite.begin();  
+  while (!USBComposite);
 }
 
 void loop() {

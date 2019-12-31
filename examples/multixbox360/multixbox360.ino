@@ -19,6 +19,7 @@ void setup() {
   pinMode(LED, OUTPUT);
   x360.registerComponent();
   USBComposite.begin();
+  while (!USBComposite);
   x360.controllers[0].setRumbleCallback(rumble);
 }
 
