@@ -461,7 +461,7 @@ static RESULT usbDataSetup(uint8 request) {
             USBCompositePart* p = parts[i];
             if (p->usbDataSetup && p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
                 // uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength
-                return parts[i]->usbDataSetup(request, interface - p->startInterface, pInformation->USBbmRequestType, pInformation->USBwValue0, 
+                return parts[i]->usbDataSetup(request, interface - p->startInterface, Type_Recipient, pInformation->USBwValue0, 
                     pInformation->USBwValue1, pInformation->USBwIndex, pInformation->USBwLength);
         }
     }
@@ -478,7 +478,7 @@ static RESULT usbNoDataSetup(uint8 request) {
             USBCompositePart* p = parts[i];
             // uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength
             if (p->usbNoDataSetup && p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
-                return parts[i]->usbNoDataSetup(request, interface - p->startInterface, pInformation->USBbmRequestType, pInformation->USBwValue0, 
+                return parts[i]->usbNoDataSetup(request, interface - p->startInterface, Type_Recipient, pInformation->USBwValue0, 
                     pInformation->USBwValue1, pInformation->USBwIndex);
         }
     }
