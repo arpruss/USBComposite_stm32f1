@@ -75,11 +75,6 @@ static volatile HIDBuffer_t* currentHIDBuffer = NULL;
  * Descriptors
  */
  
-static ONE_DESCRIPTOR HID_Report_Descriptor = {
-    (uint8*)NULL,
-    0
-};
-
 
 #define HID_ENDPOINT_TX      0
 #define USB_HID_TX_ENDP (hidEndpoints[HID_ENDPOINT_TX].address)
@@ -123,6 +118,16 @@ static const hid_part_config hidPartConfigData = {
         .wMaxPacketSize   = 64, //PATCH
         .bInterval        = 0x0A,
 	}
+};
+
+static ONE_DESCRIPTOR HID_Report_Descriptor = {
+    (uint8*)NULL,
+    0
+};
+
+static ONE_DESCRIPTOR HID_Hid_Descriptor = {
+    (uint8*)&hidPartConfigData.HID_Descriptor,
+    sizeof(hidPartConfigData.HID_Descriptor)
 };
 
 static USBEndpointInfo hidEndpoints[1] = {
@@ -477,6 +482,15 @@ static uint8* HID_GetFeature(uint16 length) {
     return (uint8*)currentHIDBuffer->buffer + wOffset;
 }
 
+static uint8* HID_GetReportDescriptor(uint16 Length){
+  return Standard_GetDescriptorData(Length, &HID_Report_Descriptor);
+}
+
+static uint8_t *HID_GetHIDDescriptor(uint16_t Length)
+{
+  return Standard_GetDescriptorData(Length, &HID_Hid_Descriptor);
+}
+
 static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
     (void)interface; // only one interface
     uint8* (*CopyRoutine)(uint16) = 0;
@@ -539,7 +553,11 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface) {
     		case GET_DESCRIPTOR:
 				if (pInformation->USBwValue1 == REPORT_DESCRIPTOR){
 					CopyRoutine = HID_GetReportDescriptor;
-				} 					
+				} 		
+				else if (pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
+					CopyRoutine = HID_GetHIDDescriptor;
+				} 		
+			
     			break;
     		case GET_PROTOCOL:
     			CopyRoutine = HID_GetProtocolValue;
@@ -587,9 +605,5 @@ static uint8* HID_GetProtocolValue(uint16 Length){
 	} else {
 		return (uint8 *)(&ProtocolValue);
 	}
-}
-
-static uint8* HID_GetReportDescriptor(uint16 Length){
-  return Standard_GetDescriptorData(Length, &HID_Report_Descriptor);
 }
 

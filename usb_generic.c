@@ -79,7 +79,6 @@ static uint32 disconnect_delay = 500; // in microseconds
 #define USB_DEVICE_CLASS              	  0x00
 #define USB_DEVICE_SUBCLASS	           	  0x00
 #define DEVICE_PROTOCOL					  0x01
-#define HID_DESCRIPTOR_TYPE               0x21
 
 static usb_descriptor_device usbGenericDescriptor_Device =
   {                                                                     
@@ -454,24 +453,16 @@ void usb_generic_disable(void) {
 }
 
 static RESULT usbDataSetup(uint8 request) {
-	if(Type_Recipient == (STANDARD_REQUEST | INTERFACE_RECIPIENT) && request == GET_DESCRIPTOR &&
-        pInformation->USBwValue1 == HID_DESCRIPTOR_TYPE){
-            
-        pInformation->Ctrl_Info.CopyData = usbGetConfigDescriptor;
-        pInformation->Ctrl_Info.Usb_wOffset = 0;
-        usbGetConfigDescriptor(0);
-        return USB_SUCCESS;        
-    }
-    else {
+    if (Type_Recipient & INTERFACE_RECIPIENT) {
         uint8 interface  = pInformation->USBwIndex0;
         for (unsigned i = 0 ; i < numParts ; i++) {
             USBCompositePart* p = parts[i];
             if (p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
                 return parts[i]->usbDataSetup(request, interface - p->startInterface);
         }
-
-        return USB_UNSUPPORT;
     }
+
+    return USB_UNSUPPORT;
     
 }
 
