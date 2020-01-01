@@ -292,7 +292,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     return 1;
 }
 
-void usb_generic_set_info( uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber) {
+void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber) {
     if (idVendor != 0)
         usbGenericDescriptor_Device.idVendor = idVendor;
     else
