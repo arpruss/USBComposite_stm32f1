@@ -52,6 +52,7 @@ void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManuf
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
 void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
 void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
+void usb_generic_control_tx_descriptor_setup(ONE_DESCRIPTOR* d);
 void usb_generic_disable(void);
 void usb_generic_enable(void);
 extern volatile int8 usbGenericTransmitting;

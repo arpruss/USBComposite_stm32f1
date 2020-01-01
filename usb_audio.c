@@ -73,8 +73,6 @@ static void audioDataTxCb(void);
 static void audioDataRxCb(void);
 static void audioUSBReset(void);
 static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
-static uint8_t *audio_get(uint16_t Length);
-static uint8_t *audio_set(uint16_t Length);
 static void (*packet_callback)(uint8) = 0;
 
 /*

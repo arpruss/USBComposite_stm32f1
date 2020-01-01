@@ -489,6 +489,10 @@ void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile
     control_data_tx(0);
 }
 
+void usb_generic_control_descriptor_tx_setup(ONE_DESCRIPTOR* d) {
+    usb_generic_control_tx_setup(d->Descriptor, d->Descriptor_Size, NULL);
+}
+
 static uint8* control_data_rx(uint16 length) {
     unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
     
