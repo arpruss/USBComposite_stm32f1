@@ -39,6 +39,7 @@
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
 #include <libmaple/delay.h>
+//#include <libmaple/gpio.h>
 
 /* Private headers */
 #include "usb_lib_globals.h"
@@ -528,13 +529,6 @@ static void vcomDataRxCb(void)
     }
 }
 
-static uint8* vcomGetSetLineCoding(uint16 length) {
-    if (length == 0) {
-        pInformation->Ctrl_Info.Usb_wLength = sizeof(struct composite_cdcacm_line_coding);
-    }
-    return (uint8*)&line_coding;
-}
-
 static void serialUSBReset(void) {
     //VCOM
     vcom_rx_head = 0;
@@ -545,15 +539,17 @@ static void serialUSBReset(void) {
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-    uint8* (*CopyRoutine)(uint16) = 0;
+    RESULT ret = USB_UNSUPPORT;
     
     if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
-            CopyRoutine = vcomGetSetLineCoding;
+            usb_generic_control_tx_setup(&line_coding, sizeof(line_coding), NULL);
+            ret = USB_SUCCESS;
             break;
         case USBHID_CDCACM_SET_LINE_CODING:
-            CopyRoutine = vcomGetSetLineCoding;
+            usb_generic_control_rx_setup(&line_coding, sizeof(line_coding), NULL);
+            ret = USB_SUCCESS;
             break;
         default:
             break;
@@ -565,14 +561,7 @@ static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestTy
         }
     }
 	
-	if (CopyRoutine == NULL){
-		return USB_UNSUPPORT;
-	}
-    
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
+    return ret;
 }
 
 static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {

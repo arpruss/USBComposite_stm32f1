@@ -446,26 +446,17 @@ static void x360Reset(void) {
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-    uint8* (*CopyRoutine)(uint16) = 0;
-	
     if(requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == GET_PROTOCOL) {
-        CopyRoutine = HID_GetProtocolValues[interface / NUM_INTERFACES];
+        usb_generic_control_tx_setup(&HID_GetProtocolValues[interface / NUM_INTERFACES], 1, NULL);
+        return USB_SUCCESS;
 	}
-    else {
-		return USB_UNSUPPORT;
-	}
-
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
+    return USB_UNSUPPORT;
 }
 
 static RESULT x360NoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
 	if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == SET_PROTOCOL) {
 		controllers[interface / NUM_INTERFACES].ProtocolValue = wValue0;
 		return USB_SUCCESS;
-	}else{
-		return USB_UNSUPPORT;
-	}
+    }
+    return USB_UNSUPPORT;
 }

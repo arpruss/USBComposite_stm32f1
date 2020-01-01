@@ -641,27 +641,6 @@ static void vcomDataRxCb(uint32 port)
     }
 }
 
-static uint8* vcomGetSetLineCoding(uint32 port, uint16 length) {
-    if (length == 0) {
-        pInformation->Ctrl_Info.Usb_wLength = sizeof(struct composite_cdcacm_line_coding);
-    }
-    return (uint8*)&ports[port].line_coding;
-}
-
-static uint8* vcomGetSetLineCoding0(uint16 length) {
-    return vcomGetSetLineCoding(0, length);
-}
-
-static uint8* vcomGetSetLineCoding1(uint16 length) {
-    return vcomGetSetLineCoding(1, length);
-}
-
-static uint8* vcomGetSetLineCoding2(uint16 length) {
-    return vcomGetSetLineCoding(1, length);
-}
-
-static uint8* (*vcomGetSetLineCodings[])(uint16) = { vcomGetSetLineCoding0, vcomGetSetLineCoding1, vcomGetSetLineCoding2 };
-
 static void serialUSBReset(void) {
     //VCOM
     for (uint32 port = 0; port<numPorts; port++) {
@@ -675,16 +654,18 @@ static void serialUSBReset(void) {
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-    uint8* (*CopyRoutine)(uint16) = 0;
+    RESULT ret = USB_UNSUPPORT;
     
     if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface % NUM_INTERFACES == CCI_INTERFACE_OFFSET) {
             uint32 port = interface / NUM_INTERFACES;
             switch (request) {
             case USBHID_CDCACM_GET_LINE_CODING:
-                CopyRoutine = vcomGetSetLineCodings[port];
+                usb_generic_control_tx_setup(&ports[port].line_coding, sizeof(ports[port].line_coding), NULL);
+                ret = USB_SUCCESS;
                 break;
             case USBHID_CDCACM_SET_LINE_CODING:
-                CopyRoutine = vcomGetSetLineCodings[port];
+                usb_generic_control_rx_setup(&ports[port].line_coding, sizeof(ports[port].line_coding), NULL);
+                ret = USB_SUCCESS;
                 break;
             default:
                 break;
@@ -696,14 +677,7 @@ static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestTy
             }
     }
 	
-	if (CopyRoutine == NULL){
-		return USB_UNSUPPORT;
-	}
-    
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
+    return ret;
 }
 
 static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
