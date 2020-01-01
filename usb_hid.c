@@ -449,7 +449,7 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
 				volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, wValue0);
 				
 				if (buffer == NULL || buffer->state == HID_BUFFER_EMPTY) {
-					return USB_UNSUPPORT;
+					return USB_UNSUPPORT; // TODO: maybe UNREADY on empty
 				}
 
                 usb_generic_control_tx_setup(buffer->buffer, buffer->bufferSize, NULL);
