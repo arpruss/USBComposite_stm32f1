@@ -687,65 +687,39 @@ static void audioUSBReset(void) {
     }
 }
 
-uint8_t *audio_set(uint16_t Length) {
-    if (!Length) {
-        pInformation->Ctrl_Info.Usb_wLength = pInformation->USBwLengths.w;
-        return NULL;
-    }
-
-    return NULL;
-}
-
-uint8_t *audio_get(uint16_t Length) {
-    if (!Length) {
-        pInformation->Ctrl_Info.Usb_wLength = pInformation->USBwLengths.w;
-        return NULL;
-    }
-
-    if (((pInformation->USBwIndex >> 8) & 0xFF) != CLOCK_SOURCE_ID) {
-        return NULL;
-    }
-
-    switch (pInformation->USBbRequest) {
-        case CUR:
-            switch (Length) {
-                case 1:
-                    return (uint8_t *)(&clock_valid);
-                case 2:
-                    return (uint8_t *)(&sample_rate);
-                case 4:
-                    return (uint8_t *)(&sample_rate_range.min);
-                default:
-                    break;
-            }
-            break;
-        case RANGE:
-                return (uint8_t *)(&sample_rate_range);
-        default:
-            break;
-    }
-
-    return NULL;
-}
-
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-	uint8_t *(*CopyRoutine)(uint16_t) = NULL;
+
 	switch (requestType) {
 		case 0x21:
-			CopyRoutine = audio_set;
-			break;
-		case 0xA1:
-			CopyRoutine = audio_get;
-			break;
-		default:
-			return USB_UNSUPPORT;
+            if ((wIndex >> 8) == CLOCK_SOURCE_ID) {
+                switch(request) {
+                    case CUR:
+                        switch(wLength) {
+                            case 1:
+                                usb_generic_control_tx_setup(&clock_valid, 1, NULL);
+                                return USB_SUCCESS;
+                            case 2:
+                                usb_generic_control_tx_setup(&sample_rate, 2, NULL);
+                                return USB_SUCCESS;
+                            case 4:
+                                usb_generic_control_tx_setup(&sample_rate_range.min, 4, NULL);
+                                return USB_SUCCESS;
+                        }
+                        break;
+                    case RANGE:
+                        usb_generic_control_tx_setup(&sample_rate_range, sizeof(sample_rate_range), NULL);
+                        return USB_SUCCESS;
+                }
+            }
+            usb_generic_control_rx_setup(NULL, wLength, NULL);
+            return USB_SUCCESS;
+            
+        case 0xA1:
+            usb_generic_control_rx_setup(NULL, wLength, NULL);
+            return USB_SUCCESS;
 	}
 
-	pInformation->Ctrl_Info.CopyData = CopyRoutine;
-	pInformation->Ctrl_Info.Usb_wOffset = 0;
-	(*CopyRoutine)(0);
-
-	return USB_SUCCESS;
+	return USB_UNSUPPORT;
 }
 

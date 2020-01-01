@@ -474,7 +474,10 @@ static uint8* control_data_tx(uint16 length) {
     if (control_tx_done && pInformation->USBwLengths.w <= wOffset + pInformation->Ctrl_Info.PacketSize)
         *control_tx_done = USB_CONTROL_DONE; // this may be a bit premature, but it's our best try
 
-    return (uint8*)control_tx_buffer + wOffset;
+    if (control_tx_buffer == NULL)
+        return NULL;
+    else
+        return (uint8*)control_tx_buffer + wOffset;
 }
 
 void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done) {
@@ -491,8 +494,8 @@ static uint8* control_data_rx(uint16 length) {
     
     if (length ==0) {
         uint16 len = pInformation->USBwLengths.w;
-        if (len > control_tx_length)
-            len = control_tx_length;
+        if (len > control_rx_length)
+            len = control_rx_length;
         
         if (wOffset < len) { 
             pInformation->Ctrl_Info.Usb_wLength = len - wOffset;
@@ -508,7 +511,10 @@ static uint8* control_data_rx(uint16 length) {
         *control_rx_done = USB_CONTROL_DONE; // this may be a bit premature, but it's our best try
     }
     
-    return (uint8*)control_rx_buffer + wOffset;
+    if (control_rx_buffer == NULL)
+        return NULL;
+    else
+        return (uint8*)control_rx_buffer + wOffset;
 }
 
 void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done) {
