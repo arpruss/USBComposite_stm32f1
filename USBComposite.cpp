@@ -17,7 +17,7 @@ static char* putSerialNumber(char* out, int nibbles, uint32 id) {
     return out;
 }
 
-const char* getDeviceIDString() {
+char* getDeviceIDString() {
     static char string[80/4+1];
     char* p = string;
     
@@ -42,7 +42,7 @@ USBCompositeDevice::USBCompositeDevice(void) {
         setManufacturerString(NULL);
         setProductString(NULL);
         setSerialString(NULL);
-    }
+}
 
 void USBCompositeDevice::setVendorId(uint16 _vendorId) {
     if (_vendorId != 0)

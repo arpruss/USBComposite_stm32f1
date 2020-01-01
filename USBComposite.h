@@ -10,8 +10,7 @@
 
 // You could use this for a serial number, but you'll be revealing the device ID to the host,
 // and hence burning it for cryptographic purposes.
-const char* getDeviceIDString();
-
+char* getDeviceIDString();
 
 class USBCompositeDevice;
 
