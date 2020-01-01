@@ -47,7 +47,6 @@
 #include <board/board.h>
 
 
-//uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 
 /* usb_lib headers */
 #include "usb_type.h"
@@ -55,6 +54,9 @@
 #include "usb_def.h"
 
 #include "usb_generic.h"
+
+const char DEFAULT_PRODUCT[] = "Maple";
+const char DEFAULT_MANUFACTURER[] = "LeafLabs";
 
 // Are we currently sending an IN packet?
 volatile int8 usbGenericTransmitting = -1;
@@ -144,29 +146,22 @@ static DEVICE my_Device_Table = {
 };
 
 /* Unicode language identifier: 0x0409 is US English */
-static const usb_descriptor_string usbHIDDescriptor_LangID = {
+static const usb_descriptor_string usb_LangID = {
     .bLength         = USB_DESCRIPTOR_STRING_LEN(1),
     .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
     .bString         = {0x09, 0x04},
 };
 
-#define default_iManufacturer_length 8
-const usb_descriptor_string usb_generic_default_iManufacturer = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {'L', 0, 'e', 0, 'a', 0, 'f', 0, 'L', 0, 'a', 0, 'b', 0, 's', 0},
+static USB_DESCRIPTOR_STRING(USB_DESCRIPTOR_STRING_LEN(USB_MAX_STRING_DESCRIPTOR_LENGTH)) string_descriptor_buffer = {
+    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING
 };
 
-#define default_iProduct_length 5
-const usb_descriptor_string usb_generic_default_iProduct = {
-    .bLength         = USB_DESCRIPTOR_STRING_LEN(default_iProduct_length),
-    .bDescriptorType = USB_DESCRIPTOR_TYPE_STRING,
-    .bString         = {'M', 0, 'a', 0, 'p', 0, 'l', 0, 'e', 0},
+static ONE_DESCRIPTOR generic_string_descriptor = {
+    (uint8*)&string_descriptor_buffer, 0
 };
-
 
 #define MAX_PACKET_SIZE            0x40  /* 64B, maximum for USB FS Devices */
-static DEVICE_PROP my_Device_Property = {
+static const DEVICE_PROP my_Device_Property = {
     .Init                        = usbInit,
     .Reset                       = usbReset,
     .Process_Status_IN           = NOP_Process, 
@@ -198,10 +193,10 @@ static uint8 numStringDescriptors = 3;
 
 #define MAX_STRING_DESCRIPTORS 4
 static ONE_DESCRIPTOR String_Descriptor[MAX_STRING_DESCRIPTORS] = {
-    {(uint8*)&usbHIDDescriptor_LangID,       USB_DESCRIPTOR_STRING_LEN(1)},
-    {(uint8*)&usb_generic_default_iManufacturer,         USB_DESCRIPTOR_STRING_LEN(default_iManufacturer_length)},
-    {(uint8*)&usb_generic_default_iProduct,              USB_DESCRIPTOR_STRING_LEN(default_iProduct_length)},
-    {NULL,                                            0},
+    {(uint8*)&usb_LangID,                  USB_DESCRIPTOR_STRING_LEN(1)},
+    {(uint8*)DEFAULT_MANUFACTURER,         0}, // a 0 in the length field indicates that we synthesize this from an asciiz string
+    {(uint8*)DEFAULT_PRODUCT,              0},
+    {NULL,                                 0},
 };
 
 static USBCompositePart** parts;
@@ -292,7 +287,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     return 1;
 }
 
-void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber) {
+void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber) {
     if (idVendor != 0)
         usbGenericDescriptor_Device.idVendor = idVendor;
     else
@@ -304,18 +299,18 @@ void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManuf
         usbGenericDescriptor_Device.idProduct = MAPLE_ID_PRODUCT;
     
     if (iManufacturer == NULL) {
-        iManufacturer = (uint8*)&usb_generic_default_iManufacturer;
+        iManufacturer = DEFAULT_MANUFACTURER;
     }
            
     String_Descriptor[1].Descriptor = (uint8*)iManufacturer;
-    String_Descriptor[1].Descriptor_Size = iManufacturer[0];
+    String_Descriptor[1].Descriptor_Size = 0;
      
     if (iProduct == NULL) {
-        iProduct = (uint8*)&usb_generic_default_iProduct;
+        iProduct = DEFAULT_PRODUCT;
     }
            
     String_Descriptor[2].Descriptor = (uint8*)iProduct;
-    String_Descriptor[2].Descriptor_Size = iProduct[0];
+    String_Descriptor[2].Descriptor_Size = 0;
     
     if (iSerialNumber == NULL) {
         numStringDescriptors = 3;
@@ -323,10 +318,10 @@ void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManuf
     }
     else {
         String_Descriptor[3].Descriptor = (uint8*)iSerialNumber;
-        String_Descriptor[3].Descriptor_Size = iSerialNumber[0];
+        String_Descriptor[3].Descriptor_Size = 0;
         numStringDescriptors = 4;
         usbGenericDescriptor_Device.iSerialNumber = 3;
-    }    
+    }
 }
  
 void usb_generic_enable(void) {
@@ -489,10 +484,6 @@ void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile
     control_data_tx(0);
 }
 
-void usb_generic_control_descriptor_tx(ONE_DESCRIPTOR* d) {
-    usb_generic_control_tx_setup(d->Descriptor, d->Descriptor_Size, NULL);
-}
-
 static uint8* control_data_rx(uint16 length) {
     unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
     
@@ -597,7 +588,28 @@ static uint8* usbGetStringDescriptor(uint16 length) {
     if (wValue0 >= numStringDescriptors) {
         return NULL;
     }
-    return Standard_GetDescriptorData(length, &String_Descriptor[wValue0]);
+    
+    ONE_DESCRIPTOR* d = &String_Descriptor[wValue0];
+    if (d->Descriptor_Size != 0) {
+        return Standard_GetDescriptorData(length, &String_Descriptor[wValue0]);
+    }
+    else {
+        const char* s = (char*)d->Descriptor;
+        
+        uint32 i = 0;
+        
+        while(*s && i < USB_MAX_STRING_DESCRIPTOR_LENGTH) {
+            string_descriptor_buffer.bString[i] = (uint8)*s;
+            s++;
+            i++;
+        }
+        
+        string_descriptor_buffer.bLength = USB_DESCRIPTOR_STRING_LEN(i);
+        generic_string_descriptor.Descriptor_Size = string_descriptor_buffer.bLength;
+        if (length > string_descriptor_buffer.bLength)
+            length = string_descriptor_buffer.bLength;
+        return Standard_GetDescriptorData(length, &generic_string_descriptor);
+    }            
 }
 
 

@@ -133,7 +133,7 @@ static USBEndpointInfo hidEndpoints[1] = {
     {
         .callback = hidDataTxCb,
         .bufferSize = 64,
-        .type = USB_EP_EP_TYPE_INTERRUPT, // TODO: interrupt???
+        .type = USB_EP_EP_TYPE_INTERRUPT,
         .tx = 1,
     }
 };
@@ -183,8 +183,6 @@ static volatile uint32 hid_tx_head = 0;
 // Read index from hidBufferTx
 static volatile uint32 hid_tx_tail = 0;
 
-#define CDC_SERIAL_RX_BUFFER_SIZE	256 // must be power of 2
-#define CDC_SERIAL_RX_BUFFER_SIZE_MASK (CDC_SERIAL_RX_BUFFER_SIZE-1)
 
  
 
@@ -383,7 +381,6 @@ static void hidDataTxCb(void)
 		return; // it was already flushed, keep Tx endpoint disabled
 	}
 	usbGenericTransmitting = 1;
-    // We can only send up to USBHID_CDCACM_TX_EPSIZE bytes in the endpoint.
     if (tx_unsent > txEPSize) {
         tx_unsent = txEPSize;
     }

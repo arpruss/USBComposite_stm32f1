@@ -6,12 +6,7 @@
 #include "usb_generic.h"
 //#include <libmaple/usb.h>
 
-#define USB_COMPOSITE_MAX_PARTS 7
-
-#define USB_MAX_PRODUCT_LENGTH 32
-#define USB_MAX_MANUFACTURER_LENGTH 32
-#define USB_MAX_SERIAL_NUMBER_LENGTH  20
-
+#define USB_COMPOSITE_MAX_PARTS 6
 
 // You could use this for a serial number, but you'll be revealing the device ID to the host,
 // and hence burning it for cryptographic purposes.
@@ -27,13 +22,9 @@ typedef void(*USBPartStopper)(void*);
 
 class USBCompositeDevice {
 private:
-    bool enabled = false;
-    uint8_t iManufacturer_buffer[USB_DESCRIPTOR_STRING_LEN(USB_MAX_MANUFACTURER_LENGTH)];
-    uint8_t iProduct_buffer[USB_DESCRIPTOR_STRING_LEN(USB_MAX_PRODUCT_LENGTH)];
-    uint8_t iSerialNumber_buffer[USB_DESCRIPTOR_STRING_LEN(USB_MAX_SERIAL_NUMBER_LENGTH)]; 
-    const uint8_t* iManufacturer = NULL;
-    const uint8_t* iProduct = NULL;
-    const uint8_t* iSerialNumber = NULL;
+    const char* iManufacturer = NULL;
+    const char* iProduct = NULL;
+    const char* iSerialNumber = NULL;
     uint16 vendorId;
     uint16 productId;
     USBCompositePart* parts[USB_COMPOSITE_MAX_PARTS];
@@ -41,6 +32,7 @@ private:
     USBPartStopper stop[USB_COMPOSITE_MAX_PARTS];
     void* plugin[USB_COMPOSITE_MAX_PARTS];
     uint32 numParts;
+    bool enabled = false;
 public:
     USBCompositeDevice(void); 
     void setVendorId(uint16 vendor=0);

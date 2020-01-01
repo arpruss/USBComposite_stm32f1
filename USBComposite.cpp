@@ -58,34 +58,16 @@ void USBCompositeDevice::setProductId(uint16 _productId) {
         productId = DEFAULT_PRODUCT_ID;
 }
 
-static void setString(const uint8** outP, uint8* buffer, const char* s, uint32 maxLength) {
-    if (s == NULL) {
-        *outP = NULL;
-    }
-    else {        
-        uint32 n = strlen(s);
-        if (n > maxLength)
-            n = maxLength;
-        buffer[0] = (uint8)USB_DESCRIPTOR_STRING_LEN(n);
-        buffer[1] = USB_DESCRIPTOR_TYPE_STRING;
-        for (uint32 i=0; i<n; i++) {
-            buffer[2 + 2*i] = (uint8)s[i];
-            buffer[2 + 1 + 2*i] = 0;
-        }
-        *outP = buffer;
-    }
-}
-
 void USBCompositeDevice::setManufacturerString(const char* s) {
-    setString(&iManufacturer, iManufacturer_buffer, s, USB_MAX_MANUFACTURER_LENGTH);
+    iManufacturer = s;
 }
 
 void USBCompositeDevice::setProductString(const char* s) {
-    setString(&iProduct, iProduct_buffer, s, USB_MAX_PRODUCT_LENGTH);
+    iProduct = s;
 }
 
 void USBCompositeDevice::setSerialString(const char* s) {
-    setString(&iSerialNumber, iSerialNumber_buffer, s, USB_MAX_SERIAL_NUMBER_LENGTH);
+    iSerialNumber = s;
 }
 
 bool USBCompositeDevice::begin() {

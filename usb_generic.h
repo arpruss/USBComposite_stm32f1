@@ -10,6 +10,7 @@ typedef unsigned char u8;
 
 #define PMA_MEMORY_SIZE 512
 #define MAX_USB_DESCRIPTOR_DATA_SIZE 200
+#define USB_MAX_STRING_DESCRIPTOR_LENGTH 32
 
 #define USB_EP0_BUFFER_SIZE       0x40
 #define USB_EP0_TX_BUFFER_ADDRESS 0x40
@@ -48,7 +49,7 @@ typedef struct USBCompositePart {
 } USBCompositePart;
 
 void usb_generic_set_disconnect_delay(uint32 delay);
-void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const uint8* iManufacturer, const uint8* iProduct, const uint8* iSerialNumber);
+void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber);
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
 void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
 void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
