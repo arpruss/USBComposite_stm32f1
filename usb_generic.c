@@ -489,7 +489,7 @@ void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile
     control_data_tx(0);
 }
 
-void usb_generic_control_descriptor_tx_setup(ONE_DESCRIPTOR* d) {
+void usb_generic_control_descriptor_tx(ONE_DESCRIPTOR* d) {
     usb_generic_control_tx_setup(d->Descriptor, d->Descriptor_Size, NULL);
 }
 

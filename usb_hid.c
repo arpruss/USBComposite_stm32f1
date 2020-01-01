@@ -33,6 +33,7 @@
  * the result made cleaner.
  */
 
+#include "usb_generic.h"
 #include "usb_hid.h"
 #include <string.h>
 #include <libmaple/usb.h>
@@ -465,11 +466,11 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
     	switch (request){
     		case GET_DESCRIPTOR:
 				if (wValue1 == REPORT_DESCRIPTOR){
-                    usb_generic_control_descriptor_tx_setup(&HID_Report_Descriptor);
+                    usb_generic_control_descriptor_tx(&HID_Report_Descriptor);
                     return USB_SUCCESS;
                 } 		
 				else if (wValue1 == HID_DESCRIPTOR_TYPE){
-                    usb_generic_control_descriptor_tx_setup(&HID_Hid_Descriptor);
+                    usb_generic_control_descriptor_tx(&HID_Hid_Descriptor);
                     return USB_SUCCESS;
 				} 		
 			

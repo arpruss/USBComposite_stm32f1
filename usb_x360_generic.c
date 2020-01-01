@@ -418,23 +418,6 @@ static void x360DataTxCb(uint32 controller) {
 }
 
 
-static uint8* HID_GetProtocolValue(uint32 controller, uint16 Length){
-	if (Length == 0){
-		pInformation->Ctrl_Info.Usb_wLength = 1;
-		return NULL;
-	} else {
-		return (uint8 *)(&controllers[controller].ProtocolValue);
-	}
-}
-
-static uint8* HID_GetProtocolValue0(uint16 n) { return HID_GetProtocolValue(0, n); }
-static uint8* HID_GetProtocolValue1(uint16 n) { return HID_GetProtocolValue(1, n); }
-static uint8* HID_GetProtocolValue2(uint16 n) { return HID_GetProtocolValue(2, n); }
-static uint8* HID_GetProtocolValue3(uint16 n) { return HID_GetProtocolValue(3, n); }
-
-static uint8* (*HID_GetProtocolValues[USB_X360_MAX_CONTROLLERS])(uint16 Length) = { HID_GetProtocolValue0, HID_GetProtocolValue1, HID_GetProtocolValue2, HID_GetProtocolValue3 };
-
-
 static void x360Reset(void) {
       /* Reset the RX/TX state */
     for (uint8 i = 0 ; i < x360_num_controllers ; i++) {
@@ -447,7 +430,7 @@ static void x360Reset(void) {
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     if(requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == GET_PROTOCOL) {
-        usb_generic_control_tx_setup(&HID_GetProtocolValues[interface / NUM_INTERFACES], 1, NULL);
+        usb_generic_control_tx_setup(&controllers[interface / NUM_INTERFACES].ProtocolValue, 1, NULL);
         return USB_SUCCESS;
 	}
     return USB_UNSUPPORT;
