@@ -6,6 +6,8 @@
 #include "usb_generic.h"
 //#include <libmaple/usb.h>
 
+#define USB_COMPOSITE_MAX_PARTS 7
+
 #define USB_MAX_PRODUCT_LENGTH 32
 #define USB_MAX_MANUFACTURER_LENGTH 32
 #define USB_MAX_SERIAL_NUMBER_LENGTH  20
@@ -15,7 +17,6 @@
 // and hence burning it for cryptographic purposes.
 const char* getDeviceIDString();
 
-#define USB_COMPOSITE_MAX_PARTS 6
 
 class USBCompositeDevice;
 
