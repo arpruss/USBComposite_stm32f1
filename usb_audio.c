@@ -676,13 +676,11 @@ static void audioUSBReset(void) {
         usb_clear_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
         usb_clear_ep_dtog_rx(AUDIO_ISO_EP_ADDRESS);
         usb_set_ep_tx_stat(AUDIO_ISO_EP_ADDRESS, USB_EP_STAT_TX_VALID);
-        usb_set_ep_rx_stat(AUDIO_ISO_EP_ADDRESS, USB_EP_STAT_RX_DISABLED);
     } else if (usbAUDIOPart.endpoints == audioEndpointOUT) {
         /* Setup OUT endpoint */
         usb_set_ep_rx_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF0_PMA_ADDRESS);
         usb_clear_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
         usb_clear_ep_dtog_rx(AUDIO_ISO_EP_ADDRESS);
-        usb_set_ep_tx_stat(AUDIO_ISO_EP_ADDRESS, USB_EP_STAT_TX_DISABLED);
         usb_set_ep_rx_stat(AUDIO_ISO_EP_ADDRESS, USB_EP_STAT_RX_VALID);
     }
 }
