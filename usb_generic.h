@@ -3,8 +3,12 @@
 #include <libmaple/libmaple_types.h>
 typedef unsigned short u16;
 typedef unsigned char u8;
-#include <usb_core.h>
+
 #include <libmaple/usb.h>
+#include <libmaple/nvic.h>
+#include <libmaple/delay.h>
+#include "usb_lib_globals.h"
+#include "usb_reg_map.h"
 
 #define USB_CONTROL_DONE 1
 
@@ -47,6 +51,23 @@ typedef struct USBCompositePart {
     RESULT (*usbNoDataSetup)(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex);
     USBEndpointInfo* endpoints;
 } USBCompositePart;
+
+static inline void usb_generic_enable_rx(uint8 endpointAddress) {
+    usb_set_ep_rx_stat(endpointAddress, USB_EP_STAT_RX_VALID);
+}
+
+static inline void usb_generic_enable_tx(uint8 endpointAddress) {
+    usb_set_ep_tx_stat(endpointAddress, USB_EP_STAT_TX_VALID);
+}
+
+static inline void usb_generic_enable_rx_ep0() {
+    usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+}
+
+static inline void usb_generic_pause_rx_ep0() {
+    usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
+}
+
 
 void usb_generic_set_disconnect_delay(uint32 delay);
 void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber);

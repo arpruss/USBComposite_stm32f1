@@ -349,7 +349,7 @@ uint32 usb_midi_tx(const uint32* buf, uint32 packets) {
     usb_set_ep_tx_count(USB_MIDI_TX_ENDP, bytes);
     n_unsent_packets = packets;
     transmitting = 1;
-    usb_set_ep_tx_stat(USB_MIDI_TX_ENDP, USB_EP_STAT_TX_VALID);
+    usb_generic_enable_tx(USB_MIDI_TX_ENDP);
 
     return packets;
 }
@@ -382,7 +382,7 @@ uint32 usb_midi_rx(uint32* buf, uint32 packets) {
      * was set to NAK when the current batch of bytes was received. */
     if (n_unread_packets == 0) {
         usb_set_ep_rx_count(USB_MIDI_RX_ENDP, rxEPSize);
-        usb_set_ep_rx_stat(USB_MIDI_RX_ENDP, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(USB_MIDI_RX_ENDP);
         rx_offset = 0;
     }
 
@@ -429,7 +429,7 @@ static void midiDataRxCb(void) {
     
     if (n_unread_packets == 0) {
         usb_set_ep_rx_count(USB_MIDI_RX_ENDP, rxEPSize);
-        usb_set_ep_rx_stat(USB_MIDI_RX_ENDP, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(USB_MIDI_RX_ENDP);
         rx_offset = 0;
     }
 

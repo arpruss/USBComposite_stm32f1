@@ -359,7 +359,7 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
     usb_set_ep_tx_count(USB_X360_TX_ENDP(controller), len);
     c->n_unsent_bytes = len;
     c->transmitting = 1;
-    usb_set_ep_tx_stat(USB_X360_TX_ENDP(controller), USB_EP_STAT_TX_VALID);
+    usb_generic_enable_tx(USB_X360_TX_ENDP(controller));
 
     return len;
 }
@@ -403,7 +403,7 @@ static void x360DataRxCb(uint32 controller)
         if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 1)
             c->rumble_callback(hidBufferRx[5],hidBufferRx[6]);
     } 
-    usb_set_ep_rx_stat(rx_endp, USB_EP_STAT_RX_VALID);
+    usb_generic_enable_rx(rx_endp);
 }
 
 /*

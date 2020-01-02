@@ -36,6 +36,7 @@
 #include "usb_generic.h"
 #include "usb_hid.h"
 #include <string.h>
+#if 0
 #include <libmaple/usb.h>
 #include <libmaple/nvic.h>
 #include <libmaple/delay.h>
@@ -43,6 +44,7 @@
 /* Private headers */
 #include "usb_lib_globals.h"
 #include "usb_reg_map.h"
+#endif
 
 uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 
@@ -230,13 +232,13 @@ static volatile HIDBuffer_t* usb_hid_find_buffer(uint8 type, uint8 reportID) {
 void usb_hid_set_feature(uint8 reportID, uint8* data) {
     volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, reportID);
     if (buffer != NULL) {
-        usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
+        usb_generic_pause_rx_ep0();
         unsigned delta = reportID != 0;
         memcpy((uint8*)buffer->buffer+delta, data, buffer->bufferSize-delta);
         if (reportID)
             buffer->buffer[0] = reportID;
         buffer->state = HID_BUFFER_READ;
-        usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx_ep0();
         return;
     }
 }
@@ -274,7 +276,7 @@ uint16_t usb_hid_get_data(uint8 type, uint8 reportID, uint8* out, uint8 poll) {
     }
     
     if (! have_unread_data_in_hid_buffer() ) {
-        usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx_ep0();
     }
 
     nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
@@ -406,7 +408,7 @@ static void hidDataTxCb(void)
 flush_hid:
 	// enable Tx endpoint
     usb_set_ep_tx_count(USB_HID_TX_ENDP, tx_unsent);
-    usb_set_ep_tx_stat(USB_HID_TX_ENDP, USB_EP_STAT_TX_VALID);
+    usb_generic_enable_tx(USB_HID_TX_ENDP);
 }
 
 

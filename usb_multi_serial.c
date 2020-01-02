@@ -475,7 +475,7 @@ uint32 multi_serial_rx(uint32 port, uint8* buf, uint32 len)
 	uint32 rx_unread = (p->vcom_rx_head - tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
     // If buffer was emptied to a pre-set value, re-enable the RX endpoint
     if ( rx_unread <= 64 ) { // experimental value, gives the best performance
-        usb_set_ep_rx_stat(USB_CDCACM_RX_ENDP(port), USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDP(port));
 	}
     return n_copied;
 }
@@ -602,7 +602,7 @@ static void vcomDataTxCb(uint32 port)
 flush_vcom:
 	// enable Tx endpoint
     usb_set_ep_tx_count(USB_CDCACM_TX_ENDP(port), tx_unsent);
-    usb_set_ep_tx_stat(USB_CDCACM_TX_ENDP(port), USB_EP_STAT_TX_VALID);
+    usb_generic_enable_tx(USB_CDCACM_TX_ENDP(port));
 }
 
 
@@ -633,7 +633,7 @@ static void vcomDataRxCb(uint32 port)
 	uint32 rx_unread = (head - p->vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 	// only enable further Rx if there is enough room to receive one more packet
 	if ( rx_unread < (CDC_SERIAL_RX_BUFFER_SIZE-p->rxEPSize) ) {
-		usb_set_ep_rx_stat(USB_CDCACM_RX_ENDP(port), USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDP(port));
 	}
 
     if (p->rx_hook) {
