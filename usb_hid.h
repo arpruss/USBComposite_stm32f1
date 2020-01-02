@@ -125,8 +125,6 @@ typedef struct
 } HIDDescriptor;
 
 
-#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
-
 #define USB_INTERFACE_CLASS_HID           0x03
 #define USB_INTERFACE_SUBCLASS_HID		  0x01
 

@@ -115,7 +115,7 @@ static const hid_part_config hidPartConfigData = {
 		.bLength          = sizeof(usb_descriptor_endpoint),
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = USB_DESCRIPTOR_ENDPOINT_IN | 0, // PATCH: USB_HID_TX_ENDP
-        .bmAttributes     = USB_ENDPOINT_TYPE_INTERRUPT,
+        .bmAttributes     = USB_EP_TYPE_INTERRUPT,
         .wMaxPacketSize   = 64, //PATCH
         .bInterval        = 0x0A,
 	}

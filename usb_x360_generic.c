@@ -66,7 +66,6 @@ typedef enum _HID_REQUESTS
 
 #define USB_ENDPOINT_IN(addr)           ((addr) | 0x80)
 #define HID_ENDPOINT_INT 				1
-#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
  
 #define HID_DESCRIPTOR_TYPE             0x21
  
@@ -225,49 +224,49 @@ USBEndpointInfo x360Endpoints[NUM_ENDPOINTS*USB_X360_MAX_CONTROLLERS] = {
     {
         .callback = x360DataTxCb0,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb0,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb1,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb1,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb2,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb2,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb3,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb3,
         .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
 };
