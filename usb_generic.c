@@ -32,7 +32,7 @@
  * place else. Nonportable bits really need to be factored out, and
  * the result made cleaner.
  */
- 
+
 #define MATCHING_ENDPOINT_RANGES // make RX and TX endpoints fall in the same range for each part
 
 #include <string.h>
@@ -235,35 +235,37 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
         uint8 ntx = 0;
         uint16 pma = 0;
         USBEndpointInfo* ep = part->endpoints;
-        for (unsigned j = 0; j < part->numEndpoints ; j++) {
-            if (ep[j].tx)
-                ntx++;
-            else
-                nrx++;
-            pma += ep[j].bufferSize;
-        }
-        
-        if (pmaOffset+pma > PMA_MEMORY_SIZE)
-            gpio_write_bit(GPIOC, 13, 0);
-            
-        if (numEndpointsRX + nrx > 8 || numEndpointsTX + ntx > 8 || pmaOffset+pma > PMA_MEMORY_SIZE) {
-            return 0;
-		}
 
         for (unsigned j = 0 ; j < part->numEndpoints ; j++) {
             ep[j].pmaAddress = pmaOffset;
             pmaOffset += ep[j].bufferSize;
+            if (pmaOffset > PMA_MEMORY_SIZE)
+                return 0;
             if (ep[j].callback == NULL)
                 ep[j].callback = NOP_Process;
+            if (ep[j].exclusive) {
+                if (numEndpointsTX>numEndpointsRX)
+                    numEndpointsRX=numEndpointsTX;
+                else
+                    numEndpointsTX=numEndpointsRX;
+            }
             if (ep[j].tx) {
+                if (numEndpointsTX > 8)
+                    return 0;
                 ep[j].address = numEndpointsTX;
                 ep_int_in[numEndpointsTX-1] = ep[j].callback;
                 numEndpointsTX++;
+                if (ep[j].exclusive)
+                    numEndpointsRX++;
             }
             else {
+                if (numEndpointsRX > 8)
+                    return 0;
                 ep[j].address = numEndpointsRX;
                 ep_int_out[numEndpointsRX-1] = ep[j].callback;
                 numEndpointsRX++;
+                if (ep[j].exclusive)
+                    numEndpointsTX++;
             }
         }
         part->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
@@ -403,6 +405,11 @@ static void usbReset(void) {
     usb_set_ep_rx_count(USB_EP0, USB_EP0_BUFFER_SIZE);
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
     
+    for (unsigned i = 1 ; i < 8 ; i++) {
+        usb_set_ep_rx_stat(i, USB_EP_STAT_RX_DISABLED);
+        usb_set_ep_tx_stat(i, USB_EP_STAT_TX_DISABLED);
+    }
+    
     for (unsigned i = 0 ; i < numParts ; i++) {
         for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
             USBEndpointInfo* e = &(parts[i]->endpoints[j]);
@@ -411,7 +418,6 @@ static void usbReset(void) {
             if (parts[i]->endpoints[j].tx) {
                 usb_set_ep_tx_addr(address, e->pmaAddress);
                 usb_set_ep_tx_stat(address, USB_EP_STAT_TX_NAK);
-                usb_set_ep_rx_stat(address, USB_EP_STAT_RX_DISABLED);
             }
             else {
                 usb_set_ep_rx_addr(address, e->pmaAddress);

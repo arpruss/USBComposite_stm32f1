@@ -381,6 +381,7 @@ static USBEndpointInfo audioEndpointIN[1] = {
         .bufferSize = AUDIO_MAX_EP_BUFFER_SIZE,
         .type = USB_EP_EP_TYPE_ISO,
         .tx = 1,
+        .exclusive = 1
     }
 };
 
@@ -390,6 +391,7 @@ static USBEndpointInfo audioEndpointOUT[1] = {
         .bufferSize = AUDIO_MAX_EP_BUFFER_SIZE,
         .type = USB_EP_EP_TYPE_ISO,
         .tx = 0,
+        .exclusive = 1
     }
 };
 

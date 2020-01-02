@@ -31,7 +31,8 @@ typedef struct USBEndpointInfo {
     void (*callback)(void);
     uint16 bufferSize;
     uint16 type; // bulk, interrupt, etc.
-    uint8 tx; // 1 if TX, 0 if RX
+    uint8 tx:1; // 1 if TX, 0 if RX
+    uint8 exclusive:1; // 1 if cannot use the same endpoint number for both rx and tx
     uint8 address;    
     uint16 pmaAddress;
 } USBEndpointInfo;
