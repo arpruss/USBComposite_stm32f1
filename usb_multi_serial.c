@@ -254,55 +254,55 @@ static USBEndpointInfo serialEndpoints[NUM_SERIAL_ENDPOINTS*USB_MULTI_SERIAL_MAX
     {
         .callback = vcomDataTxCb0,
         .bufferSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
         .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
-        .type = USB_EP_EP_TYPE_INTERRUPT,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb0,
         .bufferSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
     {
         .callback = vcomDataTxCb1,
         .bufferSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
         .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
-        .type = USB_EP_EP_TYPE_INTERRUPT,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb1,
         .bufferSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
     {
         .callback = vcomDataTxCb2,
         .bufferSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
         .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
-        .type = USB_EP_EP_TYPE_INTERRUPT,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb2,
         .bufferSize = USB_MULTI_SERIAL_DEFAULT_BUFFER_SIZE, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
 };

@@ -24,17 +24,25 @@ typedef unsigned char u8;
 extern "C" {
 #endif
 
+enum USB_ENDPOINT_TYPES {
+    USB_GENERIC_ENDPOINT_TYPE_BULK = 0,
+    USB_GENERIC_ENDPOINT_TYPE_CONTROL,
+    USB_GENERIC_ENDPOINT_TYPE_ISO,
+    USB_GENERIC_ENDPOINT_TYPE_INTERRUPT
+};
+
 extern const usb_descriptor_string usb_generic_default_iManufacturer;
 extern const usb_descriptor_string usb_generic_default_iProduct;
 
 typedef struct USBEndpointInfo {
     void (*callback)(void);
     uint16 bufferSize;
-    uint16 type; // bulk, interrupt, etc.
+    uint16 pmaAddress;
+    uint8 address;    
+    uint8 type:2;
+    uint8 doubleBuffer:1;
     uint8 tx:1; // 1 if TX, 0 if RX
     uint8 exclusive:1; // 1 if cannot use the same endpoint number for both rx and tx
-    uint8 address;    
-    uint16 pmaAddress;
 } USBEndpointInfo;
 
 typedef struct USBCompositePart {
@@ -61,6 +69,14 @@ static inline void usb_generic_enable_tx(uint8 endpointAddress) {
     usb_set_ep_tx_stat(endpointAddress, USB_EP_STAT_TX_VALID);
 }
 
+static inline void usb_generic_disable_rx(uint8 endpointAddress) {
+    usb_set_ep_rx_stat(endpointAddress, USB_EP_STAT_RX_DISABLED);
+}
+
+static inline void usb_generic_disable_tx(uint8 endpointAddress) {
+    usb_set_ep_tx_stat(endpointAddress, USB_EP_STAT_TX_DISABLED);
+}
+
 static inline void usb_generic_enable_rx_ep0() {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
 }
@@ -85,10 +101,5 @@ void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset);
 #ifdef __cplusplus
 }
 #endif
-
-#define USB_GENERIC_ENDPOINT_TYPE_INTERRUPT USB_EP_EP_TYPE_INTERRUPT
-#define USB_GENERIC_ENDPOINT_TYPE_BULK USB_EP_EP_TYPE_BULK
-#define USB_GENERIC_ENDPOINT_TYPE_CONTROL USB_EP_EP_TYPE_CONTROL
-#define USB_GENERIC_ENDPOINT_TYPE_ISO USB_EP_EP_TYPE_ISO
 
 #endif

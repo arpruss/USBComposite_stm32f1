@@ -33,7 +33,7 @@
  * the result made cleaner.
  */
 
-#define MATCHING_ENDPOINT_RANGES // make RX and TX endpoints fall in the same range for each part
+//#define MATCHING_ENDPOINT_RANGES // make RX and TX endpoints fall in the same range for each part
 
 #include <string.h>
 #include <libmaple/libmaple_types.h>
@@ -82,6 +82,13 @@ static volatile uint8* control_tx_done = NULL;
 static volatile uint8* control_rx_buffer = NULL;
 static uint16 control_rx_length = 0;
 static volatile uint8* control_rx_done = NULL;
+
+uint16 epTypes[4] = {
+    USB_EP_EP_TYPE_BULK,
+    USB_EP_EP_TYPE_CONTROL,
+    USB_EP_EP_TYPE_ISO, 
+    USB_EP_EP_TYPE_INTERRUPT
+};
 
 #define LEAFLABS_ID_VENDOR                0x1EAF
 #define MAPLE_ID_PRODUCT                  0x0024 // was 0x0024
@@ -208,13 +215,35 @@ static USER_STANDARD_REQUESTS saved_User_Standard_Requests;
 static void (*ep_int_in[7])(void);
 static void (*ep_int_out[7])(void);
 
+static uint8 minimum_address;
+
+static uint8 acceptable_endpoint_number(unsigned partNum, unsigned endpointNum, uint8 address) {
+    USBEndpointInfo* ep = &(parts[partNum]->endpoints[endpointNum]);
+    for (unsigned i = 0 ; i <= partNum ; i++)
+        for(unsigned j = 0 ; (i < partNum && j < parts[partNum]->numEndpoints) || (i == partNum && j < endpointNum) ; j++) {
+            USBEndpointInfo* ep1 = &(parts[i]->endpoints[j]);
+            if (ep1->address != address)
+                continue;
+            if (ep1->tx == ep->tx || ep->exclusive || ep1->exclusive || ep1->type != ep->type || ep1->doubleBuffer != ep->doubleBuffer)
+                return 0;
+        }
+    return 1;
+}
+
+static int8 allocate_endpoint_address(unsigned partNum, unsigned endpointNum) {
+    for (uint8 address = minimum_address ; address < 8 ; address++)
+        if (acceptable_endpoint_number(partNum, endpointNum, address))
+            return address;
+    return -1;
+}
+
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     parts = _parts;
     numParts = _numParts;
     unsigned numInterfaces = 0;
+    minimum_address = 1;
+    uint8 maxAddress = 0;
 
-    unsigned numEndpointsRX = 1;
-    unsigned numEndpointsTX = 1;
     uint16 usbDescriptorSize = 0;
     uint16 pmaOffset = USB_EP0_RX_BUFFER_ADDRESS + USB_EP0_BUFFER_SIZE;
     
@@ -231,51 +260,32 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
         if (usbDescriptorSize + part->descriptorSize > MAX_USB_DESCRIPTOR_DATA_SIZE) {
             return 0;
 		}
-        uint8 nrx = 0;
-        uint8 ntx = 0;
-        uint16 pma = 0;
         USBEndpointInfo* ep = part->endpoints;
-
         for (unsigned j = 0 ; j < part->numEndpoints ; j++) {
+            int8 address = allocate_endpoint_address(i, j);
+            if (address < 0)
+                return 0;
+
             ep[j].pmaAddress = pmaOffset;
             pmaOffset += ep[j].bufferSize;
             if (pmaOffset > PMA_MEMORY_SIZE)
                 return 0;
             if (ep[j].callback == NULL)
                 ep[j].callback = NOP_Process;
-            if (ep[j].exclusive) {
-                if (numEndpointsTX>numEndpointsRX)
-                    numEndpointsRX=numEndpointsTX;
-                else
-                    numEndpointsTX=numEndpointsRX;
-            }
+            ep[j].address = address;
             if (ep[j].tx) {
-                if (numEndpointsTX > 8)
-                    return 0;
-                ep[j].address = numEndpointsTX;
-                ep_int_in[numEndpointsTX-1] = ep[j].callback;
-                numEndpointsTX++;
-                if (ep[j].exclusive)
-                    numEndpointsRX++;
+                ep_int_in[address-1] = ep[j].callback;
             }
             else {
-                if (numEndpointsRX > 8)
-                    return 0;
-                ep[j].address = numEndpointsRX;
-                ep_int_out[numEndpointsRX-1] = ep[j].callback;
-                numEndpointsRX++;
-                if (ep[j].exclusive)
-                    numEndpointsTX++;
+                ep_int_out[address-1] = ep[j].callback;
             }
+            if (maxAddress < address)
+                maxAddress = address;
         }
         part->getPartDescriptor(usbConfig.descriptorData + usbDescriptorSize);
         usbDescriptorSize += part->descriptorSize;
 #ifdef MATCHING_ENDPOINT_RANGES        
-        // make sure endpoint numbers of different parts don't overlap between TX and RX
-        if (numEndpointsTX>numEndpointsRX)
-            numEndpointsRX=numEndpointsTX;
-        else
-            numEndpointsTX=numEndpointsRX;
+        minimum_address = maxAddress + 1;
 #endif
     }
     
@@ -284,7 +294,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     usbConfig.Config_Header.wTotalLength = usbDescriptorSize + sizeof(Base_Header);
     Config_Descriptor.Descriptor_Size = usbConfig.Config_Header.wTotalLength;
     
-    my_Device_Table.Total_Endpoint = numEndpointsTX+numEndpointsRX;
+    my_Device_Table.Total_Endpoint = maxAddress + 1;
     
     return 1;
 }
@@ -406,15 +416,16 @@ static void usbReset(void) {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
     
     for (unsigned i = 1 ; i < 8 ; i++) {
-        usb_set_ep_rx_stat(i, USB_EP_STAT_RX_DISABLED);
-        usb_set_ep_tx_stat(i, USB_EP_STAT_TX_DISABLED);
+        usb_generic_disable_tx(i);
+        usb_generic_disable_rx(i);
     }
     
     for (unsigned i = 0 ; i < numParts ; i++) {
         for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
             USBEndpointInfo* e = &(parts[i]->endpoints[j]);
             uint8 address = e->address;
-            usb_set_ep_type(address, e->type);
+            usb_set_ep_type(address, epTypes[e->type]);
+            usb_set_ep_kind(address, e->doubleBuffer ? USB_EP_EP_KIND_DBL_BUF : 0);
             if (parts[i]->endpoints[j].tx) {
                 usb_set_ep_tx_addr(address, e->pmaAddress);
                 usb_set_ep_tx_stat(address, USB_EP_STAT_TX_NAK);

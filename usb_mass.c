@@ -107,13 +107,13 @@ USBEndpointInfo usbMassEndpoints[2] = {
     {
         .callback = usb_mass_in,
         .bufferSize = MAX_BULK_PACKET_SIZE,
-        .type = USB_EP_EP_TYPE_BULK, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
         .tx = 1,
     },
     {
         .callback = usb_mass_out,
         .bufferSize = MAX_BULK_PACKET_SIZE,
-        .type = USB_EP_EP_TYPE_BULK, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
         .tx = 0,
     },
 };

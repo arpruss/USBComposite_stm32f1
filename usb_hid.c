@@ -135,7 +135,7 @@ static USBEndpointInfo hidEndpoints[1] = {
     {
         .callback = hidDataTxCb,
         .bufferSize = 64,
-        .type = USB_EP_EP_TYPE_INTERRUPT,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     }
 };

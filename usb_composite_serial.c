@@ -193,19 +193,19 @@ static USBEndpointInfo serialEndpoints[3] = {
     {
         .callback = vcomDataTxCb,
         .bufferSize = 64, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
         .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
-        .type = USB_EP_EP_TYPE_INTERRUPT,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb,
         .bufferSize = 64, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
 };
