@@ -164,8 +164,13 @@ to USB In).
 
 ## Endpoint limitations
 
-There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more in each direction. 
-Each plugin contributes the following count towards the maximum of seven:
+There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more in each direction,
+but there are some complications in that the same endpoint number when used in different directions must have some
+of the same parameters. The USBComposite library takes care of these complications when allocating endpoints, but if you
+have too many plugins, you USBComposite.begin() will return `false` to indicate that you've used up too many.
+
+This is pretty complicated, but a rule of thumb for having enough endpoints is to make sure that when you add up the 
+following contributions for the plugins you use, your total is at most seven.
 
 * USB Serial: 2 (= 2 TX, 1 RX)
 
@@ -177,10 +182,7 @@ Each plugin contributes the following count towards the maximum of seven:
 
 * XBox360 Controller: 1 per controller (= 1 TX, 1 RX)
 
-* XBox360 Wireless Controller: 1 per controller (= 1 TX, 1 RX)
-
 * USB Audio: 1 (= 1 TX or 1 RX depending on mode)
 
 * USB Multi Serial: 2 per port (= 2 TX, 1 RX)
 
-When combining plugins, make sure the contribution does not exceed 7.
