@@ -546,7 +546,7 @@ static void serialUSBReset(void) {
 static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     uint8* (*CopyRoutine)(uint16) = 0;
     
-    if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) {        
+    if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
             CopyRoutine = vcomGetSetLineCoding;
@@ -577,7 +577,7 @@ static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestTy
 static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
     RESULT ret = USB_UNSUPPORT;
     
-	if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) { 
+	if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) { 
         switch(request) {
             case USBHID_CDCACM_SET_COMM_FEATURE:
 	            /* We support set comm. feature, but don't handle it. */

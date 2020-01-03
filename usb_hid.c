@@ -505,7 +505,7 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
     (void)interface; // only one interface
     uint8* (*CopyRoutine)(uint16) = 0;
 	
-    if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
+    if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         switch (request) {
         case SET_REPORT:
 			if (wValue1 == HID_REPORT_TYPE_FEATURE) {
@@ -558,7 +558,7 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
         }
     }
 	
-	if(requestType == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
+	if((requestType & (REQUEST_TYPE | RECIPIENT)) == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
     	switch (request){
     		case GET_DESCRIPTOR:
 				if (wValue1 == REPORT_DESCRIPTOR){

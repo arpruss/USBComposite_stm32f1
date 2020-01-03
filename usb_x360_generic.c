@@ -448,7 +448,7 @@ static void x360Reset(void) {
 static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
     uint8* (*CopyRoutine)(uint16) = 0;
 	
-    if(requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == GET_PROTOCOL) {
+    if((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == GET_PROTOCOL) {
         CopyRoutine = HID_GetProtocolValues[interface / NUM_INTERFACES];
 	}
     else {
@@ -462,7 +462,7 @@ static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, u
 }
 
 static RESULT x360NoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
-	if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == SET_PROTOCOL) {
+	if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == SET_PROTOCOL) {
 		controllers[interface / NUM_INTERFACES].ProtocolValue = wValue0;
 		return USB_SUCCESS;
 	}else{
