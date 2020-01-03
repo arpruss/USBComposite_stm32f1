@@ -431,9 +431,17 @@ static void usbReset(void) {
                 usb_set_ep_tx_stat(address, USB_EP_STAT_TX_NAK);
             }
             else {
-                usb_set_ep_rx_addr(address, e->pmaAddress);
-                usb_set_ep_rx_count(address, e->bufferSize);
-                usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
+				if (! e->doubleBuffer) {
+					usb_set_ep_rx_addr(address, e->pmaAddress);
+					usb_set_ep_rx_count(address, e->bufferSize);
+				}
+				else {
+					usb_set_ep_tx_buf0_addr(address, e->pmaAddress);
+					usb_set_ep_tx_buf1_addr(address, e->pmaAddress+e->bufferSize/2);
+					usb_set_ep_tx_buf0_count(address, e->bufferSize/2);
+					usb_set_ep_tx_buf1_count(address, e->bufferSize/2);
+                }
+				usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
             }
         }
         if (parts[i]->usbReset != NULL)

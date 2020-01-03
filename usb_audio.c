@@ -670,10 +670,6 @@ static void audioUSBReset(void) {
 
     if (usbAUDIOPart.endpoints == audioEndpointIN) {
         /* Setup IN endpoint */
-        usb_set_ep_tx_buf0_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF0_PMA_ADDRESS);
-        usb_set_ep_tx_buf1_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF1_PMA_ADDRESS);
-        usb_set_ep_tx_buf0_count(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_PMA_BUFFER_SIZE);
-        usb_set_ep_tx_buf1_count(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_PMA_BUFFER_SIZE);
         usb_clear_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
         usb_generic_enable_tx(AUDIO_ISO_EP_ADDRESS);
     } else if (usbAUDIOPart.endpoints == audioEndpointOUT) {
