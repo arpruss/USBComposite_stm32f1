@@ -19,6 +19,7 @@
 #include "usb_reg_map.h"
 #include "libmaple/usb.h"
 #include <string.h>
+#include <libmaple/gpio.h>
 
 #include "usb_audio.h"
 
@@ -682,9 +683,12 @@ static void audioUSBReset(void) {
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-
 	switch (requestType) {
-		case 0x21:
+        case 0x21:
+            usb_generic_control_rx_setup(NULL, wLength, NULL);
+            return USB_SUCCESS;
+
+        case 0xA1:
             if ((wIndex >> 8) == CLOCK_SOURCE_ID) {
                 switch(request) {
                     case CUR:
@@ -705,11 +709,7 @@ static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestTyp
                         return USB_SUCCESS;
                 }
             }
-            usb_generic_control_rx_setup(NULL, wLength, NULL);
-            return USB_SUCCESS;
-            
-        case 0xA1:
-            usb_generic_control_rx_setup(NULL, wLength, NULL);
+            usb_generic_control_tx_setup(NULL, wLength, NULL);
             return USB_SUCCESS;
 	}
 
