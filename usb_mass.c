@@ -180,7 +180,7 @@ static RESULT usb_mass_data_setup(uint8 request, uint8 interface, uint8 requestT
   uint8_t * (*copy_routine)(uint16_t);
 
   copy_routine = NULL;
-  if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_GET_MAX_LUN && wValue0 == 0 && wValue1 == 0 && wLength == 0x01) {
+  if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_GET_MAX_LUN && wValue0 == 0 && wValue1 == 0 && wLength == 0x01) {
     copy_routine = usb_mass_get_max_lun;
   } else {
     return USB_UNSUPPORT;
@@ -207,7 +207,7 @@ static uint8_t* usb_mass_get_max_lun(uint16_t length) {
 }
 
 static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
-  if (requestType == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_MASS_STORAGE_RESET && wValue0 == 0 && wValue1 == 0) {
+  if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_MASS_STORAGE_RESET && wValue0 == 0 && wValue1 == 0) {
 
     /* Initialize Endpoint 1 */
     ClearDTOG_TX(USB_MASS_TX_ENDP);
