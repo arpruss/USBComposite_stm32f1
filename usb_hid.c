@@ -590,7 +590,7 @@ static RESULT hidUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestTyp
     
     RESULT ret = USB_UNSUPPORT;
     
-	if (Type_Recipient == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
+	if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT)) {
         switch(request) {
             case SET_PROTOCOL:
                 ProtocolValue = wValue0;
