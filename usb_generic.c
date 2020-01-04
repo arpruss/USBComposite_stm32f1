@@ -267,7 +267,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
                 return 0;
 
             ep[j].pmaAddress = pmaOffset;
-            pmaOffset += ep[j].bufferSize;
+            pmaOffset += (ep[j].bufferSize+1)/2*2; // ensure pma addresses are even
             if (pmaOffset > PMA_MEMORY_SIZE)
                 return 0;
             if (ep[j].callback == NULL)
@@ -551,10 +551,11 @@ static RESULT usbDataSetup(uint8 request) {
         uint8 interface  = pInformation->USBwIndex0;
         for (unsigned i = 0 ; i < numParts ; i++) {
             USBCompositePart* p = parts[i];
-            if (p->usbDataSetup && p->startInterface <= interface && interface < p->startInterface + p->numInterfaces)
+            if (p->usbDataSetup && p->startInterface <= interface && interface < p->startInterface + p->numInterfaces) {
                 // uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength
                 return parts[i]->usbDataSetup(request, interface - p->startInterface, pInformation->USBbmRequestType, pInformation->USBwValue0, 
                     pInformation->USBwValue1, pInformation->USBwIndex, pInformation->USBwLength);
+            }
         }
     }
 
