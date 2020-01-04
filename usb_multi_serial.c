@@ -60,6 +60,7 @@
 #define CDC_SERIAL_TX_BUFFER_SIZE_MASK (CDC_SERIAL_TX_BUFFER_SIZE-1)
 
 #define USB_CDCACM_MANAGEMENT_ENDP(port)    (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_MANAGEMENT].address)
+#define USB_CDCACM_RX_ENDPOINT_INFO(port)   &serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX]
 #define USB_CDCACM_TX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].address)
 #define USB_CDCACM_RX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX].address)
 #define USB_CDCACM_TX_ADDR(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].pmaAddress)
@@ -603,25 +604,9 @@ flush_vcom:
 static void vcomDataRxCb(uint32 port)
 {
     volatile struct port_data* p = &ports[port];
-	uint32 head = p->vcom_rx_head; // load volatile variable
-
-	uint32 ep_rx_size = usb_get_ep_rx_count(USB_CDCACM_RX_ENDP(port));
-	// This copy won't overwrite unread bytes as long as there is 
-	// enough room in the USB Rx buffer for next packet
-	uint32 *src = usb_pma_ptr(USB_CDCACM_RX_ADDR(port));
-    uint16 tmp = 0;
-	uint8 val;
-	uint32 i;
-	for (i = 0; i < ep_rx_size; i++) {
-		if (i&1) {
-			val = tmp>>8;
-		} else {
-			tmp = *src++;
-			val = tmp&0xFF;
-		}
-		p->vcomBufferRx[head] = val;
-		head = (head + 1) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
-	}
+	uint32 head = p->vcom_rx_head;
+    usb_generic_fill_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO(port),
+                    p->vcomBufferRx, CDC_SERIAL_RX_BUFFER_SIZE, &head);
 	p->vcom_rx_head = head; // store volatile variable
 
 	uint32 rx_unread = (head - p->vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;

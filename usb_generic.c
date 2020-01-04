@@ -649,7 +649,7 @@ static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
     return USB_SUCCESS;
 }
 
-void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
+void usb_copy_to_pma(volatile const uint8 *buf, uint16 len, uint16 pma_offset) {
     uint16 *dst = (uint16*)usb_pma_ptr(pma_offset);
     uint16 n = len >> 1;
     uint16 i;
@@ -663,7 +663,7 @@ void usb_copy_to_pma(const uint8 *buf, uint16 len, uint16 pma_offset) {
     }
 }
 
-void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
+void usb_copy_from_pma(volatile uint8 *buf, uint16 len, uint16 pma_offset) {
     uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
     uint16 *dst = (uint16*)buf;
     uint16 n = len >> 1;
@@ -676,3 +676,46 @@ void usb_copy_from_pma(uint8 *buf, uint16 len, uint16 pma_offset) {
     }
 }
 
+// return bytes read
+uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP) {
+    uint32 head = *headP;
+    uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
+    /* This copy won't overwrite unread bytes as long as there is
+     * enough room in the USB Rx buffer for next packet */
+    uint32 *src = usb_pma_ptr(ep->pmaAddress);
+
+    uint16 tmp = 0;
+    uint8 val;
+    uint32 i;
+    for (i = 0; i < ep_rx_size; i++) {
+        if (i & 1) {
+            val = tmp >> 8;
+        } else {
+            tmp = *src++;
+            val = tmp & 0xFF;
+        }
+        buf[head] = val;
+        head = (head + 1) % bufferSize;
+    }
+
+    if (ep_rx_size & 1) {
+        val = *src & 0xFF;
+        buf[head] = val;
+        *headP = (head + 1) % bufferSize;
+    }
+    else {
+        *headP = head;
+    }
+    
+    return ep_rx_size;
+}
+
+// returns number of bytes read
+// buf should be uint16-aligned
+uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize) {
+    uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
+    if (ep_rx_size > bufferSize)
+        ep_rx_size = bufferSize;
+    usb_copy_from_pma(buf, ep_rx_size, ep->pmaAddress);
+    return ep_rx_size;
+}

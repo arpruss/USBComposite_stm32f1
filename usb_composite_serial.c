@@ -497,25 +497,9 @@ flush_vcom:
 
 static void vcomDataRxCb(void)
 {
-	uint32 head = vcom_rx_head; // load volatile variable
-
-	uint32 ep_rx_size = usb_get_ep_rx_count(USB_CDCACM_RX_ENDP);
-	// This copy won't overwrite unread bytes as long as there is 
-	// enough room in the USB Rx buffer for next packet
-	uint32 *src = usb_pma_ptr(usbSerialPart.endpoints[CDCACM_ENDPOINT_RX].pmaAddress);
-    uint16 tmp = 0;
-	uint8 val;
-	uint32 i;
-	for (i = 0; i < ep_rx_size; i++) {
-		if (i&1) {
-			val = tmp>>8;
-		} else {
-			tmp = *src++;
-			val = tmp&0xFF;
-		}
-		vcomBufferRx[head] = val;
-		head = (head + 1) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
-	}
+	uint32 head = vcom_rx_head;
+    usb_generic_fill_circular_buffer(usbSerialPart.endpoints + CDCACM_ENDPOINT_RX,
+                            vcomBufferRx, CDC_SERIAL_RX_BUFFER_SIZE, &head);
 	vcom_rx_head = head; // store volatile variable
 
 	uint32 rx_unread = (head - vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;

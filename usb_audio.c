@@ -625,37 +625,9 @@ static void audioDataTxCb(void)
 
 static void audioDataRxCb(void)
 {
-    uint32 head = audio_rx_head; /* load volatile variable */
-
-    uint32 ep_rx_size = usb_get_ep_rx_count(AUDIO_ISO_EP_ADDRESS);
-    /* This copy won't overwrite unread bytes as long as there is
-     * enough room in the USB Rx buffer for next packet */
-    uint32 *src = usb_pma_ptr(AUDIO_ISO_BUF0_PMA_ADDRESS);
-
     usbAudioReceiving = 1;
-
-    uint16 tmp = 0;
-    uint8 val;
-    uint32 i;
-    for (i = 0; i < ep_rx_size; i++) {
-        if (i & 1) {
-            val = tmp >> 8;
-        } else {
-            tmp = *src++;
-            val = tmp & 0xFF;
-        }
-        audioBufferRx[head] = val;
-        head = (head + 1) & IO_BUFFER_SIZE_MASK;
-    }
-
-    if (ep_rx_size & 1) {
-        val = *src & 0xFF;
-        audioBufferRx[head] = val;
-        head = (head + 1) & IO_BUFFER_SIZE_MASK;
-    }
-
-    audio_rx_head = head; /* store volatile variable */
-
+    uint32 ep_rx_size = usb_generic_fill_circular_buffer(usbAUDIOPart.endpoints+0, audioBufferRx, 
+                        IO_BUFFER_SIZE, &audio_rx_head);
     usbAudioReceiving = 0;
 
     if (packet_callback)

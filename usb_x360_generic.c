@@ -366,28 +366,12 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
 static void x360DataRxCb(uint32 controller)
 {
     volatile struct controller_data* c = &controllers[controller];
-        
-    uint32 rx_endp = USB_X360_RX_ENDP(controller);
-	uint32 ep_rx_size = usb_get_ep_rx_count(rx_endp);
-	// This copy won't overwrite unread bytes as long as there is 
-	// enough room in the USB Rx buffer for next packet
-	uint32 *src = usb_pma_ptr(USB_X360_RX_ADDR(controller));
-    uint16 tmp = 0;
-	uint8 val;
-	uint32 i;
+    USBEndpointInfo* ep = USB_X360_RX_ENDPOINT_INFO(controller);
     
     volatile uint8* hidBufferRx = c->hidBufferRx;
     
-	for (i = 0; i < ep_rx_size; i++) {
-		if (i&1) {
-			val = tmp>>8;
-		} else {
-			tmp = *src++;
-			val = tmp&0xFF;
-		}
-		hidBufferRx[i] = val;
-	
-    }
+    uint32 ep_rx_size = usb_generic_fill_buffer(ep, hidBufferRx, USB_X360_RX_EPSIZE);
+
     if (ep_rx_size == 3) { // wired
         if (c->led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
             c->led_callback(hidBufferRx[2]);
@@ -402,7 +386,8 @@ static void x360DataRxCb(uint32 controller)
         if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 1)
             c->rumble_callback(hidBufferRx[5],hidBufferRx[6]);
     } 
-    usb_generic_enable_rx(rx_endp);
+    
+    usb_generic_enable_rx(ep->address);
 }
 
 /*
