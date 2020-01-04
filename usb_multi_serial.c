@@ -63,8 +63,8 @@
 #define USB_CDCACM_RX_ENDPOINT_INFO(port)   &serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX]
 #define USB_CDCACM_TX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].address)
 #define USB_CDCACM_RX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX].address)
-#define USB_CDCACM_TX_ADDR(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].pmaAddress)
-#define USB_CDCACM_RX_ADDR(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX].pmaAddress)
+#define USB_CDCACM_TX_PMA_PTR(port)         (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].pma)
+#define USB_CDCACM_RX_PMA_PTR(port)         (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX].pma)
 
 /* usb_lib headers */
 #include "usb_type.h"
@@ -254,55 +254,55 @@ static const serial_part_config serialPartConfigData = {
 static USBEndpointInfo serialEndpoints[NUM_SERIAL_ENDPOINTS*USB_MULTI_SERIAL_MAX_PORTS] = {
     {
         .callback = vcomDataTxCb0,
-        .bufferSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
-        .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
+        .pmaSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb0,
-        .bufferSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
     {
         .callback = vcomDataTxCb1,
-        .bufferSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
-        .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
+        .pmaSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb1,
-        .bufferSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
     {
         .callback = vcomDataTxCb2,
-        .bufferSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
-        .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
+        .pmaSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb2,
-        .bufferSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
@@ -340,14 +340,14 @@ static void getSerialPartDescriptor(uint8* _out) {
 void multi_serial_setTXEPSize(uint32 port, uint16_t size) {
     if (size == 0 || size > 64)
         size = 64;
-    serialEndpoints[NUM_SERIAL_ENDPOINTS*port+0].bufferSize = size;
+    serialEndpoints[NUM_SERIAL_ENDPOINTS*port+0].pmaSize = size;
     ports[port].txEPSize = size;
 }
 
 void multi_serial_setRXEPSize(uint32 port, uint16_t size) {
     if (size == 0 || size > 64)
         size = 64;
-    serialEndpoints[NUM_SERIAL_ENDPOINTS*port+2].bufferSize = size;
+    serialEndpoints[NUM_SERIAL_ENDPOINTS*port+2].pmaSize = size;
     ports[port].rxEPSize = size;
 }
 
@@ -577,7 +577,7 @@ static void vcomDataTxCb(uint32 port)
         tx_unsent = p->txEPSize;
     }
 	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usb_pma_ptr(USB_CDCACM_TX_ADDR(port));
+	uint32 *dst = USB_CDCACM_TX_PMA_PTR(port);
     uint16 tmp = 0;
 	uint16 val;
 	unsigned i;

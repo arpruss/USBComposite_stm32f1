@@ -134,7 +134,7 @@ static ONE_DESCRIPTOR HID_Hid_Descriptor = {
 static USBEndpointInfo hidEndpoints[1] = {
     {
         .callback = hidDataTxCb,
-        .bufferSize = 64,
+        .pmaSize = 64,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     }
@@ -143,7 +143,7 @@ static USBEndpointInfo hidEndpoints[1] = {
 void usb_hid_setTXEPSize(uint32_t size) {
     if (size == 0 || size > 64)
         size = 64;
-    hidEndpoints[0].bufferSize = size;
+    hidEndpoints[0].pmaSize = size;
     txEPSize = size;
 }
 
@@ -387,7 +387,7 @@ static void hidDataTxCb(void)
         tx_unsent = txEPSize;
     }
 	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usb_pma_ptr(usbHIDPart.endpoints[HID_ENDPOINT_TX].pmaAddress);
+	uint32 *dst = usbHIDPart.endpoints[HID_ENDPOINT_TX].pma;
     uint16 tmp = 0;
 	uint16 val;
 	unsigned i;

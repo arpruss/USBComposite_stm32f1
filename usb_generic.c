@@ -266,8 +266,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
             if (address < 0)
                 return 0;
 
-            ep[j].pmaAddress = pmaOffset;
-            pmaOffset += (ep[j].bufferSize+1)/2*2; // ensure pma addresses are even
+            ep[j].pma = usb_pma_ptr(pmaOffset);
+            pmaOffset += (ep[j].pmaSize+3)/4*4; // ensure pma offset is divisible by 4 for safety
             if (pmaOffset > PMA_MEMORY_SIZE)
                 return 0;
             if (ep[j].callback == NULL)
@@ -396,6 +396,10 @@ static void usbInit(void) {
 
 #define BTABLE_ADDRESS 0x00
 
+static inline uint16 pma_ptr_to_offset(uint32* p) {
+    return (uint16)(((uint32*)p-(uint32*)USB_PMA_BASE) * 2);
+}
+
 static void usbReset(void) {
     pInformation->Current_Configuration = 0;
 
@@ -426,20 +430,21 @@ static void usbReset(void) {
             uint8 address = e->address;
             usb_set_ep_type(address, epTypes[e->type]);
             usb_set_ep_kind(address, e->doubleBuffer ? USB_EP_EP_KIND_DBL_BUF : 0);
-            if (parts[i]->endpoints[j].tx) {
-                usb_set_ep_tx_addr(address, e->pmaAddress);
+            uint16 pmaOffset = pma_ptr_to_offset(e->pma);
+            if (e->tx) {
+                usb_set_ep_tx_addr(address, pmaOffset);
                 usb_set_ep_tx_stat(address, USB_EP_STAT_TX_NAK);
             }
             else {
+                usb_set_ep_rx_addr(address, pmaOffset);
 				if (! e->doubleBuffer) {
-					usb_set_ep_rx_addr(address, e->pmaAddress);
-					usb_set_ep_rx_count(address, e->bufferSize);
+					usb_set_ep_rx_count(address, e->pmaSize);
 				}
 				else {
-					usb_set_ep_tx_buf0_addr(address, e->pmaAddress);
-					usb_set_ep_tx_buf1_addr(address, e->pmaAddress+e->bufferSize/2);
-					usb_set_ep_tx_buf0_count(address, e->bufferSize/2);
-					usb_set_ep_tx_buf1_count(address, e->bufferSize/2);
+					usb_set_ep_tx_buf0_addr(address, pmaOffset);
+					usb_set_ep_tx_buf1_addr(address, pmaOffset+e->pmaSize/2);
+					usb_set_ep_tx_buf0_count(address, e->pmaSize/2);
+					usb_set_ep_tx_buf1_count(address, e->pmaSize/2);
                 }
 				usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
             }
@@ -653,22 +658,20 @@ static RESULT usbGetInterfaceSetting(uint8 interface, uint8 alt_setting) {
     return USB_SUCCESS;
 }
 
-void usb_copy_to_pma(volatile const uint8 *buf, uint16 len, uint16 pma_offset) {
-    uint16 *dst = (uint16*)usb_pma_ptr(pma_offset);
+void usb_copy_to_pma_ptr(volatile const uint8 *buf, uint16 len, uint32* dst) {
     uint16 n = len >> 1;
     uint16 i;
     for (i = 0; i < n; i++) {
-        *dst = (uint16)(*buf) | *(buf + 1) << 8;
+        *(uint16*)dst = (uint16)(*buf) | *(buf + 1) << 8;
         buf += 2;
-        dst += 2;
+        dst++;
     }
     if (len & 1) {
         *dst = *buf;
     }
 }
 
-void usb_copy_from_pma(volatile uint8 *buf, uint16 len, uint16 pma_offset) {
-    uint32 *src = (uint32*)usb_pma_ptr(pma_offset);
+void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* src) {
     uint16 *dst = (uint16*)buf;
     uint16 n = len >> 1;
     uint16 i;
@@ -686,7 +689,7 @@ uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf
     uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
     /* This copy won't overwrite unread bytes as long as there is
      * enough room in the USB Rx buffer for next packet */
-    uint32 *src = usb_pma_ptr(ep->pmaAddress);
+    volatile uint32 *src = ep->pma;
 
     uint16 tmp = 0;
     uint8 val;
@@ -720,6 +723,6 @@ uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 
     uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
     if (ep_rx_size > bufferSize)
         ep_rx_size = bufferSize;
-    usb_copy_from_pma(buf, ep_rx_size, ep->pmaAddress);
+    usb_copy_from_pma_ptr(buf, ep_rx_size, ep->pma);
     return ep_rx_size;
 }

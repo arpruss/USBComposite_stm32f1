@@ -223,49 +223,49 @@ typedef struct {
 USBEndpointInfo x360Endpoints[NUM_ENDPOINTS*USB_X360_MAX_CONTROLLERS] = {
     {
         .callback = x360DataTxCb0,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb0,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb1,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb1,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb2,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb2,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb3,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb3,
-        .bufferSize = 0x20,
+        .pmaSize = 0x20,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
@@ -350,7 +350,7 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
 
     /* Queue bytes for sending. */
     if (len) {
-        usb_copy_to_pma(buf, len, USB_X360_TX_ADDR(controller));
+        usb_copy_to_pma_ptr(buf, len, USB_X360_TX_PMA_PTR(controller));
     }
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing

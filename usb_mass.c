@@ -106,13 +106,13 @@ const mass_descriptor_config usbMassConfigDescriptor = {
 USBEndpointInfo usbMassEndpoints[2] = {
     {
         .callback = usb_mass_in,
-        .bufferSize = MAX_BULK_PACKET_SIZE,
+        .pmaSize = MAX_BULK_PACKET_SIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
         .tx = 1,
     },
     {
         .callback = usb_mass_out,
-        .bufferSize = MAX_BULK_PACKET_SIZE,
+        .pmaSize = MAX_BULK_PACKET_SIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
         .tx = 0,
     },
@@ -439,7 +439,7 @@ void usb_mass_bot_set_csw(uint8_t status, uint8_t sendPermission) {
 
 uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize) {
   /* Use the memory interface function to write to the selected endpoint */
-  usb_copy_to_pma(pBufferPointer, wBufferSize, USB_MASS_TX_ADDR);
+  usb_copy_to_pma_ptr(pBufferPointer, wBufferSize, USB_MASS_TX_PMA_PTR);
 
   /* Update the data length in the control register */
   SetEPTxCount(USB_MASS_TX_ENDP, wBufferSize);
@@ -454,7 +454,7 @@ uint32_t usb_mass_sil_read(uint8_t* pBufferPointer) {
   usb_mass_dataLength = GetEPRxCount(USB_MASS_RX_ENDP);
 
   /* Use the memory interface function to write to the selected endpoint */
-  usb_copy_from_pma(pBufferPointer, usb_mass_dataLength, USB_MASS_RX_ADDR);
+  usb_copy_from_pma_ptr(pBufferPointer, usb_mass_dataLength, USB_MASS_RX_PMA_PTR);
 
   /* Return the number of received data */
   return usb_mass_dataLength;

@@ -33,9 +33,9 @@
 #define IO_BUFFER_SIZE_MASK         (IO_BUFFER_SIZE - 1)
 //#define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
 #define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
-#define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
-#define AUDIO_ISO_BUF0_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress)
-#define AUDIO_ISO_BUF1_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE)
+#define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].pmaSize / 2)
+#define AUDIO_ISO_BUF0_PMA_PTR     (usbAUDIOPart.endpoints[0].pma)
+#define AUDIO_ISO_BUF1_PMA_PTR     PMA_PTR_BUF1(&(usbAUDIOPart.endpoints[0]))
 
 /* Tx data */
 static volatile uint8 audioBufferTx[IO_BUFFER_SIZE];
@@ -379,7 +379,7 @@ static const audio_part_config_2 audioPartConfigData2 = {
 static USBEndpointInfo audioEndpointIN[1] = {
     {
         .callback = audioDataTxCb,
-        .bufferSize = AUDIO_MAX_EP_BUFFER_SIZE,
+        .pmaSize = AUDIO_MAX_EP_BUFFER_SIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_ISO,
         .tx = 1,
         .exclusive = 1, // TODO: check if needed?
@@ -390,7 +390,7 @@ static USBEndpointInfo audioEndpointIN[1] = {
 static USBEndpointInfo audioEndpointOUT[1] = {
     {
         .callback = audioDataRxCb,
-        .bufferSize = AUDIO_MAX_EP_BUFFER_SIZE,
+        .pmaSize = AUDIO_MAX_EP_BUFFER_SIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_ISO,
         .tx = 0,
         .exclusive = 1, // TODO: check if needed?
@@ -406,7 +406,7 @@ void usb_audio_setEPSize(uint32_t size) {
     if (usbAUDIOPart.endpoints == audioEndpointIN)
         size *= 2;
 
-    usbAUDIOPart.endpoints[0].bufferSize = size;
+    usbAUDIOPart.endpoints[0].pmaSize = size;
 }
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
@@ -590,9 +590,9 @@ static void audioDataTxCb(void)
     /* copy the bytes from USB Tx buffer to PMA buffer */
     uint32 *dst;
     if (dtog_tx)
-        dst = usb_pma_ptr(AUDIO_ISO_BUF1_PMA_ADDRESS);
+        dst = AUDIO_ISO_BUF1_PMA_PTR;
     else
-        dst = usb_pma_ptr(AUDIO_ISO_BUF0_PMA_ADDRESS);
+        dst = AUDIO_ISO_BUF0_PMA_PTR;
 
     uint16 tmp = 0;
     uint16 val;
@@ -647,7 +647,6 @@ static void audioUSBReset(void) {
         usb_generic_enable_tx(AUDIO_ISO_EP_ADDRESS);
     } else if (usbAUDIOPart.endpoints == audioEndpointOUT) {
         /* Setup OUT endpoint */
-        usb_set_ep_rx_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF0_PMA_ADDRESS);
         usb_clear_ep_dtog_rx(AUDIO_ISO_EP_ADDRESS);
         usb_generic_enable_rx(AUDIO_ISO_EP_ADDRESS);
     }

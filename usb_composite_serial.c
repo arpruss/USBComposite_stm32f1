@@ -192,19 +192,19 @@ static const serial_part_config serialPartConfigData = {
 static USBEndpointInfo serialEndpoints[3] = {
     {
         .callback = vcomDataTxCb,
-        .bufferSize = 64, // patch
+        .pmaSize = 64, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
-        .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
+        .pmaSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
         .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb,
-        .bufferSize = 64, // patch
+        .pmaSize = 64, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
@@ -232,14 +232,14 @@ static void getSerialPartDescriptor(uint8* out) {
 void composite_cdcacm_setTXEPSize(uint32_t size) {
     if (size == 0 || size > 64)
         size = 64;
-    serialEndpoints[0].bufferSize = size;
+    serialEndpoints[0].pmaSize = size;
     txEPSize = size;
 }
 
 void composite_cdcacm_setRXEPSize(uint32_t size) {
     if (size == 0 || size > 64)
         size = 64;
-    serialEndpoints[2].bufferSize = size;
+    serialEndpoints[2].pmaSize = size;
     rxEPSize = size;
 }
 
@@ -471,7 +471,7 @@ static void vcomDataTxCb(void)
         tx_unsent = txEPSize;
     }
 	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usb_pma_ptr(usbSerialPart.endpoints[CDCACM_ENDPOINT_TX].pmaAddress);
+	uint32 *dst = usbSerialPart.endpoints[CDCACM_ENDPOINT_TX].pma;
     uint16 tmp = 0;
 	uint16 val;
 	unsigned i;

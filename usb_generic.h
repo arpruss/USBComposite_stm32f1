@@ -36,8 +36,8 @@ extern const usb_descriptor_string usb_generic_default_iProduct;
 
 typedef struct USBEndpointInfo {
     void (*callback)(void);
-    uint16 bufferSize;
-    uint16 pmaAddress;
+    void* pma;
+    uint16 pmaSize;
     uint8 address;    
     uint8 type:2;
     uint8 doubleBuffer:1;
@@ -85,6 +85,9 @@ static inline void usb_generic_pause_rx_ep0() {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
 }
 
+// even offset into PMA buffer
+#define PMA_PTR_EVEN_OFFSET(ep,offset) ((ep)->pma+(offset)/2)
+#define PMA_PTR_BUF1(ep) ((ep)->pma+(ep)->pmaSize/4)
 
 void usb_generic_set_disconnect_delay(uint32 delay);
 void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber);
@@ -95,8 +98,8 @@ void usb_generic_control_descriptor_tx(ONE_DESCRIPTOR* d);
 void usb_generic_disable(void);
 void usb_generic_enable(void);
 extern volatile int8 usbGenericTransmitting;
-void usb_copy_from_pma(volatile uint8 *buf, uint16 len, uint16 pma_offset);
-void usb_copy_to_pma(volatile const uint8 *buf, uint16 len, uint16 pma_offset);
+void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* pma);
+void usb_copy_to_pma_ptr(volatile const uint8 *buf, uint16 len, uint32* pma);
 uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP);
 uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize);
 
