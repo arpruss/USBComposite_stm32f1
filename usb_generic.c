@@ -546,6 +546,10 @@ void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile
     control_data_rx(0);
 }
 
+void usb_generic_control_descriptor_tx(ONE_DESCRIPTOR* d) {
+    usb_generic_control_tx_setup(d->Descriptor, d->Descriptor_Size, NULL);
+}
+
 static RESULT usbDataSetup(uint8 request) {
     if ((Type_Recipient & REQUEST_RECIPIENT) == INTERFACE_RECIPIENT) {
         uint8 interface  = pInformation->USBwIndex0;
