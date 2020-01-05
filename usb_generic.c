@@ -434,6 +434,13 @@ static void usbReset(void) {
             if (e->tx) {
                 usb_set_ep_tx_addr(address, pmaOffset);
                 usb_set_ep_tx_stat(address, USB_EP_STAT_TX_NAK);
+                if (e->doubleBuffer) {
+                    usb_set_ep_tx_buf0_addr(address, pmaOffset);
+                    usb_set_ep_tx_buf1_addr(address, pmaOffset+e->pmaSize/2);
+                    usb_set_ep_tx_buf0_count(address, e->pmaSize/2);
+                    usb_set_ep_tx_buf1_count(address, e->pmaSize/2);
+                    usb_clear_ep_dtog_tx(address);
+                }
             }
             else {
                 usb_set_ep_rx_addr(address, pmaOffset);
@@ -441,10 +448,7 @@ static void usbReset(void) {
 					usb_set_ep_rx_count(address, e->pmaSize);
 				}
 				else {
-					usb_set_ep_tx_buf0_addr(address, pmaOffset);
-					usb_set_ep_tx_buf1_addr(address, pmaOffset+e->pmaSize/2);
-					usb_set_ep_tx_buf0_count(address, e->pmaSize/2);
-					usb_set_ep_tx_buf1_count(address, e->pmaSize/2);
+                    usb_clear_ep_dtog_rx(address);
                 }
 				usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
             }
