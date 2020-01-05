@@ -90,10 +90,8 @@ static inline void usb_generic_set_tx(uint8 endpointAddress, uint32 length) {
     usb_generic_enable_tx(endpointAddress);
 }
 
-// even offset into PMA buffer
-#define PMA_PTR_EVEN_OFFSET(ep,offset) ((ep)->pma+(offset)/2)
-// for double bubffering
-#define PMA_PTR_BUF1(ep) ((ep)->pma+(ep)->pmaSize/4)
+// for double buffering
+#define PMA_PTR_BUF1(ep) ((void*)((uint8*)(ep)->pma+(ep)->pmaSize))
 #define PMA_PTR_BUF0(ep) ((ep)->pma)
 
 uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 amount, volatile uint32* tailP);
