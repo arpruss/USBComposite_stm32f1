@@ -63,6 +63,8 @@ static void usbMIDIReset(void);
 #define MIDI_ENDPOINT_TX 1
 #define USB_MIDI_RX_ENDP (midiEndpoints[MIDI_ENDPOINT_RX].address)
 #define USB_MIDI_TX_ENDP (midiEndpoints[MIDI_ENDPOINT_TX].address)
+#define USB_MIDI_RX_ENDPOINT_INFO (&midiEndpoints[MIDI_ENDPOINT_RX])
+#define USB_MIDI_TX_ENDPOINT_INFO (&midiEndpoints[MIDI_ENDPOINT_TX])
 #define USB_MIDI_RX_PMA_PTR (midiEndpoints[MIDI_ENDPOINT_RX].pma)
 #define USB_MIDI_TX_PMA_PTR (midiEndpoints[MIDI_ENDPOINT_TX].pma)
 
@@ -348,7 +350,7 @@ uint32 usb_midi_tx(const uint32* buf, uint32 packets) {
     // host-side buffers.)
     n_unsent_packets = packets;
     transmitting = 1;
-    usb_generic_set_tx(USB_MIDI_TX_ENDP, bytes);
+    usb_generic_set_tx(USB_MIDI_TX_ENDPOINT_INFO, bytes);
 
     return packets;
 }
@@ -380,7 +382,7 @@ uint32 usb_midi_rx(uint32* buf, uint32 packets) {
     /* If all bytes have been read, re-enable the RX endpoint, which
      * was set to NAK when the current batch of bytes was received. */
     if (n_unread_packets == 0) {
-        usb_generic_enable_rx(USB_MIDI_RX_ENDP);
+        usb_generic_enable_rx(USB_MIDI_RX_ENDPOINT_INFO);
         rx_offset = 0;
     }
 
@@ -426,7 +428,7 @@ static void midiDataRxCb(void) {
     LglSysexHandler((uint32*)midiBufferRx,(uint32*)&rx_offset,(uint32*)&n_unread_packets);
     
     if (n_unread_packets == 0) {
-        usb_generic_enable_rx(USB_MIDI_RX_ENDP);
+        usb_generic_enable_rx(USB_MIDI_RX_ENDPOINT_INFO);
         rx_offset = 0;
     }
 

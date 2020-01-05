@@ -61,20 +61,20 @@ typedef struct USBCompositePart {
     USBEndpointInfo* endpoints;
 } USBCompositePart;
 
-static inline void usb_generic_enable_rx(uint8 endpointAddress) {
-    usb_set_ep_rx_stat(endpointAddress, USB_EP_STAT_RX_VALID);
+static inline void usb_generic_enable_rx(USBEndpointInfo* ep) {
+    usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_VALID);
 }
 
-static inline void usb_generic_enable_tx(uint8 endpointAddress) {
-    usb_set_ep_tx_stat(endpointAddress, USB_EP_STAT_TX_VALID);
+static inline void usb_generic_enable_tx(USBEndpointInfo* ep) {
+    usb_set_ep_tx_stat(ep->address, USB_EP_STAT_TX_VALID);
 }
 
-static inline void usb_generic_disable_rx(uint8 endpointAddress) {
-    usb_set_ep_rx_stat(endpointAddress, USB_EP_STAT_RX_DISABLED);
+static inline void usb_generic_disable_rx(USBEndpointInfo* ep) {
+    usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_DISABLED);
 }
 
-static inline void usb_generic_disable_tx(uint8 endpointAddress) {
-    usb_set_ep_tx_stat(endpointAddress, USB_EP_STAT_TX_DISABLED);
+static inline void usb_generic_disable_tx(USBEndpointInfo* ep) {
+    usb_set_ep_tx_stat(ep->address, USB_EP_STAT_TX_DISABLED);
 }
 
 static inline void usb_generic_enable_rx_ep0() {
@@ -85,9 +85,9 @@ static inline void usb_generic_pause_rx_ep0() {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
 }
 
-static inline void usb_generic_set_tx(uint8 endpointAddress, uint32 length) {
-    usb_set_ep_tx_count(endpointAddress, length);
-    usb_generic_enable_tx(endpointAddress);
+static inline void usb_generic_set_tx(USBEndpointInfo* ep, uint32 length) {
+    usb_set_ep_tx_count(ep->address, length);
+    usb_generic_enable_tx(ep);
 }
 
 // for double buffering

@@ -78,7 +78,7 @@ static volatile HIDBuffer_t hidBuffers[MAX_HID_BUFFERS] = {{ 0 }};
  
 
 #define HID_ENDPOINT_TX      0
-#define USB_HID_TX_ENDPOINT_INFO &hidEndpoints[HID_ENDPOINT_TX]
+#define USB_HID_TX_ENDPOINT_INFO (&hidEndpoints[HID_ENDPOINT_TX])
 #define USB_HID_TX_ENDP (hidEndpoints[HID_ENDPOINT_TX].address)
 
 

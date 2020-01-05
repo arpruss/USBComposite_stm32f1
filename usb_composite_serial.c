@@ -52,8 +52,9 @@
 #define USB_CDCACM_MANAGEMENT_ENDP    (serialEndpoints[CDCACM_ENDPOINT_MANAGEMENT].address)
 #define USB_CDCACM_TX_ENDP            (serialEndpoints[CDCACM_ENDPOINT_TX].address)
 #define USB_CDCACM_RX_ENDP            (serialEndpoints[CDCACM_ENDPOINT_RX].address)
-
-uint16 GetEPTxAddr(uint8 /*bEpNum*/);
+#define USB_CDCACM_MANAGEMENT_ENDPOINT_INFO    (&serialEndpoints[CDCACM_ENDPOINT_MANAGEMENT])
+#define USB_CDCACM_TX_ENDPOINT_INFO            (&serialEndpoints[CDCACM_ENDPOINT_TX])
+#define USB_CDCACM_RX_ENDPOINT_INFO            (&serialEndpoints[CDCACM_ENDPOINT_RX])
 
 /* usb_lib headers */
 #include "usb_type.h"
@@ -363,7 +364,7 @@ uint32 composite_cdcacm_rx(uint8* buf, uint32 len)
 	uint32 rx_unread = (vcom_rx_head - tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
     // If buffer was emptied to a pre-set value, re-enable the RX endpoint
     if ( rx_unread <= 64 ) { // experimental value, gives the best performance
-        usb_generic_enable_rx(USB_CDCACM_RX_ENDP);
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDPOINT_INFO);
 	}
     return n_copied;
 }
@@ -454,7 +455,7 @@ int composite_cdcacm_get_n_data_bits(void) {
  */
 static void vcomDataTxCb(void)
 {
-    usb_generic_send_from_circular_buffer(&usbSerialPart.endpoints[CDCACM_ENDPOINT_TX], 
+    usb_generic_send_from_circular_buffer(USB_CDCACM_TX_ENDPOINT_INFO, 
         vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, vcom_tx_head, &vcom_tx_tail);
 }
 
@@ -462,14 +463,14 @@ static void vcomDataTxCb(void)
 static void vcomDataRxCb(void)
 {
 	uint32 head = vcom_rx_head;
-    usb_generic_fill_circular_buffer(usbSerialPart.endpoints + CDCACM_ENDPOINT_RX,
+    usb_generic_fill_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO,
                             vcomBufferRx, CDC_SERIAL_RX_BUFFER_SIZE, &head);
 	vcom_rx_head = head; // store volatile variable
 
 	uint32 rx_unread = (head - vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 	// only enable further Rx if there is enough room to receive one more packet
 	if ( rx_unread < (CDC_SERIAL_RX_BUFFER_SIZE-rxEPSize) ) {
-        usb_generic_enable_rx(USB_CDCACM_RX_ENDP);
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDPOINT_INFO);
 	}
 
     if (rx_hook) {

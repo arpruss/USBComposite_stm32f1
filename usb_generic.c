@@ -420,8 +420,8 @@ static void usbReset(void) {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
     
     for (unsigned i = 1 ; i < 8 ; i++) {
-        usb_generic_disable_tx(i);
-        usb_generic_disable_rx(i);
+        usb_set_ep_rx_stat(i, USB_EP_STAT_RX_DISABLED);
+        usb_set_ep_tx_stat(i, USB_EP_STAT_TX_DISABLED);
     }
     
     for (unsigned i = 0 ; i < numParts ; i++) {
@@ -763,7 +763,7 @@ uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8
 flush:
 	// enable Tx endpoint
     usb_set_ep_tx_count(ep->address, amount);
-    usb_generic_enable_tx(ep->address);
+    usb_generic_enable_tx(ep);
     
     return amount;
 }

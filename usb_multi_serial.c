@@ -60,8 +60,9 @@
 #define CDC_SERIAL_TX_BUFFER_SIZE_MASK (CDC_SERIAL_TX_BUFFER_SIZE-1)
 
 #define USB_CDCACM_MANAGEMENT_ENDP(port)    (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_MANAGEMENT].address)
-#define USB_CDCACM_RX_ENDPOINT_INFO(port)   &serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX]
-#define USB_CDCACM_TX_ENDPOINT_INFO(port)   &serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX]
+#define USB_CDCACM_MANAGEMENT_ENDPOINT_INFO(port)   (&serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_MANAGEMENT])
+#define USB_CDCACM_RX_ENDPOINT_INFO(port)   (&serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX])
+#define USB_CDCACM_TX_ENDPOINT_INFO(port)   (&serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX])
 #define USB_CDCACM_TX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].address)
 #define USB_CDCACM_RX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX].address)
 #define USB_CDCACM_TX_PMA_PTR(port)         (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].pma)
@@ -466,7 +467,7 @@ uint32 multi_serial_rx(uint32 port, uint8* buf, uint32 len)
 	uint32 rx_unread = (p->vcom_rx_head - tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
     // If buffer was emptied to a pre-set value, re-enable the RX endpoint
     if ( rx_unread <= 64 ) { // experimental value, gives the best performance
-        usb_generic_enable_rx(USB_CDCACM_RX_ENDP(port));
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDPOINT_INFO(port));
 	}
     return n_copied;
 }
@@ -577,7 +578,7 @@ static void vcomDataRxCb(uint32 port)
 	uint32 rx_unread = (head - p->vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 	// only enable further Rx if there is enough room to receive one more packet
 	if ( rx_unread < (CDC_SERIAL_RX_BUFFER_SIZE-p->rxEPSize) ) {
-        usb_generic_enable_rx(USB_CDCACM_RX_ENDP(port));
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDPOINT_INFO(port));
 	}
 
     if (p->rx_hook) {

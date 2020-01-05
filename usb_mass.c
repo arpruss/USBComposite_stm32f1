@@ -160,8 +160,8 @@ static void usb_mass_reset(void) {
 static void usb_mass_set_configuration(void) {
   if (pInformation->Current_Configuration != 0) {
     deviceState = USB_CONFIGURED;
-    ClearDTOG_TX(USB_MASS_TX_ENDP);
-    ClearDTOG_RX(USB_MASS_RX_ENDP);
+    ClearDTOG_TX(USB_MASS_TX_ENDP); // TODO
+    ClearDTOG_RX(USB_MASS_RX_ENDP); // TODO
     usb_mass_botState = BOT_STATE_IDLE;
   }
 }
@@ -210,10 +210,10 @@ static RESULT usb_mass_no_data_setup(uint8 request, uint8 interface, uint8 reque
   if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == REQUEST_MASS_STORAGE_RESET && wValue0 == 0 && wValue1 == 0) {
 
     /* Initialize Endpoint 1 */
-    ClearDTOG_TX(USB_MASS_TX_ENDP);
+    ClearDTOG_TX(USB_MASS_TX_ENDP); // TODO
 
     /* Initialize Endpoint 2 */
-    ClearDTOG_RX(USB_MASS_RX_ENDP);
+    ClearDTOG_RX(USB_MASS_RX_ENDP); // TODO
 
     /*initialize the usb_mass_CBW signature to enable the clear feature*/
     usb_mass_CBW.dSignature = BOT_CBW_SIGNATURE;
@@ -401,14 +401,14 @@ static void usb_mass_bot_cbw_decode() {
 void usb_mass_bot_abort(uint8_t direction) {
   switch (direction) {
     case BOT_DIR_IN:
-      SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_STL);
+      SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_STL); // TODO
       break;
     case BOT_DIR_OUT:
-      SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_STL);
+      SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_STL); // TODO
       break;
     case BOT_DIR_BOTH:
-      SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_STL);
-      SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_STL);
+      SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_STL); // TODO
+      SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_STL); // TODO
       break;
     default:
       break;
@@ -418,7 +418,7 @@ void usb_mass_bot_abort(uint8_t direction) {
 void usb_mass_transfer_data_request(uint8_t* dataPointer, uint16_t dataLen) {
   usb_mass_sil_write(dataPointer, dataLen);
 
-  SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
+  SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL); // TODO
   usb_mass_botState = BOT_STATE_DATA_IN_LAST;
   usb_mass_CSW.dDataResidue -= dataLen;
   usb_mass_CSW.bStatus = BOT_CSW_CMD_PASSED;
@@ -433,7 +433,7 @@ void usb_mass_bot_set_csw(uint8_t status, uint8_t sendPermission) {
   usb_mass_botState = BOT_STATE_ERROR;
   if (sendPermission) {
     usb_mass_botState = BOT_STATE_CSW_Send;
-    SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
+    SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL); // TODO
   }
 }
 
@@ -442,7 +442,7 @@ uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize) {
   usb_copy_to_pma_ptr(pBufferPointer, wBufferSize, USB_MASS_TX_PMA_PTR);
 
   /* Update the data length in the control register */
-  SetEPTxCount(USB_MASS_TX_ENDP, wBufferSize);
+  SetEPTxCount(USB_MASS_TX_ENDP, wBufferSize); // TODO
 
   return 0;
 }
@@ -451,7 +451,7 @@ uint32_t usb_mass_sil_read(uint8_t* pBufferPointer) {
   uint32_t usb_mass_dataLength = 0;
 
   /* Get the number of received data on the selected Endpoint */
-  usb_mass_dataLength = GetEPRxCount(USB_MASS_RX_ENDP);
+  usb_mass_dataLength = GetEPRxCount(USB_MASS_RX_ENDP); // TODO
 
   /* Use the memory interface function to write to the selected endpoint */
   usb_copy_from_pma_ptr(pBufferPointer, usb_mass_dataLength, USB_MASS_RX_PMA_PTR);

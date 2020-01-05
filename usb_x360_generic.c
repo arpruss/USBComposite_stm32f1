@@ -357,7 +357,7 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
     // host-side buffers.)
     c->n_unsent_bytes = len;
     c->transmitting = 1;
-    usb_generic_set_tx(USB_X360_TX_ENDP(controller), len);
+    usb_generic_set_tx(USB_X360_TX_ENDPOINT_INFO(controller), len);
 
     return len;
 }
@@ -386,7 +386,7 @@ static void x360DataRxCb(uint32 controller)
             c->rumble_callback(hidBufferRx[5],hidBufferRx[6]);
     } 
     
-    usb_generic_enable_rx(ep->address);
+    usb_generic_enable_rx(ep);
 }
 
 /*

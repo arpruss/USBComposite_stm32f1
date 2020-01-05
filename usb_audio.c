@@ -606,12 +606,10 @@ static void audioUSBReset(void) {
 
     if (usbAUDIOPart.endpoints == audioEndpointIN) {
         /* Setup IN endpoint */
-        usb_clear_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
-        usb_generic_enable_tx(AUDIO_ISO_EP_ADDRESS);
+        usb_generic_enable_tx(AUDIO_ISO_EP_ENDPOINT_INFO);
     } else if (usbAUDIOPart.endpoints == audioEndpointOUT) {
         /* Setup OUT endpoint */
-        usb_clear_ep_dtog_rx(AUDIO_ISO_EP_ADDRESS);
-        usb_generic_enable_rx(AUDIO_ISO_EP_ADDRESS);
+        usb_generic_enable_rx(AUDIO_ISO_EP_ENDPOINT_INFO);
     }
 }
 
