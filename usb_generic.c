@@ -705,14 +705,7 @@ uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf
         head = (head + 1) % bufferSize;
     }
 
-    if (ep_rx_size & 1) {
-        val = *src & 0xFF;
-        buf[head] = val;
-        *headP = (head + 1) % bufferSize;
-    }
-    else {
-        *headP = head;
-    }
+    *headP = head;
     
     return ep_rx_size;
 }
