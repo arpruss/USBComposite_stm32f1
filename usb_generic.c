@@ -763,3 +763,49 @@ flush:
     
     return amount;
 }
+
+
+uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 amount, volatile uint32* tailP) {
+    uint32 tail = *tailP; /* load volatile variable */
+
+    uint32 dtog_tx = usb_get_ep_dtog_tx(ep->address);
+
+    usbGenericTransmitting = 1;
+
+    /* copy the bytes from USB Tx buffer to PMA buffer */
+    uint32 *dst;
+    if (dtog_tx)
+        dst = PMA_PTR_BUF1(ep);
+    else
+        dst = PMA_PTR_BUF0(ep);
+    
+    if (amount > ep->pmaSize / 2)
+        amount = ep->pmaSize / 2;
+
+    uint16 tmp = 0;
+    uint16 val;
+    unsigned i;
+    for (i = 0; i < amount; i++) {
+        val = buf[tail];
+        tail = (tail + 1) % circularBufferSize;
+        if (i & 1) {
+            *dst++ = tmp | (val << 8);
+        } else {
+            tmp = val;
+        }
+    }
+
+    if (amount & 1)
+        *dst = tmp;
+
+    *tailP = tail; /* store volatile variable */
+
+    usbGenericTransmitting = -1;
+
+    if (dtog_tx)
+        usb_set_ep_tx_buf1_count(ep->address, amount);
+    else
+        usb_set_ep_tx_buf0_count(ep->address, amount);
+    
+    return amount;
+}

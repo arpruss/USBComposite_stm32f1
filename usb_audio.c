@@ -32,10 +32,9 @@
 #define IO_BUFFER_SIZE              256
 #define IO_BUFFER_SIZE_MASK         (IO_BUFFER_SIZE - 1)
 //#define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
+#define AUDIO_ISO_EP_ENDPOINT_INFO (&usbAUDIOPart.endpoints[0])
 #define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
 #define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].pmaSize / 2)
-#define AUDIO_ISO_BUF0_PMA_PTR     (usbAUDIOPart.endpoints[0].pma)
-#define AUDIO_ISO_BUF1_PMA_PTR     PMA_PTR_BUF1(&(usbAUDIOPart.endpoints[0]))
 
 /* Tx data */
 static volatile uint8 audioBufferTx[IO_BUFFER_SIZE];
@@ -581,43 +580,7 @@ uint32 usb_audio_read_rx_data(uint8* buf, uint32 len)
 /* Since we're USB FS, this function called once per millisecond */
 static void audioDataTxCb(void)
 {
-    uint32 tail = audio_tx_tail; /* load volatile variable */
-
-    uint32 dtog_tx = usb_get_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
-
-    usbGenericTransmitting = 1;
-
-    /* copy the bytes from USB Tx buffer to PMA buffer */
-    uint32 *dst;
-    if (dtog_tx)
-        dst = AUDIO_ISO_BUF1_PMA_PTR;
-    else
-        dst = AUDIO_ISO_BUF0_PMA_PTR;
-
-    uint16 tmp = 0;
-    uint16 val;
-    unsigned i;
-    for (i = 0; i < buffer_size; i++) {
-        val = audioBufferTx[tail];
-        tail = (tail + 1) & IO_BUFFER_SIZE_MASK;
-        if (i & 1) {
-            *dst++ = tmp | (val << 8);
-        } else {
-            tmp = val;
-        }
-    }
-
-    if (buffer_size & 1)
-        *dst = tmp;
-
-    audio_tx_tail = tail; /* store volatile variable */
-
-    usbGenericTransmitting = -1;
-
-    if (dtog_tx)
-        usb_set_ep_tx_buf1_count(AUDIO_ISO_EP_ADDRESS, buffer_size);
-    else
-        usb_set_ep_tx_buf0_count(AUDIO_ISO_EP_ADDRESS, buffer_size);
+    usb_generic_send_from_circular_buffer_double_buffered(AUDIO_ISO_EP_ENDPOINT_INFO, audioBufferTx, IO_BUFFER_SIZE, buffer_size, &audio_tx_tail);
 
     if (packet_callback)
         packet_callback(buffer_size);

@@ -92,8 +92,11 @@ static inline void usb_generic_set_tx(uint8 endpointAddress, uint32 length) {
 
 // even offset into PMA buffer
 #define PMA_PTR_EVEN_OFFSET(ep,offset) ((ep)->pma+(offset)/2)
+// for double bubffering
 #define PMA_PTR_BUF1(ep) ((ep)->pma+(ep)->pmaSize/4)
+#define PMA_PTR_BUF0(ep) ((ep)->pma)
 
+uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 amount, volatile uint32* tailP);
 void usb_generic_set_disconnect_delay(uint32 delay);
 void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber);
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
