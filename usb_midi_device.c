@@ -380,7 +380,6 @@ uint32 usb_midi_rx(uint32* buf, uint32 packets) {
     /* If all bytes have been read, re-enable the RX endpoint, which
      * was set to NAK when the current batch of bytes was received. */
     if (n_unread_packets == 0) {
-        usb_set_ep_rx_count(USB_MIDI_RX_ENDP, rxEPSize);
         usb_generic_enable_rx(USB_MIDI_RX_ENDP);
         rx_offset = 0;
     }
@@ -427,7 +426,6 @@ static void midiDataRxCb(void) {
     LglSysexHandler((uint32*)midiBufferRx,(uint32*)&rx_offset,(uint32*)&n_unread_packets);
     
     if (n_unread_packets == 0) {
-        usb_set_ep_rx_count(USB_MIDI_RX_ENDP, rxEPSize);
         usb_generic_enable_rx(USB_MIDI_RX_ENDP);
         rx_offset = 0;
     }
