@@ -95,7 +95,6 @@ typedef struct
  * CDC ACM interface
  */
 
-void   composite_cdcacm_putc(char ch);
 uint32 composite_cdcacm_tx(const uint8* buf, uint32 len);
 uint32 composite_cdcacm_rx(uint8* buf, uint32 len);
 uint32 composite_cdcacm_peek(uint8* buf, uint32 len);

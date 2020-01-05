@@ -302,11 +302,6 @@ void composite_cdcacm_set_hooks(unsigned hook_flags, void (*hook)(unsigned, void
     }
 }
 
-void composite_cdcacm_putc(char ch) {
-    while (!composite_cdcacm_tx((uint8*)&ch, 1))
-        ;
-}
-
 /* This function is non-blocking.
  *
  * It copies data from a user buffer into the USB peripheral TX

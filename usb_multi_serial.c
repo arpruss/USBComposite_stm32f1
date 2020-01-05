@@ -400,11 +400,6 @@ void multi_serial_set_hooks(uint32 port, unsigned hook_flags, void (*hook)(unsig
     }
 }
 
-void multi_serial_putc(uint32 port, char ch) {
-    while (!multi_serial_tx(port, (uint8*)&ch, 1))
-        ;
-}
-
 /* This function is non-blocking.
  *
  * It copies data from a user buffer into the USB peripheral TX

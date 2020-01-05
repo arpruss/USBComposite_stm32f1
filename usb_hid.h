@@ -78,6 +78,7 @@ void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int
 uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
 void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
 void usb_hid_setTXEPSize(uint32_t size); 
+uint32 usb_hid_get_pending(void);
 
 /*
  * HID Requests
@@ -132,12 +133,10 @@ typedef struct
  * HID interface
  */
 
-void   usb_hid_putc(char ch);
 uint32 usb_hid_tx(const uint8* buf, uint32 len);
 uint32 usb_hid_tx_mod(const uint8* buf, uint32 len);
 
 uint32 usb_hid_data_available(void); /* in RX buffer */
-uint16 usb_hid_get_pending(void);
 
 
 #ifdef __cplusplus

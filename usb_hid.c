@@ -188,30 +188,6 @@ static volatile uint32 hid_tx_tail = 0;
 
 
  
-
-
-void usb_hid_putc(char ch) {
-    while (!usb_hid_tx((uint8*)&ch, 1))
-        ;
-}
-
-    /*
-static void hidStatusIn() {
-    if (pInformation->ControlState == WAIT_STATUS_IN) {
-        if (currentInFeature >= 0) {
-            if (featureBuffers[currentInFeature].bufferSize == featureBuffers[currentInFeature].currentDataSize) 
-                featureBuffers[currentInFeature].state = HID_BUFFER_UNREAD;
-            currentInFeature = -1;
-        }
-        if (currentOutput >= 0) {
-            if (outputBuffers[currentOutput].bufferSize == outputBuffers[currentOutput].currentDataSize) 
-                outputBuffers[currentOutput].state = HID_BUFFER_UNREAD;
-            currentOutput = -1;
-        }
-    }
-}
-    */
-
 void usb_hid_set_report_descriptor(const uint8* report_descriptor, uint16 report_descriptor_length) {    
     HID_Report_Descriptor.Descriptor = (uint8*)report_descriptor;
     HID_Report_Descriptor.Descriptor_Size = report_descriptor_length;        
@@ -371,9 +347,10 @@ uint32 usb_hid_tx(const uint8* buf, uint32 len)
 
 
 
-uint16 usb_hid_get_pending(void) {
+uint32 usb_hid_get_pending(void) {
     return (hid_tx_head - hid_tx_tail) & HID_TX_BUFFER_SIZE_MASK;
 }
+
 
 static void hidDataTxCb(void)
 {

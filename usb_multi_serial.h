@@ -56,7 +56,6 @@ extern USBCompositePart usbMultiSerialPart;
  * CDC ACM interface
  */
 
-void   multi_serial_putc(uint32 port, char ch);
 uint32 multi_serial_tx(uint32 port, const uint8* buf, uint32 len);
 uint32 multi_serial_rx(uint32 port, uint8* buf, uint32 len);
 uint32 multi_serial_peek(uint32 port, uint8* buf, uint32 len);
