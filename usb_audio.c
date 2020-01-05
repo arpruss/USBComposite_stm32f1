@@ -645,12 +645,6 @@ static void audioDataRxCb(void)
         head = (head + 1) & IO_BUFFER_SIZE_MASK;
     }
 
-    if (ep_rx_size & 1) {
-        val = *src & 0xFF;
-        audioBufferRx[head] = val;
-        head = (head + 1) & IO_BUFFER_SIZE_MASK;
-    }
-
     audio_rx_head = head; /* store volatile variable */
 
     usbAudioReceiving = 0;
