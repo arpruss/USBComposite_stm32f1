@@ -726,3 +726,47 @@ uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 
     usb_copy_from_pma_ptr(buf, ep_rx_size, ep->pma);
     return ep_rx_size;
 }
+
+uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP) {
+    uint32 tail = *tailP;
+	int32 amount = (head - tail) % bufferSize;
+    if (amount < 0)
+        amount += bufferSize;
+    
+	if (amount==0) {
+		if ( (--usbGenericTransmitting)==0) goto flush; // no more data to send
+		return 0; // it was already flushed, keep Tx endpoint disabled
+	}
+    
+	usbGenericTransmitting = 1;
+
+    if (amount > ep->pmaSize) {
+        amount = ep->pmaSize;
+    }
+    
+	// copy the bytes from USB Tx buffer to PMA buffer
+	uint32 *dst = ep->pma;
+    uint16 tmp = 0;
+	uint16 val;
+	int32 i;
+	for (i = 0; i < amount; i++) {
+		val = buf[tail];
+		tail = (tail + 1) % bufferSize;
+		if (i&1) {
+			*dst++ = tmp | (val<<8);
+		} else {
+			tmp = val;
+		}
+	}
+    if ( amount&1 ) {
+        *dst = tmp;
+    }
+	*tailP = tail; // store volatile variable
+    
+flush:
+	// enable Tx endpoint
+    usb_set_ep_tx_count(ep->address, amount);
+    usb_generic_enable_tx(ep->address);
+    
+    return amount;
+}

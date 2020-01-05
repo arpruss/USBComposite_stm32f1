@@ -78,6 +78,7 @@ static volatile HIDBuffer_t hidBuffers[MAX_HID_BUFFERS] = {{ 0 }};
  
 
 #define HID_ENDPOINT_TX      0
+#define USB_HID_TX_ENDPOINT_INFO &hidEndpoints[HID_ENDPOINT_TX]
 #define USB_HID_TX_ENDP (hidEndpoints[HID_ENDPOINT_TX].address)
 
 
@@ -376,41 +377,9 @@ uint16 usb_hid_get_pending(void) {
 
 static void hidDataTxCb(void)
 {
-	uint32 tail = hid_tx_tail; // load volatile variable
-	uint32 tx_unsent = (hid_tx_head - tail) & HID_TX_BUFFER_SIZE_MASK;
-	if (tx_unsent==0) {
-		if ( (--usbGenericTransmitting)==0) goto flush_hid; // no more data to send
-		return; // it was already flushed, keep Tx endpoint disabled
-	}
-	usbGenericTransmitting = 1;
-    if (tx_unsent > txEPSize) {
-        tx_unsent = txEPSize;
-    }
-	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usbHIDPart.endpoints[HID_ENDPOINT_TX].pma;
-    uint16 tmp = 0;
-	uint16 val;
-	unsigned i;
-	for (i = 0; i < tx_unsent; i++) {
-		val = hidBufferTx[tail];
-		tail = (tail + 1) & HID_TX_BUFFER_SIZE_MASK;
-		if (i&1) {
-			*dst++ = tmp | (val<<8);
-		} else {
-			tmp = val;
-		}
-	}
-    if ( tx_unsent&1 ) {
-        *dst = tmp;
-    }
-	hid_tx_tail = tail; // store volatile variable
-    
-flush_hid:
-	// enable Tx endpoint
-    usb_set_ep_tx_count(USB_HID_TX_ENDP, tx_unsent);
-    usb_generic_enable_tx(USB_HID_TX_ENDP);
+    usb_generic_send_from_circular_buffer(USB_HID_TX_ENDPOINT_INFO, 
+        hidBufferTx, HID_TX_BUFFER_SIZE, hid_tx_head, &hid_tx_tail);
 }
-
 
 
 static void hidUSBReset(void) {

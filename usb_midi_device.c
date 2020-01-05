@@ -346,10 +346,9 @@ uint32 usb_midi_tx(const uint32* buf, uint32 packets) {
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing
     // host-side buffers.)
-    usb_set_ep_tx_count(USB_MIDI_TX_ENDP, bytes);
     n_unsent_packets = packets;
     transmitting = 1;
-    usb_generic_enable_tx(USB_MIDI_TX_ENDP);
+    usb_generic_set_tx(USB_MIDI_TX_ENDP, bytes);
 
     return packets;
 }

@@ -355,10 +355,9 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing
     // host-side buffers.)
-    usb_set_ep_tx_count(USB_X360_TX_ENDP(controller), len);
     c->n_unsent_bytes = len;
     c->transmitting = 1;
-    usb_generic_enable_tx(USB_X360_TX_ENDP(controller));
+    usb_generic_set_tx(USB_X360_TX_ENDP(controller), len);
 
     return len;
 }

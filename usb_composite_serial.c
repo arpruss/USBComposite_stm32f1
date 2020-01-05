@@ -459,39 +459,8 @@ int composite_cdcacm_get_n_data_bits(void) {
  */
 static void vcomDataTxCb(void)
 {
-	uint32 tail = vcom_tx_tail; // load volatile variable
-	uint32 tx_unsent = (vcom_tx_head - tail) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
-	if (tx_unsent==0) {
-		if ( (--usbGenericTransmitting)==0) goto flush_vcom; // no more data to send
-		return; // it was already flushed, keep Tx endpoint disabled
-	}
-	usbGenericTransmitting = 1;
-    // We can only send up to txEPSize bytes in the endpoint.
-    if (tx_unsent > txEPSize) {
-        tx_unsent = txEPSize;
-    }
-	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usbSerialPart.endpoints[CDCACM_ENDPOINT_TX].pma;
-    uint16 tmp = 0;
-	uint16 val;
-	unsigned i;
-	for (i = 0; i < tx_unsent; i++) {
-		val = vcomBufferTx[tail];
-		tail = (tail + 1) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
-		if (i&1) {
-			*dst++ = tmp | (val<<8);
-		} else {
-			tmp = val;
-		}
-	}
-    if ( tx_unsent&1 ) {
-        *dst = tmp;
-    }
-	vcom_tx_tail = tail; // store volatile variable
-flush_vcom:
-	// enable Tx endpoint
-    usb_set_ep_tx_count(USB_CDCACM_TX_ENDP, tx_unsent);
-    usb_generic_enable_tx(USB_CDCACM_TX_ENDP);
+    usb_generic_send_from_circular_buffer(&usbSerialPart.endpoints[CDCACM_ENDPOINT_TX], 
+        vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, vcom_tx_head, &vcom_tx_tail);
 }
 
 

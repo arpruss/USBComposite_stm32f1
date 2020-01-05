@@ -85,6 +85,11 @@ static inline void usb_generic_pause_rx_ep0() {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
 }
 
+static inline void usb_generic_set_tx(uint8 endpointAddress, uint32 length) {
+    usb_set_ep_tx_count(endpointAddress, length);
+    usb_generic_enable_tx(endpointAddress);
+}
+
 // even offset into PMA buffer
 #define PMA_PTR_EVEN_OFFSET(ep,offset) ((ep)->pma+(offset)/2)
 #define PMA_PTR_BUF1(ep) ((ep)->pma+(ep)->pmaSize/4)
@@ -102,6 +107,7 @@ void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* pma);
 void usb_copy_to_pma_ptr(volatile const uint8 *buf, uint16 len, uint32* pma);
 uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP);
 uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize);
+uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP);
 
 #ifdef __cplusplus
 }

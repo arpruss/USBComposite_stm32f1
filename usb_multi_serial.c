@@ -61,6 +61,7 @@
 
 #define USB_CDCACM_MANAGEMENT_ENDP(port)    (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_MANAGEMENT].address)
 #define USB_CDCACM_RX_ENDPOINT_INFO(port)   &serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX]
+#define USB_CDCACM_TX_ENDPOINT_INFO(port)   &serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX]
 #define USB_CDCACM_TX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].address)
 #define USB_CDCACM_RX_ENDP(port)            (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_RX].address)
 #define USB_CDCACM_TX_PMA_PTR(port)         (serialEndpoints[NUM_SERIAL_ENDPOINTS*(port)+CDCACM_ENDPOINT_TX].pma)
@@ -565,39 +566,8 @@ int multi_serial_get_n_data_bits(uint32 port) {
 static void vcomDataTxCb(uint32 port)
 {
     volatile struct port_data* p = &ports[port];
-	uint32 tail = p->vcom_tx_tail; // load volatile variable
-	uint32 tx_unsent = (p->vcom_tx_head - tail) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
-	if (tx_unsent==0) {
-		if ( (--usbGenericTransmitting)==0) goto flush_vcom; // no more data to send
-		return; // it was already flushed, keep Tx endpoint disabled
-	}
-	usbGenericTransmitting = 1;
-    // We can only send up to txEPSize bytes in the endpoint.
-    if (tx_unsent > p->txEPSize) {
-        tx_unsent = p->txEPSize;
-    }
-	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = USB_CDCACM_TX_PMA_PTR(port);
-    uint16 tmp = 0;
-	uint16 val;
-	unsigned i;
-	for (i = 0; i < tx_unsent; i++) {
-		val = p->vcomBufferTx[tail];
-		tail = (tail + 1) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
-		if (i&1) {
-			*dst++ = tmp | (val<<8);
-		} else {
-			tmp = val;
-		}
-	}
-    if ( tx_unsent&1 ) {
-        *dst = tmp;
-    }
-	p->vcom_tx_tail = tail; // store volatile variable
-flush_vcom:
-	// enable Tx endpoint
-    usb_set_ep_tx_count(USB_CDCACM_TX_ENDP(port), tx_unsent);
-    usb_generic_enable_tx(USB_CDCACM_TX_ENDP(port));
+    usb_generic_send_from_circular_buffer(USB_CDCACM_TX_ENDPOINT_INFO(port),
+        p->vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, p->vcom_tx_head, &(p->vcom_tx_tail));
 }
 
 
