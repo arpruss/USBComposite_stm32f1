@@ -686,25 +686,23 @@ void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* src) {
 }
 
 // return bytes read
-uint32 usb_generic_read_to_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP) {
+uint32 usb_generic_read_to_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, volatile uint32* headP) {
     uint32 head = *headP;
     uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
     /* This copy won't overwrite unread bytes as long as there is
      * enough room in the USB Rx buffer for next packet */
     volatile uint32 *src = ep->pma;
 
-    uint16 tmp = 0;
-    uint8 val;
-    uint32 i;
-    for (i = 0; i < ep_rx_size; i++) {
-        if (i & 1) {
-            val = tmp >> 8;
-        } else {
-            tmp = *src++;
-            val = tmp & 0xFF;
+    for (uint32 i = 0; i < ep_rx_size; i++) {
+        uint16 tmp = *src++;
+        buf[head] = (uint8)tmp;
+        head = (head + 1) % circularBufferSize;
+        i++;
+        if (i >= ep_rx_size) {
+            break;
         }
-        buf[head] = val;
-        head = (head + 1) % bufferSize;
+        buf[head] = (uint8)(tmp>>8);
+        head = (head + 1) % circularBufferSize;
     }
 
     *headP = head;
