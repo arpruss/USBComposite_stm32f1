@@ -119,13 +119,12 @@ void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile
 void usb_generic_control_descriptor_tx(ONE_DESCRIPTOR* d);
 void usb_generic_disable(void);
 void usb_generic_enable(void);
-extern volatile int8 usbGenericTransmitting;
 void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* pma);
 void usb_copy_to_pma_ptr(volatile const uint8 *buf, uint16 len, uint32* pma);
 uint32 usb_generic_read_to_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP);
 #define USB_GENERIC_UNLIMITED_BUFFER 0xFFFFFFFFul
 uint32 usb_generic_read_to_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize);
-uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP);
+uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP, volatile int8* transmittingP);
 uint32 usb_generic_send_from_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 amount);
 
 #ifdef __cplusplus

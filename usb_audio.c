@@ -50,6 +50,7 @@ static volatile uint32 audio_rx_head = 0;
 static volatile uint32 audio_rx_tail = 0;
 static uint8 usbAudioReceiving;
 
+static volatile int8 transmitting;
 static uint8  clock_valid = 1;
 static uint16 sample_rate;
 static uint8  buffer_size;
@@ -514,7 +515,7 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
     if (len == 0)
         return 0; /* no data to send */
 
-    while(usbGenericTransmitting >= 0);
+    while(transmitting >= 0);
 
     uint32 head = audio_tx_head; /* load volatile variable */
     uint32 tx_unsent = (head - audio_tx_tail) & IO_BUFFER_SIZE_MASK;
@@ -580,7 +581,9 @@ uint32 usb_audio_read_rx_data(uint8* buf, uint32 len)
 /* Since we're USB FS, this function called once per millisecond */
 static void audioDataTxCb(void)
 {
+    transmitting = 1;
     usb_generic_send_from_circular_buffer_double_buffered(AUDIO_ISO_EP_ENDPOINT_INFO, audioBufferTx, IO_BUFFER_SIZE, buffer_size, &audio_tx_tail);
+    transmitting = -1;
 
     if (packet_callback)
         packet_callback(buffer_size);
@@ -603,6 +606,8 @@ static void audioUSBReset(void) {
     audio_tx_tail = 0;
     audio_rx_head = 0;
     audio_rx_tail = 0;
+    usbAudioReceiving = 0;
+    transmitting = -1;
 
     if (usbAUDIOPart.endpoints == audioEndpointIN) {
         /* Setup IN endpoint */

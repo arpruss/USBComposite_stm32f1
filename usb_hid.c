@@ -59,6 +59,7 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 
 static uint32 ProtocolValue = 0;
 static uint32 txEPSize = 64;
+static volatile int8 transmitting;
 
 static void hidDataTxCb(void);
 static void hidUSBReset(void);
@@ -336,9 +337,9 @@ uint32 usb_hid_tx(const uint8* buf, uint32 len)
 	}
 	hid_tx_head = head; // store volatile variable
 
-	while(usbGenericTransmitting >= 0);
+	while(transmitting >= 0);
 	
-	if (usbGenericTransmitting<0) {
+	if (transmitting<0) {
 		hidDataTxCb(); // initiate data transmission
 	}
 
@@ -355,7 +356,7 @@ uint32 usb_hid_get_pending(void) {
 static void hidDataTxCb(void)
 {
     usb_generic_send_from_circular_buffer(USB_HID_TX_ENDPOINT_INFO, 
-        hidBufferTx, HID_TX_BUFFER_SIZE, hid_tx_head, &hid_tx_tail);
+        hidBufferTx, HID_TX_BUFFER_SIZE, hid_tx_head, &hid_tx_tail, &transmitting);
 }
 
 
@@ -363,7 +364,7 @@ static void hidUSBReset(void) {
     /* Reset the RX/TX state */
 	hid_tx_head = 0;
 	hid_tx_tail = 0;
-
+    transmitting = -1;
 }
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"

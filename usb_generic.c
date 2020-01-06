@@ -58,9 +58,6 @@
 const char DEFAULT_PRODUCT[] = "Maple";
 const char DEFAULT_MANUFACTURER[] = "LeafLabs";
 
-// Are we currently sending an IN packet?
-volatile int8 usbGenericTransmitting = -1;
-
 static uint8* usbGetConfigDescriptor(uint16 length);
 static void usbInit(void);
 static void usbReset(void);
@@ -455,7 +452,6 @@ static void usbReset(void) {
             parts[i]->usbReset();
     }
     
-    usbGenericTransmitting = -1;
     control_rx_length = 0;
     control_tx_length = 0;
     
@@ -731,18 +727,25 @@ uint32 usb_generic_send_from_buffer(USBEndpointInfo* ep, volatile uint8* buf, ui
     return amount;
 }
 
-uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 head, volatile uint32* tailP) {
+// transmitting = 1 when transmitting, 0 when done but not flushed, negative when done and flushed
+uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 head, volatile uint32* tailP, volatile int8* transmittingP) {
     uint32 tail = *tailP;
 	int32 amount = (head - tail) % circularBufferSize;
-    if (amount < 0)
+    if (amount < 0) {
+        // wish we could count on % returning a non-negative answer
         amount += circularBufferSize;
+    }
     
 	if (amount==0) {
-		if ( (--usbGenericTransmitting)==0) goto flush; // no more data to send
-		return 0; // it was already flushed, keep Tx endpoint disabled
+        if (*transmittingP <= 0) {
+            *transmittingP = -1;
+            return 0; // it was already flushed, keep Tx endpoint disabled
+        }
+        *transmittingP = 0;
+        goto flush; // no more data to send
 	}
     
-	usbGenericTransmitting = 1;
+	*transmittingP = 1;
 
     if (amount > ep->pmaSize) {
         amount = ep->pmaSize;
@@ -779,8 +782,6 @@ uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep
 
     uint32 dtog_tx = usb_get_ep_dtog_tx(ep->address);
 
-    usbGenericTransmitting = 1;
-
     /* copy the bytes from USB Tx buffer to PMA buffer */
     uint32 *dst;
     if (dtog_tx)
@@ -804,8 +805,6 @@ uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep
     }
 
     *tailP = tail; /* store volatile variable */
-
-    usbGenericTransmitting = -1;
 
     if (dtog_tx)
         usb_set_ep_tx_buf1_count(ep->address, amount);

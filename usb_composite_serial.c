@@ -76,6 +76,7 @@ static void vcomDataRxCb(void);
  * Descriptors
  */
  
+static volatile int8 transmitting;
 static uint32_t txEPSize = 64;
 static uint32_t rxEPSize = 64;
 
@@ -328,9 +329,9 @@ uint32 composite_cdcacm_tx(const uint8* buf, uint32 len)
 	}
 	vcom_tx_head = head; // store volatile variable
 	
-	while(usbGenericTransmitting >= 0);
+	while(transmitting >= 0);
 	
-	if (usbGenericTransmitting<0) {
+	if (transmitting < 0) {
 		vcomDataTxCb(); // initiate data transmission
 	}
 
@@ -456,7 +457,7 @@ int composite_cdcacm_get_n_data_bits(void) {
 static void vcomDataTxCb(void)
 {
     usb_generic_send_from_circular_buffer(USB_CDCACM_TX_ENDPOINT_INFO, 
-        vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, vcom_tx_head, &vcom_tx_tail);
+        vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, vcom_tx_head, &vcom_tx_tail, &transmitting);
 }
 
 
@@ -484,6 +485,7 @@ static void serialUSBReset(void) {
     vcom_rx_tail = 0;
     vcom_tx_head = 0;
     vcom_tx_tail = 0;
+    transmitting = -1;
 }
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"

@@ -99,6 +99,7 @@ static volatile struct port_data {
     uint32 vcom_tx_tail;
     composite_cdcacm_line_coding line_coding;
     uint8 line_dtr_rts;
+    int8 transmitting;
     void (*rx_hook)(unsigned, void*);
     void (*iface_setup_hook)(unsigned, void*);
     uint32_t txEPSize;
@@ -428,9 +429,9 @@ uint32 multi_serial_tx(uint32 port, const uint8* buf, uint32 len)
 	}
 	p->vcom_tx_head = head; // store volatile variable
 	
-	while(usbGenericTransmitting >= 0);
+	while(p->transmitting >= 0);
 	
-	if (usbGenericTransmitting<0) {
+	if (p->transmitting < 0) {
 		vcomDataTxCb(port); // initiate data transmission
 	}
 
@@ -563,7 +564,7 @@ static void vcomDataTxCb(uint32 port)
 {
     volatile struct port_data* p = &ports[port];
     usb_generic_send_from_circular_buffer(USB_CDCACM_TX_ENDPOINT_INFO(port),
-        p->vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, p->vcom_tx_head, &(p->vcom_tx_tail));
+        p->vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, p->vcom_tx_head, &(p->vcom_tx_tail), &(p->transmitting));
 }
 
 
@@ -594,6 +595,7 @@ static void serialUSBReset(void) {
         p->vcom_rx_tail = 0;
         p->vcom_tx_head = 0;
         p->vcom_tx_tail = 0;
+        p->transmitting = -1;
     }
 }
 
