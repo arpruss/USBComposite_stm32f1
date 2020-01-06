@@ -571,7 +571,7 @@ static void vcomDataRxCb(uint32 port)
 {
     volatile struct port_data* p = &ports[port];
 	uint32 head = p->vcom_rx_head;
-    usb_generic_fill_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO(port),
+    usb_generic_read_to_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO(port),
                     p->vcomBufferRx, CDC_SERIAL_RX_BUFFER_SIZE, &head);
 	p->vcom_rx_head = head; // store volatile variable
 

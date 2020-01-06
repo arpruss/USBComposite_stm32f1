@@ -463,7 +463,7 @@ static void vcomDataTxCb(void)
 static void vcomDataRxCb(void)
 {
 	uint32 head = vcom_rx_head;
-    usb_generic_fill_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO,
+    usb_generic_read_to_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO,
                             vcomBufferRx, CDC_SERIAL_RX_BUFFER_SIZE, &head);
 	vcom_rx_head = head; // store volatile variable
 

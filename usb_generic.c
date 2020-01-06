@@ -421,8 +421,10 @@ static void usbReset(void) {
     
     for (unsigned i = 1 ; i < 8 ; i++) {
         usb_set_ep_rx_stat(i, USB_EP_STAT_RX_DISABLED);
+        usb_clear_ep_dtog_rx(i);
         usb_set_ep_tx_stat(i, USB_EP_STAT_TX_DISABLED);
-    }
+        usb_clear_ep_dtog_tx(i);
+   }
     
     for (unsigned i = 0 ; i < numParts ; i++) {
         for (unsigned j = 0 ; j < parts[i]->numEndpoints ; j++) {
@@ -439,7 +441,6 @@ static void usbReset(void) {
                     usb_set_ep_tx_buf1_addr(address, pmaOffset+e->pmaSize/2);
                     usb_set_ep_tx_buf0_count(address, e->pmaSize/2);
                     usb_set_ep_tx_buf1_count(address, e->pmaSize/2);
-                    usb_clear_ep_dtog_tx(address);
                 }
             }
             else {
@@ -447,9 +448,6 @@ static void usbReset(void) {
 				if (! e->doubleBuffer) {
 					usb_set_ep_rx_count(address, e->pmaSize);
 				}
-				else {
-                    usb_clear_ep_dtog_rx(address);
-                }
 				usb_set_ep_rx_stat(address, USB_EP_STAT_RX_VALID);
             }
         }
@@ -688,7 +686,7 @@ void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* src) {
 }
 
 // return bytes read
-uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP) {
+uint32 usb_generic_read_to_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP) {
     uint32 head = *headP;
     uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
     /* This copy won't overwrite unread bytes as long as there is
@@ -716,12 +714,23 @@ uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf
 
 // returns number of bytes read
 // buf should be uint16-aligned
-uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize) {
+uint32 usb_generic_read_to_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize) {
     uint32 ep_rx_size = usb_get_ep_rx_count(ep->address);
     if (ep_rx_size > bufferSize)
         ep_rx_size = bufferSize;
     usb_copy_from_pma_ptr(buf, ep_rx_size, ep->pma);
     return ep_rx_size;
+}
+
+uint32 usb_generic_send_from_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 amount) {
+    if (amount > ep->pmaSize)
+        amount = ep->pmaSize;
+    
+    usb_copy_to_pma_ptr(buf, amount, ep->pma);
+    usb_set_ep_tx_count(ep->address, amount);
+    usb_generic_enable_tx(ep);
+    
+    return amount;
 }
 
 uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP) {

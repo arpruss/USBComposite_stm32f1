@@ -589,7 +589,7 @@ static void audioDataTxCb(void)
 static void audioDataRxCb(void)
 {
     usbAudioReceiving = 1;
-    uint32 ep_rx_size = usb_generic_fill_circular_buffer(usbAUDIOPart.endpoints+0, audioBufferRx, 
+    uint32 ep_rx_size = usb_generic_read_to_circular_buffer(usbAUDIOPart.endpoints+0, audioBufferRx, 
                         IO_BUFFER_SIZE, &audio_rx_head);
     usbAudioReceiving = 0;
 

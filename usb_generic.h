@@ -69,6 +69,14 @@ static inline void usb_generic_enable_tx(USBEndpointInfo* ep) {
     usb_set_ep_tx_stat(ep->address, USB_EP_STAT_TX_VALID);
 }
 
+static inline void usb_generic_stall_rx(USBEndpointInfo* ep) {
+    usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_STALL);
+}
+
+static inline void usb_generic_stall_tx(USBEndpointInfo* ep) {
+    usb_set_ep_tx_stat(ep->address, USB_EP_STAT_TX_STALL);
+}
+
 static inline void usb_generic_disable_rx(USBEndpointInfo* ep) {
     usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_DISABLED);
 }
@@ -83,6 +91,10 @@ static inline void usb_generic_enable_rx_ep0() {
 
 static inline void usb_generic_pause_rx_ep0() {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
+}
+
+static inline void usb_generic_prepare_tx(USBEndpointInfo* ep, uint32 length) {
+    usb_set_ep_tx_count(ep->address, length);
 }
 
 static inline void usb_generic_set_tx(USBEndpointInfo* ep, uint32 length) {
@@ -106,9 +118,11 @@ void usb_generic_enable(void);
 extern volatile int8 usbGenericTransmitting;
 void usb_copy_from_pma_ptr(volatile uint8 *buf, uint16 len, uint32* pma);
 void usb_copy_to_pma_ptr(volatile const uint8 *buf, uint16 len, uint32* pma);
-uint32 usb_generic_fill_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP);
-uint32 usb_generic_fill_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize);
+uint32 usb_generic_read_to_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, volatile uint32* headP);
+#define USB_GENERIC_UNLIMITED_BUFFER 0xFFFFFFFFul
+uint32 usb_generic_read_to_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize);
 uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP);
+uint32 usb_generic_send_from_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 amount);
 
 #ifdef __cplusplus
 }

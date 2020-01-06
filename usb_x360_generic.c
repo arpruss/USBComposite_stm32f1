@@ -369,7 +369,7 @@ static void x360DataRxCb(uint32 controller)
     
     volatile uint8* hidBufferRx = c->hidBufferRx;
     
-    uint32 ep_rx_size = usb_generic_fill_buffer(ep, hidBufferRx, USB_X360_RX_EPSIZE);
+    uint32 ep_rx_size = usb_generic_read_to_buffer(ep, hidBufferRx, USB_X360_RX_EPSIZE);
 
     if (ep_rx_size == 3) { // wired
         if (c->led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
