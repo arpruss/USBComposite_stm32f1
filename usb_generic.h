@@ -82,7 +82,7 @@ static inline void usb_generic_disable_rx(USBEndpointInfo* ep) {
 }
 
 static inline void usb_generic_pause_rx(USBEndpointInfo* ep) {
-    usb_set_ep_rx_state(ep->address, USB_EP_STAT_RX_NAK);
+    usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_NAK);
 }
 
 static inline void usb_generic_disable_tx(USBEndpointInfo* ep) {

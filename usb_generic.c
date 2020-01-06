@@ -733,11 +733,11 @@ uint32 usb_generic_send_from_buffer(USBEndpointInfo* ep, volatile uint8* buf, ui
     return amount;
 }
 
-uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP) {
+uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 head, volatile uint32* tailP) {
     uint32 tail = *tailP;
-	int32 amount = (head - tail) % bufferSize;
+	int32 amount = (head - tail) % circularBufferSize;
     if (amount < 0)
-        amount += bufferSize;
+        amount += circularBufferSize;
     
 	if (amount==0) {
 		if ( (--usbGenericTransmitting)==0) goto flush; // no more data to send
@@ -752,22 +752,20 @@ uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8
     
 	// copy the bytes from USB Tx buffer to PMA buffer
 	uint32 *dst = ep->pma;
-    uint16 tmp = 0;
-	uint16 val;
-	int32 i;
-	for (i = 0; i < amount; i++) {
-		val = buf[tail];
-		tail = (tail + 1) % bufferSize;
-		if (i&1) {
-			*dst++ = tmp | (val<<8);
-		} else {
-			tmp = val;
-		}
-	}
-    if ( amount&1 ) {
-        *dst = tmp;
+
+    for (int32 i = 0; i < amount; i++) {
+        uint16 low = buf[tail];
+        tail = (tail + 1) % circularBufferSize;
+        i++;
+        if (i >= amount) {
+            *dst = low;
+            break;
+        }
+        *dst++ = ((uint16)buf[tail] << 8) | low;
+        tail = (tail + 1) % circularBufferSize;
     }
-	*tailP = tail; // store volatile variable
+
+    *tailP = tail; /* store volatile variable */
     
 flush:
 	// enable Tx endpoint
@@ -795,21 +793,17 @@ uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep
     if (amount > ep->pmaSize / 2)
         amount = ep->pmaSize / 2;
 
-    uint16 tmp = 0;
-    uint16 val;
-    unsigned i;
-    for (i = 0; i < amount; i++) {
-        val = buf[tail];
+    for (uint32 i = 0; i < amount; i++) {
+        uint16 low = buf[tail];
         tail = (tail + 1) % circularBufferSize;
-        if (i & 1) {
-            *dst++ = tmp | (val << 8);
-        } else {
-            tmp = val;
+        i++;
+        if (i >= amount) {
+            *dst = low;
+            break;
         }
+        *dst++ = ((uint16)buf[tail] << 8) | low;
+        tail = (tail + 1) % circularBufferSize;
     }
-
-    if (amount & 1)
-        *dst = tmp;
 
     *tailP = tail; /* store volatile variable */
 
