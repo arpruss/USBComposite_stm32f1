@@ -25,7 +25,8 @@ static bool enabledAUDIO = false;
  */
 
 bool USBAUDIO::init(USBAUDIO* me) {
-    usb_audio_setEPSize(me->txPacketSize);
+    uint32 txPacketSize = usb_audio_init(me->type, me->sampleRate);
+    usb_audio_setEPSize(txPacketSize);
 
     return true;
 }
@@ -45,7 +46,7 @@ uint32 USBAUDIO::read(uint8* buffer, uint32 length)
     return usb_audio_read_rx_data(buffer, length);
 }
 
-uint8 USBAUDIO::getSamplePeriod(void)
+uint16 USBAUDIO::getSamplePeriod(void)
 {
     return samplePeriod;
 }
@@ -59,14 +60,19 @@ void USBAUDIO::setPacketCallback(void (*callback)(uint8 size)) {
     audio_set_packet_callback(callback);
 }
 
-void USBAUDIO::begin(uint16 type, uint16 sampleRate) {
+void USBAUDIO::setParameters(uint16 _type, uint16 _sampleRate) {
+    type = _type;
+    sampleRate = _sampleRate;
+    setSamplePeriod(&samplePeriod, sampleRate);
+}
+
+void USBAUDIO::begin(uint16 _type, uint16 _sampleRate) {
     if (enabledAUDIO)
         return;
 
-    USBComposite.clear();
+    setParameters(_type, _sampleRate);
 
-    txPacketSize = usb_audio_init(type, sampleRate);
-    setSamplePeriod(&samplePeriod, sampleRate);
+    USBComposite.clear();
 
     registerComponent();
 
@@ -75,14 +81,13 @@ void USBAUDIO::begin(uint16 type, uint16 sampleRate) {
     enabledAUDIO = true;
 }
 
-void USBAUDIO::begin(USBCompositeSerial serial, uint16 type, uint16 sampleRate) {
+void USBAUDIO::begin(USBCompositeSerial serial, uint16 _type, uint16 _sampleRate) {
     if (enabledAUDIO)
         return;
 
-    USBComposite.clear();
+    setParameters(_type, _sampleRate);
 
-    txPacketSize = usb_audio_init(type, sampleRate);
-    setSamplePeriod(&samplePeriod, sampleRate);
+    USBComposite.clear();
 
     registerComponent();
 
