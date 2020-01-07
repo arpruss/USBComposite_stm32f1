@@ -38,7 +38,6 @@
 #include <string.h>
 #include <libmaple/libmaple_types.h>
 #include <libmaple/usb.h>
-#include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 #include <libmaple/gpio.h>
 #include <usb_lib_globals.h>
@@ -382,7 +381,7 @@ static void usbInit(void) {
     USBLIB->irq_mask = USB_ISR_MSK;
     USB_BASE->CNTR = USBLIB->irq_mask;
 
-    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
+    usb_generic_enable_interrupts_ep0();
 
     for (unsigned i = 0 ; i < numParts ; i++)
         if(parts[i]->usbInit != NULL)
@@ -469,7 +468,7 @@ static void usb_power_down(void) {
 void usb_generic_disable(void) {
     /* Turn off the interrupt and signal disconnect (see e.g. USB 2.0
      * spec, section 7.1.7.3). */
-    nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
+    usb_generic_disable_interrupts_ep0();
     
     if (BOARD_USB_DISC_DEV != NULL) {
         gpio_write_bit(BOARD_USB_DISC_DEV, (uint8)(uint32)BOARD_USB_DISC_BIT, 1);

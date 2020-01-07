@@ -36,15 +36,6 @@
 #include "usb_generic.h"
 #include "usb_hid.h"
 #include <string.h>
-#if 0
-#include <libmaple/usb.h>
-#include <libmaple/nvic.h>
-#include <libmaple/delay.h>
-
-/* Private headers */
-#include "usb_lib_globals.h"
-#include "usb_reg_map.h"
-#endif
 
 uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 
@@ -238,7 +229,7 @@ uint16_t usb_hid_get_data(uint8 type, uint8 reportID, uint8* out, uint8 poll) {
     if (buffer == NULL)
         return 0;
 
-    nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
+    usb_generic_disable_interrupts_ep0();
     
     if (buffer->reportID == reportID && buffer->state != HID_BUFFER_EMPTY && !(poll && buffer->state == HID_BUFFER_READ)) {
         unsigned delta = reportID != 0;
@@ -257,7 +248,7 @@ uint16_t usb_hid_get_data(uint8 type, uint8 reportID, uint8* out, uint8 poll) {
         usb_generic_enable_rx_ep0();
     }
 
-    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
+    usb_generic_enable_interrupts_ep0();
             
     return ret;
 }

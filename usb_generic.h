@@ -89,12 +89,20 @@ static inline void usb_generic_disable_tx(USBEndpointInfo* ep) {
     usb_set_ep_tx_stat(ep->address, USB_EP_STAT_TX_DISABLED);
 }
 
-static inline void usb_generic_enable_rx_ep0() {
+static inline void usb_generic_enable_rx_ep0(void) {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_VALID);
 }
 
-static inline void usb_generic_pause_rx_ep0() {
+static inline void usb_generic_pause_rx_ep0(void) {
     usb_set_ep_rx_stat(USB_EP0, USB_EP_STAT_RX_NAK);
+}
+
+static inline void usb_generic_disable_interrupts_ep0(void) {
+    nvic_irq_disable(NVIC_USB_LP_CAN_RX0);
+}
+
+static inline void usb_generic_enable_interrupts_ep0(void) {
+    nvic_irq_enable(NVIC_USB_LP_CAN_RX0);
 }
 
 static inline void usb_generic_prepare_tx(USBEndpointInfo* ep, uint32 length) {

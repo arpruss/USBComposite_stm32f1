@@ -37,7 +37,6 @@
 #include "usb_generic.h"
 #include <string.h>
 #include <libmaple/usb.h>
-#include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 
 /* Private headers */
