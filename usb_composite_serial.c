@@ -238,8 +238,8 @@ void composite_cdcacm_setTXEPSize(uint32_t size) {
 }
 
 void composite_cdcacm_setRXEPSize(uint32_t size) {
-    if (size == 0 || size > 64)
-        size = 64;
+    //if (size == 0 || size > 64)
+    size = 64; // only this works right now
     serialEndpoints[2].pmaSize = size;
     rxEPSize = size;
 }

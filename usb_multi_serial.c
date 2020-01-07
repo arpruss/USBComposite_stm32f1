@@ -239,7 +239,7 @@ static const serial_part_config serialPartConfigData = {
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_OUT |
                              0), // patch: CDCACM_ENDPOINT_RX
         .bmAttributes     = USB_EP_TYPE_BULK,
-        .wMaxPacketSize   = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .wMaxPacketSize   = USB_MULTI_SERIAL_DEFAULT_RX_SIZE, // patch
         .bInterval        = 0x00,
     },
 
@@ -248,7 +248,7 @@ static const serial_part_config serialPartConfigData = {
         .bDescriptorType  = USB_DESCRIPTOR_TYPE_ENDPOINT,
         .bEndpointAddress = (USB_DESCRIPTOR_ENDPOINT_IN | 0), // PATCH: CDCACM_ENDPOINT_TX
         .bmAttributes     = USB_EP_TYPE_BULK,
-        .wMaxPacketSize   = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .wMaxPacketSize   = USB_MULTI_SERIAL_DEFAULT_TX_SIZE, // patch
         .bInterval        = 0x00,
     }
 };
@@ -256,7 +256,7 @@ static const serial_part_config serialPartConfigData = {
 static USBEndpointInfo serialEndpoints[NUM_SERIAL_ENDPOINTS*USB_MULTI_SERIAL_MAX_PORTS] = {
     {
         .callback = vcomDataTxCb0,
-        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_TX_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
@@ -268,13 +268,13 @@ static USBEndpointInfo serialEndpoints[NUM_SERIAL_ENDPOINTS*USB_MULTI_SERIAL_MAX
     },
     {
         .callback = vcomDataRxCb0,
-        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_RX_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
     {
         .callback = vcomDataTxCb1,
-        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_TX_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
@@ -286,13 +286,13 @@ static USBEndpointInfo serialEndpoints[NUM_SERIAL_ENDPOINTS*USB_MULTI_SERIAL_MAX
     },
     {
         .callback = vcomDataRxCb1,
-        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_RX_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
     {
         .callback = vcomDataTxCb2,
-        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_TX_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
@@ -304,7 +304,7 @@ static USBEndpointInfo serialEndpoints[NUM_SERIAL_ENDPOINTS*USB_MULTI_SERIAL_MAX
     },
     {
         .callback = vcomDataRxCb2,
-        .pmaSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE, // patch
+        .pmaSize = USB_MULTI_SERIAL_DEFAULT_RX_SIZE, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
@@ -347,10 +347,10 @@ void multi_serial_setTXEPSize(uint32 port, uint16_t size) {
 }
 
 void multi_serial_setRXEPSize(uint32 port, uint16_t size) {
-    if (size == 0 || size > 64)
+/*    if (size == 0 || size > 64)
         size = 64;
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+2].pmaSize = size;
-    ports[port].rxEPSize = size;
+    ports[port].rxEPSize = size; */
 }
 
 USBCompositePart usbMultiSerialPart = {
@@ -379,6 +379,8 @@ void multi_serial_initialize_port_data(uint32 _numPorts, uint8* buffers) {
         p->vcomBufferTx = buffers;
         buffers += CDC_SERIAL_TX_BUFFER_SIZE;
         p->vcomBufferRx = buffers;
+        p->rxEPSize = USB_MULTI_SERIAL_DEFAULT_RX_SIZE;
+        p->txEPSize = USB_MULTI_SERIAL_DEFAULT_TX_SIZE;
         buffers += CDC_SERIAL_RX_BUFFER_SIZE;
     }
     

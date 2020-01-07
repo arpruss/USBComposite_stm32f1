@@ -11,8 +11,8 @@ void usb_multi_serial_ifaceSetupHook0(unsigned, void*);
 
 class USBSerialPort : public Stream {
 public:
-    uint32 txPacketSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE;
-    uint32 rxPacketSize = USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE;
+    uint32 txPacketSize = USB_MULTI_SERIAL_DEFAULT_TX_SIZE;
+    const uint32 rxPacketSize = USB_MULTI_SERIAL_DEFAULT_RX_SIZE; // currently has to be 64
     uint32 port;
     virtual int available(void);// Changed to virtual
 
@@ -34,11 +34,11 @@ public:
     uint8 isConnected();
     uint8 pending();
     
-    void setRXPacketSize(uint32 size=USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE) {
-        rxPacketSize = size;
-    }
+    //void setRXPacketSize(uint32 size=USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE) {
+    //    rxPacketSize = size;
+    //}
 
-    void setTXPacketSize(uint32 size=USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE) {
+    void setTXPacketSize(uint32 size=USB_MULTI_SERIAL_DEFAULT_TX_SIZE) {
         txPacketSize = size;
     }
     
@@ -51,7 +51,7 @@ public:
     }    
 };
 
-template<const uint32 numPorts=3,const uint32 packetSize=USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE>class USBMultiSerial {
+template<const uint32 numPorts=3,const uint32 txPacketSize=USB_MULTI_SERIAL_DEFAULT_TX_SIZE>class USBMultiSerial {
 private:
 	bool enabled = false;
     uint8 buffers[USB_MULTI_SERIAL_BUFFERS_SIZE(numPorts)];
@@ -75,13 +75,13 @@ public:
     }
 
     bool registerComponent() {
-        return USBComposite.add(&usbMultiSerialPart, this, (USBPartInitializer)&USBMultiSerial<numPorts,packetSize>::init);
+        return USBComposite.add(&usbMultiSerialPart, this, (USBPartInitializer)&USBMultiSerial<numPorts,txPacketSize>::init);
     }
 
-    static bool init(USBMultiSerial<numPorts,packetSize>* me) {
+    static bool init(USBMultiSerial<numPorts,txPacketSize>* me) {
         for (uint8 i=0; i<numPorts; i++) {
-            multi_serial_setTXEPSize(i, packetSize);
-            multi_serial_setRXEPSize(i, packetSize);
+            multi_serial_setTXEPSize(i, txPacketSize);
+            multi_serial_setRXEPSize(i, USB_MULTI_SERIAL_DEFAULT_RX_SIZE);
         }
         multi_serial_initialize_port_data(numPorts, me->buffers);
 #if defined(SERIAL_USB)
