@@ -44,7 +44,8 @@ extern "C" {
 #endif
 
 #define USB_MULTI_SERIAL_MAX_PORTS 3
-#define USB_MULTI_SERIAL_DEFAULT_PACKET_SIZE 44
+#define USB_MULTI_SERIAL_DEFAULT_RX_SIZE 64 // currently not changeable
+#define USB_MULTI_SERIAL_DEFAULT_TX_SIZE 24
 #define USB_MULTI_SERIAL_BUFFER_SIZE	256 // must be power of 2
 #define USB_MULTI_SERIAL_BUFFERS_SIZE(numPorts) ((numPorts)*2*USB_MULTI_SERIAL_BUFFER_SIZE)
 
