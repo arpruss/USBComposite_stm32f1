@@ -139,6 +139,7 @@ uint32 usb_generic_read_to_circular_buffer(USBEndpointInfo* ep, volatile uint8* 
 uint32 usb_generic_read_to_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize);
 uint32 usb_generic_send_from_circular_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 bufferSize, uint32 head, volatile uint32* tailP, volatile int8* transmittingP);
 uint32 usb_generic_send_from_buffer(USBEndpointInfo* ep, volatile uint8* buf, uint32 amount);
+uint16_t usb_generic_roundUpToPowerOf2(uint16_t x);
 
 #ifdef __cplusplus
 }

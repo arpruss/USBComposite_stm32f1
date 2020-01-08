@@ -267,7 +267,24 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
                 return 0;
 
             ep[j].pma = usb_pma_ptr(pmaOffset);
-            pmaOffset += (ep[j].pmaSize+3)/4*4; // ensure pma offset is divisible by 4 for safety
+            uint32 size = ep[j].pmaSize;
+            if (ep[j].doubleBuffer) {
+                if (size <= 124) {
+                    size = (size+3)/4*4;
+                }
+                else {
+                    size = (size+63)/64*64;
+                }
+            }
+            else {
+                if (size <= 62) {
+                    size = (size+1)/2*2;
+                }
+                else {
+                    size = (size+31)/32*32;
+                }
+            }
+            pmaOffset += size;
             if (pmaOffset > PMA_MEMORY_SIZE)
                 return 0;
             if (ep[j].callback == NULL)
@@ -878,4 +895,14 @@ uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep
         usb_set_ep_tx_buf0_count(ep->address, amount);
     
     return amount;
+}
+
+
+uint16_t usb_generic_roundUpToPowerOf2(uint16_t x) {
+    uint16_t xx;
+    for (xx = 1 ; xx < x && xx != 0; xx *= 2) ;
+    if (xx == 0)
+        return x;
+    else
+        return xx;
 }

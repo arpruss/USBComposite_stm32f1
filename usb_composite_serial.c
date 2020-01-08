@@ -231,15 +231,16 @@ static void getSerialPartDescriptor(uint8* out) {
 }
 
 void composite_cdcacm_setTXEPSize(uint32_t size) {
-    if (size == 0 || size > 64)
+    if (size == 0)
         size = 64;
     serialEndpoints[0].pmaSize = size;
     txEPSize = size;
 }
 
 void composite_cdcacm_setRXEPSize(uint32_t size) {
-    //if (size == 0 || size > 64)
-    size = 64; // only this works right now
+    if (size == 0)
+        size = 64; 
+    size = usb_generic_roundUpToPowerOf2(size);
     serialEndpoints[2].pmaSize = size;
     rxEPSize = size;
 }

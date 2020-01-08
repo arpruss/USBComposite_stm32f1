@@ -340,15 +340,16 @@ static void getSerialPartDescriptor(uint8* _out) {
 }
 
 void multi_serial_setTXEPSize(uint32 port, uint16_t size) {
-    if (size == 0 || size > 64)
+    if (size == 0)
         size = 64;
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+0].pmaSize = size;
     ports[port].txEPSize = size;
 }
 
 void multi_serial_setRXEPSize(uint32 port, uint16_t size) {
-//    if (size == 0 || size > 64)
-    size = 64;
+    if (size == 0)
+        size = 64;
+    size = usb_generic_roundUpToPowerOf2(size);
     serialEndpoints[NUM_SERIAL_ENDPOINTS*port+2].pmaSize = size;
     ports[port].rxEPSize = size; 
 }

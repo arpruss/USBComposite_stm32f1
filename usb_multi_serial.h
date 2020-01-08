@@ -45,8 +45,8 @@ extern "C" {
 
 #define USB_MULTI_SERIAL_MAX_PORTS 3
 #define USB_MULTI_SERIAL_DEFAULT_TX_SIZE 24
-#define USB_MULTI_SERIAL_DEFAULT_RX_SIZE 64 // cannot be changed
-#define USB_MULTI_SERIAL_BUFFER_SIZE	256 // must be power of 2
+#define USB_MULTI_SERIAL_DEFAULT_RX_SIZE 64 // must be pwoer of 2 for mysterious reasons
+#define USB_MULTI_SERIAL_BUFFER_SIZE	256 // must be power of 2 due to code structure
 #define USB_MULTI_SERIAL_BUFFERS_SIZE(numPorts) ((numPorts)*2*USB_MULTI_SERIAL_BUFFER_SIZE)
 
 void multi_serial_initialize_port_data(uint32 numPorts, uint8* buffers);
