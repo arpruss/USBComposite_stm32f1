@@ -61,10 +61,10 @@ typedef struct USBCompositePart {
     USBEndpointInfo* endpoints;
 } USBCompositePart;
 
-struct usb_iovec {
-    void* iov_base;
-    uint32 iov_len;
-};
+struct usb_data_chunk {
+    uint16 dataLength;
+    uint8 data[];
+} __packed;
 
 static inline void usb_generic_enable_rx(USBEndpointInfo* ep) {
     usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_VALID);
