@@ -268,8 +268,9 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
 
             ep[j].pma = usb_pma_ptr(pmaOffset);
             uint32 size = ep[j].pmaSize;
+            // rx has special length alignment issues
             if (ep[j].doubleBuffer) {
-                if (size <= 124) {
+                if (size <= 124 || ep[j].tx) {
                     size = (size+3)/4*4;
                 }
                 else {
@@ -277,7 +278,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
                 }
             }
             else {
-                if (size <= 62) {
+                if (size <= 62 || ep[j].tx) {
                     size = (size+1)/2*2;
                 }
                 else {
