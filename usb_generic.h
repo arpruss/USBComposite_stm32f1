@@ -66,6 +66,8 @@ struct usb_chunk {
     const uint8* data;
 } __packed;
 
+uint32 usb_generic_chunks_length(struct usb_chunk** chunks, uint32 count);
+
 static inline void usb_generic_enable_rx(USBEndpointInfo* ep) {
     usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_VALID);
 }

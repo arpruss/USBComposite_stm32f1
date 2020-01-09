@@ -533,16 +533,20 @@ void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile
     control_data_tx(0);
 }
 
+uint32 usb_generic_chunks_length(struct usb_chunk** chunks, uint32 count) {
+    uint32 l=0;
+    
+    for (uint32 i=0 ; i < count ; i++)
+        l += chunks[i]->dataLength;
+
+    return l;
+}
+
 static uint8* control_data_chunk_tx(uint16 length) {
     unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
     
     if (length == 0) {
-        uint32 l=0;
-        
-        for (uint32 i=0 ; i < control_tx_chunk_count ; i++)
-            l += control_tx_chunk_array[i]->dataLength;
-        
-        pInformation->Ctrl_Info.Usb_wLength = l - wOffset;
+        pInformation->Ctrl_Info.Usb_wLength = usb_generic_chunks_length(control_tx_chunk_array, control_tx_chunk_count) - wOffset;
         
         return NULL;
     }

@@ -33,6 +33,7 @@
 
 bool USBHID::init(USBHID* me) {
     usb_hid_setTXEPSize(me->txPacketSize);
+	usb_hid_set_report_descriptor(me->reportChunks, me->numReportChunks);
 	return true;
 }
 
@@ -40,8 +41,14 @@ bool USBHID::registerComponent() {
 	return USBComposite.add(&usbHIDPart, this, (USBPartInitializer)&USBHID::init);
 }
 
+extern const void* rdesc;
+extern uint16 rdesclen; 
+
 void USBHID::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
-	usb_hid_set_report_descriptor(report_descriptor, report_descriptor_length);
+    baseChunk.dataLength = report_descriptor_length;
+    baseChunk.data = report_descriptor;
+    reportChunks[0] = &baseChunk;
+    numReportChunks = 1;
 }
 
 void USBHID::setReportDescriptor(const HIDReportDescriptor* report) {

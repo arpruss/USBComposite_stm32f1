@@ -26,12 +26,17 @@
 #define USB_HID_MAX_MANUFACTURER_LENGTH 32
 #define USB_HID_MAX_SERIAL_NUMBER_LENGTH  20
 
+#define HID_MAX_REPORT_CHUNKS 24
+
 #define HID_MOUSE_REPORT_ID 1
 #define HID_KEYBOARD_REPORT_ID 2
 #define HID_CONSUMER_REPORT_ID 3
 #define HID_JOYSTICK_REPORT_ID 20
 
 #define HID_KEYBOARD_ROLLOVER 6
+
+#define HID_AUTO_REPORT_START 0x80
+#define HID_MAX_AUTO_REPORTS  0x7F
 
 #define MACRO_GET_ARGUMENT_2(x, y, ...) y
 #define MACRO_GET_ARGUMENT_1_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_2(placeholder, ## __VA_ARGS__, default)
@@ -288,20 +293,29 @@ typedef struct {
     uint16_t length;    
 } HIDReportDescriptor;
 
+class HIDReporter;
+
 class USBHID {
 private:
 	bool enabledHID = false;
     uint32 txPacketSize = 64;
+    uint8 nextAutoReportID = HID_AUTO_REPORT_START;
+    struct usb_chunk* reportChunks[HID_MAX_REPORT_CHUNKS];
+    struct usb_chunk baseChunk;
+    uint32 numReportChunks = 0;
 public:
 	static bool init(USBHID* me);
+    uint8 getReportID(HIDReporter* r);
+    bool addReport(HIDReporter* r, bool autoReport);
+    void clearReports();
 	bool registerComponent();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
 	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
     void begin(const uint8_t* report_descriptor, uint16_t length);
-    void begin(const HIDReportDescriptor* reportDescriptor);
+    void begin(const HIDReportDescriptor* reportDescriptor = NULL);
     void begin(USBCompositeSerial serial, const uint8_t* report_descriptor, uint16_t length);
-    void begin(USBCompositeSerial serial, const HIDReportDescriptor* reportDescriptor);
+    void begin(USBCompositeSerial serial, const HIDReportDescriptor* reportDescriptor = NULL);
     void setBuffers(uint8_t buffers, volatile HIDBuffer_t* fb=NULL, int count=0); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
     bool addBuffer(uint8_t type, volatile HIDBuffer_t* buffer);
 	void clearBuffers(uint8_t type);
@@ -329,12 +343,15 @@ class HIDReporter {
         uint8_t* buffer;
         unsigned bufferSize;
         uint8_t reportID;
+        HIDReportDescriptor* reportDescriptor;
+        //struct usb_chunk reportChunks[3];
 
     protected:
         USBHID& HID;
         
     public:
         void sendReport(); 
+        //void registerReport();
         // if you use this init function, the buffer starts with a reportID, even if the reportID is zero,
         // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
         // reportID byte
