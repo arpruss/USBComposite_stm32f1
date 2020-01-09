@@ -72,7 +72,7 @@ static void usbSetConfiguration(void);
 static void usbSetDeviceAddress(void);
 static uint32 disconnect_delay = 500; // in microseconds
 
-static struct usb_iovec** control_tx_chunk_array = NULL;
+static struct usb_chunk** control_tx_chunk_array = NULL;
 static uint32 control_tx_chunk_count = 0;
 static uint8 control_tx_chunk_buffer[USB_EP0_BUFFER_SIZE];
 
@@ -540,14 +540,14 @@ static uint8* control_data_chunk_tx(uint16 length) {
         uint32 l=0;
         
         for (uint32 i=0 ; i < control_tx_chunk_count ; i++)
-            l += control_tx_iovec_chunk[i]->length;
+            l += control_tx_chunk_array[i]->dataLength;
         
         pInformation->Ctrl_Info.Usb_wLength = l - wOffset;
         
         return NULL;
     }
 
-    if (control_tx_iovec_count == 0) {
+    if (control_tx_chunk_count == 0) {
         return NULL;
     }
     else {
@@ -555,10 +555,10 @@ static uint8* control_data_chunk_tx(uint16 length) {
         uint32 buf_offset = 0;
         
         for (uint32 i=0 ; i < control_tx_chunk_count && chunks_offset < wOffset + length ; i++) {
-            uint32 len = control_tx_chunk_array[i]->length;
+            uint32 len = control_tx_chunk_array[i]->dataLength;
             
             if (wOffset < chunks_offset + len) {
-                /* need to copy some data from this segment of the iovec */
+                /* need to copy some data from this chunk */
                 uint32 start;
                 if (wOffset <= chunks_offset) {
                     start = 0;
@@ -586,12 +586,12 @@ static uint8* control_data_chunk_tx(uint16 length) {
     }
 }
 
-void usb_generic_control_tx_chunk_setup(struct usb_chunk* array, uint32 count) {
+void usb_generic_control_tx_chunk_setup(struct usb_chunk** array, uint32 count) {
     control_tx_chunk_array = array;
     control_tx_chunk_count = count;
     pInformation->Ctrl_Info.CopyData = control_data_chunk_tx;
     pInformation->Ctrl_Info.Usb_wOffset = 0;
-    control_data_iovec_tx(0);
+    control_data_chunk_tx(0);
 }
 
 
