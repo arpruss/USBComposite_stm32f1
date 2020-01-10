@@ -77,6 +77,7 @@ void USBHID::setReportDescriptor(const uint8_t* report_descriptor, uint16_t repo
 }
 
 void USBHID::clear() {
+    clearBuffers();
     baseChunk.data = NULL;
     baseChunk.dataLength = 0;
     baseChunk.next = NULL;
