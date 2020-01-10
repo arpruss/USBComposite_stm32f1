@@ -317,16 +317,19 @@ class HIDReporter;
 
 class USBHID {
 private:
+    bool autoRegister = true;
 	bool enabledHID = false;
     uint32 txPacketSize = 64;
     struct usb_chunk* chunkList;
+    // baseChunk holds any explicitly specified report descriptor that
+    // overrides any report descriptors from the chain of registered reports
     struct usb_chunk baseChunk = { 0, 0, 0 };
     HIDReporter* reports;
 public:
 	static bool init(USBHID* me);
-    uint8 getReportID(HIDReporter* r);
-    void addReport(HIDReporter* r);
-    void clearReports();
+    // add a report to the list ; if always is false, then it only works if autoRegister is true
+    void addReport(HIDReporter* r, bool always=true);
+    void clear();
 	bool registerComponent();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
 	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor=NULL);
@@ -355,6 +358,9 @@ public:
     void setTXPacketSize(uint32 size=64) {
         txPacketSize = size;
     }
+    USBHID(bool _autoRegister=true) {
+        autoRegister = _autoRegister;
+    }
 };
 
 class HIDReporter {
@@ -374,7 +380,6 @@ class HIDReporter {
         
     public:
         void sendReport(); 
-        //void registerReport();
         // if you use this init function, the buffer starts with a reportID, even if the reportID is zero,
         // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
         // reportID byte
@@ -385,7 +390,7 @@ class HIDReporter {
         uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
         void setFeature(uint8_t* feature);
-        void registerReport();
+        void registerReport(bool always=true);
 };
 
 //================================================================================

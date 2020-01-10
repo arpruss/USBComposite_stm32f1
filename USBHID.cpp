@@ -17,8 +17,6 @@
 
 #include "USBComposite.h" 
 
-#include <Arduino.h>
-
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
@@ -73,8 +71,6 @@ bool USBHID::registerComponent() {
 }
 
 void USBHID::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
-    digitalWrite(PC13,0);
-        
     baseChunk.dataLength = report_descriptor_length;
     baseChunk.data = report_descriptor;
     baseChunk.next = NULL;
@@ -86,11 +82,12 @@ void USBHID::clear() {
     baseChunk.next = NULL;
     chunkList = NULL;
     reports = NULL;
-    reportDescriptor.data = NULL;
-    reportDescriptor.length = 0;
 }
 
-void USBHID::addReport(HIDReporter* r) {
+void USBHID::addReport(HIDReporter* r, bool always) {
+    if (! always && ! autoRegister)
+        return;
+    
     r->next = NULL;
     if (reports == NULL) {
         reports = r;
@@ -212,7 +209,7 @@ void HIDReporter::sendReport() {
     usb_hid_tx(NULL, 0);
 }
 
-void HIDReporter::registerReport() {
+void HIDReporter::registerReport(bool always) {
     for (uint32 i=0; i<3; i++) {
         reportChunks[i].data = NULL;
         reportChunks[i].dataLength = 0;
@@ -256,7 +253,7 @@ void HIDReporter::registerReport() {
             reportChunks[2].dataLength = reportDescriptor.length - (reportIDOffset+1);
         }
     }
-    HID.addReport(this);
+    HID.addReport(this, always);
 }
         
 HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size, uint8_t _reportID, bool forceReportID) : HID(_HID) {
@@ -287,7 +284,7 @@ HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _b
         forceUserSuppliedReportID = true;
     }
     
-    registerReport();
+    registerReport(false);
 }
 
 HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size) : HID(_HID) {
@@ -305,7 +302,7 @@ HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _b
     userSuppliedReportID = 0;
     forceUserSuppliedReportID = true;
 
-    registerReport();
+    registerReport(false);
 }
 
 void HIDReporter::setFeature(uint8_t* in) {
