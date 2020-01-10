@@ -51,8 +51,7 @@ uint16 GetEPTxAddr(uint8 /*bEpNum*/);
 static uint32 ProtocolValue = 0;
 static uint32 txEPSize = 64;
 static volatile int8 transmitting;
-static struct usb_chunk** reportDescriptorChunks = NULL;
-static uint32 reportDescriptorCount = 0;
+static struct usb_chunk* reportDescriptorChunks = NULL;
 
 static void hidDataTxCb(void);
 static void hidUSBReset(void);
@@ -145,7 +144,7 @@ static void getHIDPartDescriptor(uint8* out) {
     // patch to reflect where the part goes in the descriptor
     OUT_BYTE(hidPartConfigData, HID_Interface.bInterfaceNumber) += usbHIDPart.startInterface;
     OUT_BYTE(hidPartConfigData, HIDDataInEndpoint.bEndpointAddress) += USB_HID_TX_ENDP;
-    uint16 size = usb_generic_chunks_length(reportDescriptorChunks, reportDescriptorCount);
+    uint16 size = usb_generic_chunks_length(reportDescriptorChunks);
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenL) = (uint8)size;
     OUT_BYTE(hidPartConfigData, HID_Descriptor.descLenH) = (uint8)(size>>8);
     OUT_16(hidPartConfigData, HIDDataInEndpoint.wMaxPacketSize) = txEPSize;
@@ -176,9 +175,8 @@ static volatile uint32 hid_tx_head = 0;
 // Read index from hidBufferTx
 static volatile uint32 hid_tx_tail = 0;
 
-void usb_hid_set_report_descriptor(struct usb_chunk** chunks, uint32 count) {
+void usb_hid_set_report_descriptor(struct usb_chunk* chunks) {
     reportDescriptorChunks = chunks;
-    reportDescriptorCount = count;
 }
 
     
@@ -399,7 +397,7 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
     	switch (request){
     		case GET_DESCRIPTOR:
 				if (wValue1 == REPORT_DESCRIPTOR) {
-                    usb_generic_control_tx_chunk_setup(reportDescriptorChunks, reportDescriptorCount);
+                    usb_generic_control_tx_chunk_setup(reportDescriptorChunks);
                     return USB_SUCCESS;
                 } 		
 				else if (wValue1 == HID_DESCRIPTOR_TYPE){

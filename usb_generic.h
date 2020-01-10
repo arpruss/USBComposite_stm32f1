@@ -64,9 +64,10 @@ typedef struct USBCompositePart {
 struct usb_chunk {
     uint32 dataLength;
     const uint8* data;
+    struct usb_chunk* next;
 } __packed;
 
-uint32 usb_generic_chunks_length(struct usb_chunk** chunks, uint32 count);
+uint32 usb_generic_chunks_length(struct usb_chunk* chunk);
 
 static inline void usb_generic_enable_rx(USBEndpointInfo* ep) {
     usb_set_ep_rx_stat(ep->address, USB_EP_STAT_RX_VALID);
@@ -131,7 +132,7 @@ void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufa
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
 void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
 void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
-void usb_generic_control_tx_chunk_setup(struct usb_chunk** array, uint32 count);
+void usb_generic_control_tx_chunk_setup(struct usb_chunk* chunk);
 void usb_generic_control_descriptor_tx(ONE_DESCRIPTOR* d);
 void usb_generic_disable(void);
 void usb_generic_enable(void);

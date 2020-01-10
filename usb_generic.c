@@ -72,8 +72,7 @@ static void usbSetConfiguration(void);
 static void usbSetDeviceAddress(void);
 static uint32 disconnect_delay = 500; // in microseconds
 
-static struct usb_chunk** control_tx_chunk_array = NULL;
-static uint32 control_tx_chunk_count = 0;
+static struct usb_chunk* control_tx_chunk_list = NULL;
 static uint8 control_tx_chunk_buffer[USB_EP0_BUFFER_SIZE];
 
 static volatile uint8* control_tx_buffer = NULL;
@@ -533,11 +532,13 @@ void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile
     control_data_tx(0);
 }
 
-uint32 usb_generic_chunks_length(struct usb_chunk** chunks, uint32 count) {
+uint32 usb_generic_chunks_length(struct usb_chunk* chunk) {
     uint32 l=0;
     
-    for (uint32 i=0 ; i < count ; i++)
-        l += chunks[i]->dataLength;
+    while (chunk != NULL) {
+        l += chunk->dataLength;
+        chunk = chunk->next;
+    }
 
     return l;
 }
@@ -546,20 +547,23 @@ static uint8* control_data_chunk_tx(uint16 length) {
     unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
     
     if (length == 0) {
-        pInformation->Ctrl_Info.Usb_wLength = usb_generic_chunks_length(control_tx_chunk_array, control_tx_chunk_count) - wOffset;
+        pInformation->Ctrl_Info.Usb_wLength = usb_generic_chunks_length(control_tx_chunk_list) - wOffset;
         
         return NULL;
     }
 
-    if (control_tx_chunk_count == 0) {
+    if (control_tx_chunk_list == NULL) {
         return NULL;
     }
     else {
         uint32 chunks_offset = 0;
         uint32 buf_offset = 0;
         
-        for (uint32 i=0 ; i < control_tx_chunk_count && chunks_offset < wOffset + length ; i++) {
-            uint32 len = control_tx_chunk_array[i]->dataLength;
+        for (struct usb_chunk* chunk = control_tx_chunk_list ; chunk != NULL && chunks_offset < wOffset + length ; chunk = chunk->next ) {
+            uint32 len = chunk->dataLength;
+            
+            if (len == 0)
+                continue;
             
             if (wOffset < chunks_offset + len) {
                 /* need to copy some data from this chunk */
@@ -579,7 +583,7 @@ static uint8* control_data_chunk_tx(uint16 length) {
                     to_copy = len - start;
                 }
                 
-                memcpy(control_tx_chunk_buffer + buf_offset, control_tx_chunk_array[i]->data + start, to_copy);
+                memcpy(control_tx_chunk_buffer + buf_offset, chunk->data + start, to_copy);
                 buf_offset += to_copy;
             }
             
@@ -590,9 +594,8 @@ static uint8* control_data_chunk_tx(uint16 length) {
     }
 }
 
-void usb_generic_control_tx_chunk_setup(struct usb_chunk** array, uint32 count) {
-    control_tx_chunk_array = array;
-    control_tx_chunk_count = count;
+void usb_generic_control_tx_chunk_setup(struct usb_chunk* chunk) {
+    control_tx_chunk_list = chunk;
     pInformation->Ctrl_Info.CopyData = control_data_chunk_tx;
     pInformation->Ctrl_Info.Usb_wOffset = 0;
     control_data_chunk_tx(0);

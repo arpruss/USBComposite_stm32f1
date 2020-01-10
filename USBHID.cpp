@@ -17,6 +17,8 @@
 
 #include "USBComposite.h" 
 
+#include <Arduino.h>
+
 #include <string.h>
 #include <stdint.h>
 #include <libmaple/nvic.h>
@@ -33,7 +35,36 @@
 
 bool USBHID::init(USBHID* me) {
     usb_hid_setTXEPSize(me->txPacketSize);
-	usb_hid_set_report_descriptor(me->reportChunks, me->numReportChunks);
+    
+    HIDReporter* r = me->reports;
+    
+    if (me->baseChunk.data != NULL) {
+        /* user set an explicit report for USBHID */
+        while (r != NULL) {
+            r->reportID = r->userSuppliedReportID;
+            if (r->reportID != 0)
+                r->reportBuffer[0] = r->reportID;
+            r = r->next;
+        }
+        usb_hid_set_report_descriptor(&(me->baseChunk));
+    }
+    else {
+        uint8 reportID = HID_AUTO_REPORT_ID_START;
+        
+        while (r != NULL) {
+            if (r->forceUserSuppliedReportID) 
+                r->reportID = r->userSuppliedReportID;
+            else 
+                r->reportID = reportID++;
+            
+            if (r->reportID != 0) 
+                r->reportBuffer[0] = r->reportID;
+            
+            r = r->next;
+        }
+        usb_hid_set_report_descriptor(me->chunkList);
+    }
+
 	return true;
 }
 
@@ -41,18 +72,63 @@ bool USBHID::registerComponent() {
 	return USBComposite.add(&usbHIDPart, this, (USBPartInitializer)&USBHID::init);
 }
 
-extern const void* rdesc;
-extern uint16 rdesclen; 
-
 void USBHID::setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
+    digitalWrite(PC13,0);
+        
     baseChunk.dataLength = report_descriptor_length;
     baseChunk.data = report_descriptor;
-    reportChunks[0] = &baseChunk;
-    numReportChunks = 1;
+    baseChunk.next = NULL;
+}
+
+void USBHID::clear() {
+    baseChunk.data = NULL;
+    baseChunk.dataLength = 0;
+    baseChunk.next = NULL;
+    chunkList = NULL;
+    reports = NULL;
+    reportDescriptor.data = NULL;
+    reportDescriptor.length = 0;
+}
+
+void USBHID::addReport(HIDReporter* r) {
+    r->next = NULL;
+    if (reports == NULL) {
+        reports = r;
+    }
+    else {
+        HIDReporter* tail = reports;
+        while (tail != r && tail->next != NULL) {
+            tail = tail->next;
+        }
+        if (tail == r)
+            return;
+        tail->next = r;
+    }
+
+    struct usb_chunk* chunkTail = chunkList;
+    
+    if (chunkTail == NULL) {
+        chunkList = &(r->reportChunks[0]);
+        chunkTail = chunkList;
+    }
+    else {
+        while (chunkTail->next != NULL)
+            chunkTail = chunkTail->next;
+        chunkTail->next = &(r->reportChunks[0]);
+        chunkTail = chunkTail->next;
+    }
+    chunkTail->next = &(r->reportChunks[1]);
+    chunkTail = chunkTail->next;
+    chunkTail->next = &(r->reportChunks[2]);
+    chunkTail = chunkTail->next;
+    chunkTail->next = NULL;
 }
 
 void USBHID::setReportDescriptor(const HIDReportDescriptor* report) {
-    setReportDescriptor(report->descriptor, report->length);
+    if (report == NULL)
+        setReportDescriptor(NULL, 0);
+    else
+        setReportDescriptor(report->descriptor, report->length);
 }
 
 void USBHID::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
@@ -71,7 +147,10 @@ void USBHID::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_
 }
 
 void USBHID::begin(const HIDReportDescriptor* report) {
-    begin(report->descriptor, report->length);
+    if (report == NULL)
+        begin(NULL, 0);
+    else
+        begin(report->descriptor, report->length);
 }
 
 void USBHID::setBuffers(uint8_t type, volatile HIDBuffer_t* fb, int count) {
@@ -118,7 +197,7 @@ void HIDReporter::sendReport() {
 //    }
 
     unsigned toSend = bufferSize;
-    uint8* b = buffer;
+    uint8* b = reportBuffer;
     
     while (toSend) {
         unsigned delta = usb_hid_tx(b, toSend);
@@ -132,27 +211,101 @@ void HIDReporter::sendReport() {
     /* flush out to avoid having the pc wait for more data */
     usb_hid_tx(NULL, 0);
 }
+
+void HIDReporter::registerReport() {
+    for (uint32 i=0; i<3; i++) {
+        reportChunks[i].data = NULL;
+        reportChunks[i].dataLength = 0;
+    }
+    if (reportDescriptor.descriptor != NULL) {
+        int32_t reportIDOffset = -1;
+        if (! forceUserSuppliedReportID) {
+            uint32_t i = 0;
+            
+            /*
+             * parse bits of beginning of report looking for the report ID
+             */
+            while (i < reportDescriptor.length && reportIDOffset < 0) {
+                switch (reportDescriptor.descriptor[i]) {
+                    case 0x06:
+                        i += 3;
+                        break;
+                    case 0x85:
+                        if (i+1 < reportDescriptor.length)
+                            reportIDOffset = i+1;
+                        i += 2;
+                        break;
+                    default:
+                        i += 2;
+                }
+            }
+            if (i >= reportDescriptor.length) {
+                forceUserSuppliedReportID = true;
+            }
+        }
+        if (forceUserSuppliedReportID) {
+            reportChunks[0].data = reportDescriptor.descriptor;
+            reportChunks[0].dataLength = reportDescriptor.length;
+        }
+        else {
+            reportChunks[0].data = reportDescriptor.descriptor;
+            reportChunks[0].dataLength = reportIDOffset;
+            reportChunks[1].data = &(reportID);
+            reportChunks[1].dataLength = 1;
+            reportChunks[2].data = reportDescriptor.descriptor+reportIDOffset+1;
+            reportChunks[2].dataLength = reportDescriptor.length - (reportIDOffset+1);
+        }
+    }
+    HID.addReport(this);
+}
         
-HIDReporter::HIDReporter(USBHID& _HID, uint8_t* _buffer, unsigned _size, uint8_t _reportID) : HID(_HID) {
+HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size, uint8_t _reportID, bool forceReportID) : HID(_HID) {
+    if (r != NULL) {
+        memcpy(&reportDescriptor, r, sizeof(reportDescriptor));
+    }
+    else {
+        reportDescriptor.descriptor = NULL;
+        reportDescriptor.length = 0;
+    }
+
     if (_reportID == 0) {
-        buffer = _buffer+1;
+        reportBuffer = _buffer+1;
         bufferSize = _size-1;
     }
     else {
-        buffer = _buffer;
+        reportBuffer = _buffer;
         bufferSize = _size;
     }
-    memset(buffer, 0, bufferSize);
-    reportID = _reportID;
-    if (_size > 0 && reportID != 0)
-        buffer[0] = _reportID;
+    memset(reportBuffer, 0, bufferSize);
+    userSuppliedReportID = _reportID;
+
+    if (_size > 0 && _reportID != 0 && ! forceReportID) {
+        reportBuffer[0] = _reportID;
+        forceUserSuppliedReportID = false;
+    }
+    else {
+        forceUserSuppliedReportID = true;
+    }
+    
+    registerReport();
 }
 
-HIDReporter::HIDReporter(USBHID& _HID, uint8_t* _buffer, unsigned _size) : HID(_HID) {
-    buffer = _buffer;
+HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size) : HID(_HID) {
+    if (r != NULL) {
+        memcpy(&reportDescriptor, r, sizeof(reportDescriptor));
+    }
+    else {
+        reportDescriptor.descriptor = NULL;
+        reportDescriptor.length = 0;
+    }
+
+    reportBuffer = _buffer;
     bufferSize = _size;
-    memset(buffer, 0, _size);
-    reportID = 0;
+    memset(_buffer, 0, _size);
+    userSuppliedReportID = 0;
+    forceUserSuppliedReportID = true;
+
+    registerReport();
 }
 
 void HIDReporter::setFeature(uint8_t* in) {

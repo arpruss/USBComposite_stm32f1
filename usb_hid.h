@@ -71,8 +71,7 @@ typedef struct HIDBuffer_t {
 extern "C" {
 #endif
 
-void usb_hid_set_report_descriptor0(const uint8* report_descriptor, uint16 report_descriptor_length);
-void usb_hid_set_report_descriptor(struct usb_chunk** chunks, uint32 count);
+void usb_hid_set_report_descriptor(struct usb_chunk* chunks);
 void usb_hid_clear_buffers(uint8_t type);
 uint8_t usb_hid_add_buffer(uint8_t type, volatile HIDBuffer_t* buf);
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    

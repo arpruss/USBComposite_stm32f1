@@ -28,6 +28,9 @@
 
 #define HID_MAX_REPORT_CHUNKS 24
 
+#define HID_REPORT_ID_NONE -1
+#define HID_REPORT_ID_AUTO -2
+
 #define HID_MOUSE_REPORT_ID 1
 #define HID_KEYBOARD_REPORT_ID 2
 #define HID_CONSUMER_REPORT_ID 3
@@ -35,8 +38,7 @@
 
 #define HID_KEYBOARD_ROLLOVER 6
 
-#define HID_AUTO_REPORT_START 0x80
-#define HID_MAX_AUTO_REPORTS  0x7F
+#define HID_AUTO_REPORT_ID_START 0x80
 
 #define MACRO_GET_ARGUMENT_2(x, y, ...) y
 #define MACRO_GET_ARGUMENT_1_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_2(placeholder, ## __VA_ARGS__, default)
@@ -289,9 +291,27 @@
 	0xC0					/*  end collection */ 
     
 typedef struct {
-    uint8_t* descriptor;
+    const uint8_t* descriptor;
     uint16_t length;    
 } HIDReportDescriptor;
+
+extern const HIDReportDescriptor* hidReportMouse;
+extern const HIDReportDescriptor* hidReportKeyboard;
+extern const HIDReportDescriptor* hidReportJoystick;
+extern const HIDReportDescriptor* hidReportKeyboardMouse;
+extern const HIDReportDescriptor* hidReportKeyboardJoystick;
+extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
+extern const HIDReportDescriptor* hidReportBootKeyboard;
+extern const HIDReportDescriptor* hidReportAbsMouse;
+extern const HIDReportDescriptor* hidReportConsumer;
+
+#define HID_MOUSE                   hidReportMouse
+#define HID_KEYBOARD                hidReportKeyboard
+#define HID_JOYSTICK                hidReportJoystick
+#define HID_KEYBOARD_MOUSE          hidReportKeyboardMouse
+#define HID_KEYBOARD_JOYSTICK       hidReportKeyboardJoystick
+#define HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
+#define HID_BOOT_KEYBOARD           hidReportBootKeyboard
 
 class HIDReporter;
 
@@ -299,18 +319,17 @@ class USBHID {
 private:
 	bool enabledHID = false;
     uint32 txPacketSize = 64;
-    uint8 nextAutoReportID = HID_AUTO_REPORT_START;
-    struct usb_chunk* reportChunks[HID_MAX_REPORT_CHUNKS];
-    struct usb_chunk baseChunk;
-    uint32 numReportChunks = 0;
+    struct usb_chunk* chunkList;
+    struct usb_chunk baseChunk = { 0, 0, 0 };
+    HIDReporter* reports;
 public:
 	static bool init(USBHID* me);
     uint8 getReportID(HIDReporter* r);
-    bool addReport(HIDReporter* r, bool autoReport);
+    void addReport(HIDReporter* r);
     void clearReports();
 	bool registerComponent();
 	void setReportDescriptor(const uint8_t* report_descriptor, uint16_t report_descriptor_length);
-	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor);
+	void setReportDescriptor(const HIDReportDescriptor* reportDescriptor=NULL);
     // All the strings are zero-terminated ASCII strings. Use NULL for defaults.
     void begin(const uint8_t* report_descriptor, uint16_t length);
     void begin(const HIDReportDescriptor* reportDescriptor = NULL);
@@ -340,11 +359,15 @@ public:
 
 class HIDReporter {
     private:
-        uint8_t* buffer;
-        unsigned bufferSize;
+        uint8_t* reportBuffer;
         uint8_t reportID;
-        HIDReportDescriptor* reportDescriptor;
-        //struct usb_chunk reportChunks[3];
+        uint8_t userSuppliedReportID;
+        bool forceUserSuppliedReportID;
+        uint16_t bufferSize;
+        HIDReportDescriptor reportDescriptor;
+        struct usb_chunk reportChunks[3];
+        class HIDReporter* next;
+        friend class USBHID;
 
     protected:
         USBHID& HID;
@@ -355,13 +378,14 @@ class HIDReporter {
         // if you use this init function, the buffer starts with a reportID, even if the reportID is zero,
         // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
         // reportID byte
-        HIDReporter(USBHID& _HID, uint8_t* _buffer, unsigned _size, uint8_t _reportID);
+        HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size, uint8_t _reportID, bool forceReportID=false);
         // if you use this init function, the buffer has no reportID byte in it
-        HIDReporter(USBHID& _HID, uint8_t* _buffer, unsigned _size);
+        HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size);
         uint16_t getFeature(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
         void setFeature(uint8_t* feature);
+        void registerReport();
 };
 
 //================================================================================
@@ -379,7 +403,7 @@ protected:
 	void buttons(uint8_t b);
     uint8_t reportBuffer[5];
 public:
-	HIDMouse(USBHID& HID, uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter(HID, reportBuffer, sizeof(reportBuffer), reportID), _buttons(0) {}
+	HIDMouse(USBHID& HID, uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter(HID, hidReportMouse, reportBuffer, sizeof(reportBuffer), reportID), _buttons(0) {}
 	void begin(void);
 	void end(void);
 	void click(uint8_t b = MOUSE_LEFT);
@@ -402,7 +426,7 @@ protected:
 	void buttons(uint8_t b);
     AbsMouseReport_t report;
 public:
-	HIDAbsMouse(USBHID& HID, uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter(HID, (uint8_t*)&report, sizeof(report), reportID) {
+	HIDAbsMouse(USBHID& HID, uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter(HID, hidReportAbsMouse, (uint8_t*)&report, sizeof(report), reportID) {
         report.buttons = 0;
         report.x = 0;
         report.y = 0;
@@ -435,7 +459,7 @@ public:
            PLAY_OR_PAUSE = 0xCD
            // see pages 75ff of http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
            };
-	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, (uint8_t*)&report, sizeof(report), reportID) {
+	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
         report.button = 0;
     }
 	void begin(void);
@@ -501,7 +525,7 @@ protected:
 
 public:
 	HIDKeyboard(USBHID& HID, uint8_t _reportID=HID_KEYBOARD_REPORT_ID) : 
-        HIDReporter(HID, (uint8*)&keyReport, sizeof(KeyReport_t), _reportID),
+        HIDReporter(HID, hidReportKeyboard, (uint8*)&keyReport, sizeof(KeyReport_t), _reportID),
         ledData(leds, HID_BUFFER_SIZE(1,_reportID), _reportID, HID_BUFFER_MODE_NO_WAIT),
         reportID(_reportID)
         {}
@@ -564,7 +588,7 @@ public:
 	void slider(uint16_t val);
 	void hat(int16_t dir);
 	HIDJoystick(USBHID& HID, uint8_t reportID=HID_JOYSTICK_REPORT_ID) 
-            : HIDReporter(HID, (uint8_t*)&joyReport, sizeof(joyReport), reportID) {
+            : HIDReporter(HID, hidReportJoystick, (uint8_t*)&joyReport, sizeof(joyReport), reportID) {
         joyReport.buttons = 0;
         joyReport.hat = 15;
         joyReport.x = 512;
@@ -596,22 +620,6 @@ public:
         sendReport();
     }
 };
-
-extern const HIDReportDescriptor* hidReportMouse;
-extern const HIDReportDescriptor* hidReportKeyboard;
-extern const HIDReportDescriptor* hidReportJoystick;
-extern const HIDReportDescriptor* hidReportKeyboardMouse;
-extern const HIDReportDescriptor* hidReportKeyboardJoystick;
-extern const HIDReportDescriptor* hidReportKeyboardMouseJoystick;
-extern const HIDReportDescriptor* hidReportBootKeyboard;
-
-#define HID_MOUSE                   hidReportMouse
-#define HID_KEYBOARD                hidReportKeyboard
-#define HID_JOYSTICK                hidReportJoystick
-#define HID_KEYBOARD_MOUSE          hidReportKeyboardMouse
-#define HID_KEYBOARD_JOYSTICK       hidReportKeyboardJoystick
-#define HID_KEYBOARD_MOUSE_JOYSTICK hidReportKeyboardMouseJoystick
-#define HID_BOOT_KEYBOARD           hidReportBootKeyboard
 
 #endif
         		
