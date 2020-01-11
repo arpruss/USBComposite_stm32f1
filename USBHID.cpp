@@ -221,21 +221,18 @@ void HIDReporter::registerReport(bool always) {
             uint32_t i = 0;
             
             /*
-             * parse bits of beginning of report looking for the report ID
+             * parse bits of beginning of report looking for a single-byte report ID (0x85 ID)
              */
             while (i < reportDescriptor.length && reportIDOffset < 0) {
-                switch (reportDescriptor.descriptor[i]) {
-                    case 0x06:
-                        i += 3;
-                        break;
-                    case 0x85:
-                        if (i+1 < reportDescriptor.length)
-                            reportIDOffset = i+1;
-                        i += 2;
-                        break;
-                    default:
-                        i += 2;
+                if (reportDescriptor.descriptor[i]==0x85) {
+                    if (i+1 < reportDescriptor.length)
+                        reportIDOffset = i+1;
                 }
+                // the lowest 2 bit determine the data length of the tag
+                if ((reportDescriptor.descriptor[i] & 3) == 3)
+                    i += 5;
+                else 
+                    i += 1 + (reportDescriptor.descriptor[i] & 3);
             }
             if (i >= reportDescriptor.length) {
                 forceUserSuppliedReportID = true;
