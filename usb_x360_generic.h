@@ -71,8 +71,10 @@ void x360_generic_initialize_controller_data(uint32 _numControllers, uint8* buff
 #define X360_ENDPOINT_RX 1
 #define X360_NUM_ENDPOINTS 2
 
-#define USB_X360_RX_ADDR(i) x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_RX].pmaAddress
-#define USB_X360_TX_ADDR(i) x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_TX].pmaAddress
+#define USB_X360_RX_ENDPOINT_INFO(i) &x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_RX]
+#define USB_X360_TX_ENDPOINT_INFO(i) &x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_TX]
+#define USB_X360_RX_PMA_PTR(i) x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_RX].pma
+#define USB_X360_TX_PMA_PTR(i) x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_TX].pma
 #define USB_X360_RX_ENDP(i) x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_RX].address
 #define USB_X360_TX_ENDP(i) x360Endpoints[(i)*X360_NUM_ENDPOINTS+X360_ENDPOINT_TX].address
 

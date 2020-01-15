@@ -37,7 +37,6 @@
 #include <string.h>
 
 #include <libmaple/usb.h>
-#include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 
 /* Private headers */
@@ -54,7 +53,6 @@
 
 #define USB_ENDPOINT_IN(addr)           ((addr) | 0x80)
 #define HID_ENDPOINT_INT 				1
-#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
  
 #define HID_DESCRIPTOR_TYPE             0x21
  

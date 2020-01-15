@@ -36,7 +36,6 @@
 #include <string.h>
 
 #include <libmaple/usb.h>
-#include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 
 /* Private headers */
@@ -66,7 +65,6 @@ typedef enum _HID_REQUESTS
 
 #define USB_ENDPOINT_IN(addr)           ((addr) | 0x80)
 #define HID_ENDPOINT_INT 				1
-#define USB_ENDPOINT_TYPE_INTERRUPT     0x03
  
 #define HID_DESCRIPTOR_TYPE             0x21
  
@@ -224,50 +222,50 @@ typedef struct {
 USBEndpointInfo x360Endpoints[NUM_ENDPOINTS*USB_X360_MAX_CONTROLLERS] = {
     {
         .callback = x360DataTxCb0,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb0,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb1,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb1,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb2,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb2,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
     {
         .callback = x360DataTxCb3,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 1
     },
     {
         .callback = x360DataRxCb3,
-        .bufferSize = 0x20,
-        .type = USB_EP_EP_TYPE_INTERRUPT, 
+        .pmaSize = 0x20,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT, 
         .tx = 0,
     },
 };
@@ -351,15 +349,14 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
 
     /* Queue bytes for sending. */
     if (len) {
-        usb_copy_to_pma(buf, len, USB_X360_TX_ADDR(controller));
+        usb_copy_to_pma_ptr(buf, len, USB_X360_TX_PMA_PTR(controller));
     }
     // We still need to wait for the interrupt, even if we're sending
     // zero bytes. (Sending zero-size packets is useful for flushing
     // host-side buffers.)
-    usb_set_ep_tx_count(USB_X360_TX_ENDP(controller), len);
     c->n_unsent_bytes = len;
     c->transmitting = 1;
-    usb_set_ep_tx_stat(USB_X360_TX_ENDP(controller), USB_EP_STAT_TX_VALID);
+    usb_generic_set_tx(USB_X360_TX_ENDPOINT_INFO(controller), len);
 
     return len;
 }
@@ -367,28 +364,12 @@ uint32 x360_tx(uint32 controller, const uint8* buf, uint32 len) {
 static void x360DataRxCb(uint32 controller)
 {
     volatile struct controller_data* c = &controllers[controller];
-        
-    uint32 rx_endp = USB_X360_RX_ENDP(controller);
-	uint32 ep_rx_size = usb_get_ep_rx_count(rx_endp);
-	// This copy won't overwrite unread bytes as long as there is 
-	// enough room in the USB Rx buffer for next packet
-	uint32 *src = usb_pma_ptr(USB_X360_RX_ADDR(controller));
-    uint16 tmp = 0;
-	uint8 val;
-	uint32 i;
+    USBEndpointInfo* ep = USB_X360_RX_ENDPOINT_INFO(controller);
     
     volatile uint8* hidBufferRx = c->hidBufferRx;
     
-	for (i = 0; i < ep_rx_size; i++) {
-		if (i&1) {
-			val = tmp>>8;
-		} else {
-			tmp = *src++;
-			val = tmp&0xFF;
-		}
-		hidBufferRx[i] = val;
-	
-    }
+    uint32 ep_rx_size = usb_generic_read_to_buffer(ep, hidBufferRx, USB_X360_RX_EPSIZE);
+
     if (ep_rx_size == 3) { // wired
         if (c->led_callback != NULL && hidBufferRx[0] == 1 && hidBufferRx[1] == 3)
             c->led_callback(hidBufferRx[2]);
@@ -403,7 +384,8 @@ static void x360DataRxCb(uint32 controller)
         if (c->rumble_callback != NULL && hidBufferRx[0] == 0 && hidBufferRx[1] == 1)
             c->rumble_callback(hidBufferRx[5],hidBufferRx[6]);
     } 
-    usb_set_ep_rx_stat(rx_endp, USB_EP_STAT_RX_VALID);
+    
+    usb_generic_enable_rx(ep);
 }
 
 /*
@@ -418,23 +400,6 @@ static void x360DataTxCb(uint32 controller) {
 }
 
 
-static uint8* HID_GetProtocolValue(uint32 controller, uint16 Length){
-	if (Length == 0){
-		pInformation->Ctrl_Info.Usb_wLength = 1;
-		return NULL;
-	} else {
-		return (uint8 *)(&controllers[controller].ProtocolValue);
-	}
-}
-
-static uint8* HID_GetProtocolValue0(uint16 n) { return HID_GetProtocolValue(0, n); }
-static uint8* HID_GetProtocolValue1(uint16 n) { return HID_GetProtocolValue(1, n); }
-static uint8* HID_GetProtocolValue2(uint16 n) { return HID_GetProtocolValue(2, n); }
-static uint8* HID_GetProtocolValue3(uint16 n) { return HID_GetProtocolValue(3, n); }
-
-static uint8* (*HID_GetProtocolValues[USB_X360_MAX_CONTROLLERS])(uint16 Length) = { HID_GetProtocolValue0, HID_GetProtocolValue1, HID_GetProtocolValue2, HID_GetProtocolValue3 };
-
-
 static void x360Reset(void) {
       /* Reset the RX/TX state */
     for (uint8 i = 0 ; i < x360_num_controllers ; i++) {
@@ -446,26 +411,17 @@ static void x360Reset(void) {
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT x360DataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-    uint8* (*CopyRoutine)(uint16) = 0;
-	
     if((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == GET_PROTOCOL) {
-        CopyRoutine = HID_GetProtocolValues[interface / NUM_INTERFACES];
+        usb_generic_control_tx_setup(&controllers[interface / NUM_INTERFACES].ProtocolValue, 1, NULL);
+        return USB_SUCCESS;
 	}
-    else {
-		return USB_UNSUPPORT;
-	}
-
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
+    return USB_UNSUPPORT;
 }
 
 static RESULT x360NoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {
 	if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && request == SET_PROTOCOL) {
 		controllers[interface / NUM_INTERFACES].ProtocolValue = wValue0;
 		return USB_SUCCESS;
-	}else{
-		return USB_UNSUPPORT;
-	}
+    }
+    return USB_UNSUPPORT;
 }

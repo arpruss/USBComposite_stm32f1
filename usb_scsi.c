@@ -4,7 +4,6 @@
 #include "usb_scsi.h"
 
 #include <libmaple/usb.h>
-#include <libmaple/nvic.h>
 #include <libmaple/delay.h>
 
 /* Private headers */
@@ -164,7 +163,7 @@ void scsi_write10_cmd(uint8_t lun, uint32_t lba, uint32_t blockNbr) {
 
     if ((usb_mass_CBW.bmFlags & 0x80) == 0) {
       usb_mass_botState = BOT_STATE_DATA_OUT;
-      SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL);
+      usb_generic_enable_rx(USB_MASS_RX_ENDPOINT_INFO); 
     } else {
       usb_mass_bot_abort(BOT_DIR_IN);
       scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);
@@ -270,18 +269,16 @@ void scsi_read_memory(uint8_t lun, uint32_t startSector, uint32_t numSectors) {
     if (SCSI_blockReadCount == 0) {
       usb_mass_mal_read_memory(lun, SCSI_dataBuffer, (uint32_t)(offset/SCSI_BLOCK_SIZE), 1);
 
-      usb_mass_sil_write(SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
-
       SCSI_blockReadCount = SCSI_BLOCK_SIZE - MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset = MAX_BULK_PACKET_SIZE;
-    } else {
-      usb_mass_sil_write(SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
 
+      usb_mass_sil_write(SCSI_dataBuffer, MAX_BULK_PACKET_SIZE);
+    } else {
       SCSI_blockReadCount -= MAX_BULK_PACKET_SIZE;
       SCSI_blockOffset += MAX_BULK_PACKET_SIZE;
-    }
 
-    SetEPTxStatus(USB_MASS_TX_ENDP, USB_EP_ST_TX_VAL);
+      usb_mass_sil_write(SCSI_dataBuffer + SCSI_blockOffset, MAX_BULK_PACKET_SIZE);
+    }
 
     offset += MAX_BULK_PACKET_SIZE;
     length -= MAX_BULK_PACKET_SIZE;
@@ -328,7 +325,7 @@ void scsi_write_memory(uint8_t lun, uint32_t startSector, uint32_t numSectors) {
     }
 
     usb_mass_CSW.dDataResidue -= usb_mass_dataLength;
-    SetEPRxStatus(USB_MASS_RX_ENDP, USB_EP_ST_RX_VAL); /* enable the next transaction*/
+    usb_generic_enable_rx(USB_MASS_RX_ENDPOINT_INFO); /* enable the next transaction*/ // TODO
 
     // TODO: Led_RW_ON();
   }

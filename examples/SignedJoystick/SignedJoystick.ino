@@ -68,7 +68,7 @@ public:
   void begin(void) {};
   void end(void) {};
   HIDSignedJoystick(USBHID& HID, uint8_t reportID=HID_JOYSTICK_REPORT_ID) 
-            : HIDReporter(HID, (uint8_t*)&joyReport, sizeof(joyReport), reportID) {
+            : HIDReporter(HID, NULL, (uint8_t*)&joyReport, sizeof(joyReport), reportID) {
         joyReport.buttons = 0;
         joyReport.hat = 15;
         joyReport.x = 0;
@@ -88,7 +88,7 @@ uint8 signedJoyReportDescriptor[] = {
 };
 
 void setup() {
-  HID.setReportDescriptor(signedJoyReportDescriptor,sizeof(signedJoyReportDescriptor));
+  HID.setReportDescriptor(signedJoyReportDescriptor, sizeof(signedJoyReportDescriptor));
   HID.registerComponent();
   USBComposite.begin();  
   while (!USBComposite);

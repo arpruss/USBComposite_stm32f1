@@ -37,8 +37,8 @@
 #include "usb_generic.h"
 #include <string.h>
 #include <libmaple/usb.h>
-#include <libmaple/nvic.h>
 #include <libmaple/delay.h>
+//#include <libmaple/gpio.h>
 
 /* Private headers */
 #include "usb_lib_globals.h"
@@ -51,8 +51,9 @@
 #define USB_CDCACM_MANAGEMENT_ENDP    (serialEndpoints[CDCACM_ENDPOINT_MANAGEMENT].address)
 #define USB_CDCACM_TX_ENDP            (serialEndpoints[CDCACM_ENDPOINT_TX].address)
 #define USB_CDCACM_RX_ENDP            (serialEndpoints[CDCACM_ENDPOINT_RX].address)
-
-uint16 GetEPTxAddr(uint8 /*bEpNum*/);
+#define USB_CDCACM_MANAGEMENT_ENDPOINT_INFO    (&serialEndpoints[CDCACM_ENDPOINT_MANAGEMENT])
+#define USB_CDCACM_TX_ENDPOINT_INFO            (&serialEndpoints[CDCACM_ENDPOINT_TX])
+#define USB_CDCACM_RX_ENDPOINT_INFO            (&serialEndpoints[CDCACM_ENDPOINT_RX])
 
 /* usb_lib headers */
 #include "usb_type.h"
@@ -74,6 +75,7 @@ static void vcomDataRxCb(void);
  * Descriptors
  */
  
+static volatile int8 transmitting;
 static uint32_t txEPSize = 64;
 static uint32_t rxEPSize = 64;
 
@@ -191,20 +193,20 @@ static const serial_part_config serialPartConfigData = {
 static USBEndpointInfo serialEndpoints[3] = {
     {
         .callback = vcomDataTxCb,
-        .bufferSize = 64, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .pmaSize = 64, // patch
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = NULL,
-        .bufferSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
-        .type = USB_EP_EP_TYPE_INTERRUPT,
+        .pmaSize = USBHID_CDCACM_MANAGEMENT_EPSIZE,
+        .type = USB_GENERIC_ENDPOINT_TYPE_INTERRUPT,
         .tx = 1,
     },
     {
         .callback = vcomDataRxCb,
-        .bufferSize = 64, // patch
-        .type = USB_EP_EP_TYPE_BULK,
+        .pmaSize = 64, // patch
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
 };
@@ -229,16 +231,17 @@ static void getSerialPartDescriptor(uint8* out) {
 }
 
 void composite_cdcacm_setTXEPSize(uint32_t size) {
-    if (size == 0 || size > 64)
+    if (size == 0)
         size = 64;
-    serialEndpoints[0].bufferSize = size;
+    serialEndpoints[0].pmaSize = size;
     txEPSize = size;
 }
 
 void composite_cdcacm_setRXEPSize(uint32_t size) {
-//    if (size == 0 || size > 64) // must be 64 for reasons unknown
-    size = 64;
-    serialEndpoints[2].bufferSize = size;
+    if (size == 0)
+        size = 64; 
+    size = usb_generic_roundUpToPowerOf2(size);
+    serialEndpoints[2].pmaSize = size;
     rxEPSize = size;
 }
 
@@ -301,11 +304,6 @@ void composite_cdcacm_set_hooks(unsigned hook_flags, void (*hook)(unsigned, void
     }
 }
 
-void composite_cdcacm_putc(char ch) {
-    while (!composite_cdcacm_tx((uint8*)&ch, 1))
-        ;
-}
-
 /* This function is non-blocking.
  *
  * It copies data from a user buffer into the USB peripheral TX
@@ -331,9 +329,9 @@ uint32 composite_cdcacm_tx(const uint8* buf, uint32 len)
 	}
 	vcom_tx_head = head; // store volatile variable
 	
-	while(usbGenericTransmitting >= 0);
+	while(transmitting >= 0);
 	
-	if (usbGenericTransmitting<0) {
+	if (transmitting < 0) {
 		vcomDataTxCb(); // initiate data transmission
 	}
 
@@ -367,7 +365,7 @@ uint32 composite_cdcacm_rx(uint8* buf, uint32 len)
 	uint32 rx_unread = (vcom_rx_head - tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
     // If buffer was emptied to a pre-set value, re-enable the RX endpoint
     if ( rx_unread <= 64 ) { // experimental value, gives the best performance
-        usb_set_ep_rx_stat(USB_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDPOINT_INFO);
 	}
     return n_copied;
 }
@@ -458,81 +456,27 @@ int composite_cdcacm_get_n_data_bits(void) {
  */
 static void vcomDataTxCb(void)
 {
-	uint32 tail = vcom_tx_tail; // load volatile variable
-	uint32 tx_unsent = (vcom_tx_head - tail) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
-	if (tx_unsent==0) {
-		if ( (--usbGenericTransmitting)==0) goto flush_vcom; // no more data to send
-		return; // it was already flushed, keep Tx endpoint disabled
-	}
-	usbGenericTransmitting = 1;
-    // We can only send up to txEPSize bytes in the endpoint.
-    if (tx_unsent > txEPSize) {
-        tx_unsent = txEPSize;
-    }
-	// copy the bytes from USB Tx buffer to PMA buffer
-	uint32 *dst = usb_pma_ptr(usbSerialPart.endpoints[CDCACM_ENDPOINT_TX].pmaAddress);
-    uint16 tmp = 0;
-	uint16 val;
-	unsigned i;
-	for (i = 0; i < tx_unsent; i++) {
-		val = vcomBufferTx[tail];
-		tail = (tail + 1) & CDC_SERIAL_TX_BUFFER_SIZE_MASK;
-		if (i&1) {
-			*dst++ = tmp | (val<<8);
-		} else {
-			tmp = val;
-		}
-	}
-    if ( tx_unsent&1 ) {
-        *dst = tmp;
-    }
-	vcom_tx_tail = tail; // store volatile variable
-flush_vcom:
-	// enable Tx endpoint
-    usb_set_ep_tx_count(USB_CDCACM_TX_ENDP, tx_unsent);
-    usb_set_ep_tx_stat(USB_CDCACM_TX_ENDP, USB_EP_STAT_TX_VALID);
+    usb_generic_send_from_circular_buffer(USB_CDCACM_TX_ENDPOINT_INFO, 
+        vcomBufferTx, CDC_SERIAL_TX_BUFFER_SIZE, vcom_tx_head, &vcom_tx_tail, &transmitting);
 }
 
 
 static void vcomDataRxCb(void)
 {
-	uint32 head = vcom_rx_head; // load volatile variable
-
-	uint32 ep_rx_size = usb_get_ep_rx_count(USB_CDCACM_RX_ENDP);
-	// This copy won't overwrite unread bytes as long as there is 
-	// enough room in the USB Rx buffer for next packet
-	uint32 *src = usb_pma_ptr(usbSerialPart.endpoints[CDCACM_ENDPOINT_RX].pmaAddress);
-    uint16 tmp = 0;
-	uint8 val;
-	uint32 i;
-	for (i = 0; i < ep_rx_size; i++) {
-		if (i&1) {
-			val = tmp>>8;
-		} else {
-			tmp = *src++;
-			val = tmp&0xFF;
-		}
-		vcomBufferRx[head] = val;
-		head = (head + 1) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
-	}
+	uint32 head = vcom_rx_head;
+    usb_generic_read_to_circular_buffer(USB_CDCACM_RX_ENDPOINT_INFO,
+                            vcomBufferRx, CDC_SERIAL_RX_BUFFER_SIZE, &head);
 	vcom_rx_head = head; // store volatile variable
 
 	uint32 rx_unread = (head - vcom_rx_tail) & CDC_SERIAL_RX_BUFFER_SIZE_MASK;
 	// only enable further Rx if there is enough room to receive one more packet
 	if ( rx_unread < (CDC_SERIAL_RX_BUFFER_SIZE-rxEPSize) ) {
-		usb_set_ep_rx_stat(USB_CDCACM_RX_ENDP, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(USB_CDCACM_RX_ENDPOINT_INFO);
 	}
 
     if (rx_hook) {
         rx_hook(USBHID_CDCACM_HOOK_RX, 0);
     }
-}
-
-static uint8* vcomGetSetLineCoding(uint16 length) {
-    if (length == 0) {
-        pInformation->Ctrl_Info.Usb_wLength = sizeof(struct composite_cdcacm_line_coding);
-    }
-    return (uint8*)&line_coding;
 }
 
 static void serialUSBReset(void) {
@@ -541,18 +485,22 @@ static void serialUSBReset(void) {
     vcom_rx_tail = 0;
     vcom_tx_head = 0;
     vcom_tx_tail = 0;
+    transmitting = -1;
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-    uint8* (*CopyRoutine)(uint16) = 0;
+    RESULT ret = USB_UNSUPPORT;
     
     if ((requestType & (REQUEST_TYPE | RECIPIENT)) == (CLASS_REQUEST | INTERFACE_RECIPIENT) && interface == CCI_INTERFACE_OFFSET) {        
         switch (request) {
         case USBHID_CDCACM_GET_LINE_CODING:
-            CopyRoutine = vcomGetSetLineCoding;
+            usb_generic_control_tx_setup(&line_coding, sizeof(line_coding), NULL);
+            ret = USB_SUCCESS;
             break;
         case USBHID_CDCACM_SET_LINE_CODING:
-            CopyRoutine = vcomGetSetLineCoding;
+            usb_generic_control_rx_setup(&line_coding, sizeof(line_coding), NULL);
+            ret = USB_SUCCESS;
             break;
         default:
             break;
@@ -564,14 +512,7 @@ static RESULT serialUSBDataSetup(uint8 request, uint8 interface, uint8 requestTy
         }
     }
 	
-	if (CopyRoutine == NULL){
-		return USB_UNSUPPORT;
-	}
-    
-    pInformation->Ctrl_Info.CopyData = CopyRoutine;
-    pInformation->Ctrl_Info.Usb_wOffset = 0;
-    (*CopyRoutine)(0);
-    return USB_SUCCESS;
+    return ret;
 }
 
 static RESULT serialUSBNoDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex) {

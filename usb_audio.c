@@ -19,6 +19,7 @@
 #include "usb_reg_map.h"
 #include "libmaple/usb.h"
 #include <string.h>
+#include <libmaple/gpio.h>
 
 #include "usb_audio.h"
 
@@ -31,10 +32,9 @@
 #define IO_BUFFER_SIZE              256
 #define IO_BUFFER_SIZE_MASK         (IO_BUFFER_SIZE - 1)
 //#define AUDIO_INTERFACE_NUMBER     (AUDIO_INTERFACE_OFFSET + usbAUDIOPart.startInterface)
+#define AUDIO_ISO_EP_ENDPOINT_INFO (&usbAUDIOPart.endpoints[0])
 #define AUDIO_ISO_EP_ADDRESS       (usbAUDIOPart.endpoints[0].address)
-#define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].bufferSize / 2)
-#define AUDIO_ISO_BUF0_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress)
-#define AUDIO_ISO_BUF1_PMA_ADDRESS (usbAUDIOPart.endpoints[0].pmaAddress + AUDIO_ISO_PMA_BUFFER_SIZE)
+#define AUDIO_ISO_PMA_BUFFER_SIZE  (usbAUDIOPart.endpoints[0].pmaSize / 2)
 
 /* Tx data */
 static volatile uint8 audioBufferTx[IO_BUFFER_SIZE];
@@ -50,6 +50,7 @@ static volatile uint32 audio_rx_head = 0;
 static volatile uint32 audio_rx_tail = 0;
 static uint8 usbAudioReceiving;
 
+static volatile int8 transmitting;
 static uint8  clock_valid = 1;
 static uint16 sample_rate;
 static uint8  buffer_size;
@@ -73,8 +74,6 @@ static void audioDataTxCb(void);
 static void audioDataRxCb(void);
 static void audioUSBReset(void);
 static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength);
-static uint8_t *audio_get(uint16_t Length);
-static uint8_t *audio_set(uint16_t Length);
 static void (*packet_callback)(uint8) = 0;
 
 /*
@@ -380,18 +379,22 @@ static const audio_part_config_2 audioPartConfigData2 = {
 static USBEndpointInfo audioEndpointIN[1] = {
     {
         .callback = audioDataTxCb,
-        .bufferSize = AUDIO_MAX_EP_BUFFER_SIZE,
-        .type = USB_EP_EP_TYPE_ISO,
+        .pmaSize = AUDIO_MAX_EP_BUFFER_SIZE,
+        .type = USB_GENERIC_ENDPOINT_TYPE_ISO,
         .tx = 1,
+        .exclusive = 1, // TODO: check if needed?
+		.doubleBuffer = 1
     }
 };
 
 static USBEndpointInfo audioEndpointOUT[1] = {
     {
         .callback = audioDataRxCb,
-        .bufferSize = AUDIO_MAX_EP_BUFFER_SIZE,
-        .type = USB_EP_EP_TYPE_ISO,
+        .pmaSize = AUDIO_MAX_EP_BUFFER_SIZE,
+        .type = USB_GENERIC_ENDPOINT_TYPE_ISO,
         .tx = 0,
+        .exclusive = 1, // TODO: check if needed?
+		.doubleBuffer = 1
     }
 };
 
@@ -403,7 +406,7 @@ void usb_audio_setEPSize(uint32_t size) {
     if (usbAUDIOPart.endpoints == audioEndpointIN)
         size *= 2;
 
-    usbAUDIOPart.endpoints[0].bufferSize = size;
+    usbAUDIOPart.endpoints[0].pmaSize = size;
 }
 
 #define OUT_BYTE(s,v) out[(uint8*)&(s.v)-(uint8*)&s]
@@ -512,7 +515,7 @@ uint32 usb_audio_write_tx_data(const uint8* buf, uint32 len)
     if (len == 0)
         return 0; /* no data to send */
 
-    while(usbGenericTransmitting >= 0);
+    while(transmitting >= 0);
 
     uint32 head = audio_tx_head; /* load volatile variable */
     uint32 tx_unsent = (head - audio_tx_tail) & IO_BUFFER_SIZE_MASK;
@@ -578,43 +581,9 @@ uint32 usb_audio_read_rx_data(uint8* buf, uint32 len)
 /* Since we're USB FS, this function called once per millisecond */
 static void audioDataTxCb(void)
 {
-    uint32 tail = audio_tx_tail; /* load volatile variable */
-
-    uint32 dtog_tx = usb_get_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
-
-    usbGenericTransmitting = 1;
-
-    /* copy the bytes from USB Tx buffer to PMA buffer */
-    uint32 *dst;
-    if (dtog_tx)
-        dst = usb_pma_ptr(AUDIO_ISO_BUF1_PMA_ADDRESS);
-    else
-        dst = usb_pma_ptr(AUDIO_ISO_BUF0_PMA_ADDRESS);
-
-    uint16 tmp = 0;
-    uint16 val;
-    unsigned i;
-    for (i = 0; i < buffer_size; i++) {
-        val = audioBufferTx[tail];
-        tail = (tail + 1) & IO_BUFFER_SIZE_MASK;
-        if (i & 1) {
-            *dst++ = tmp | (val << 8);
-        } else {
-            tmp = val;
-        }
-    }
-
-    if (buffer_size & 1)
-        *dst = tmp;
-
-    audio_tx_tail = tail; /* store volatile variable */
-
-    usbGenericTransmitting = -1;
-
-    if (dtog_tx)
-        usb_set_ep_tx_buf1_count(AUDIO_ISO_EP_ADDRESS, buffer_size);
-    else
-        usb_set_ep_tx_buf0_count(AUDIO_ISO_EP_ADDRESS, buffer_size);
+    transmitting = 1;
+    usb_generic_send_from_circular_buffer_double_buffered(AUDIO_ISO_EP_ENDPOINT_INFO, audioBufferTx, IO_BUFFER_SIZE, buffer_size, &audio_tx_tail);
+    transmitting = -1;
 
     if (packet_callback)
         packet_callback(buffer_size);
@@ -622,31 +591,9 @@ static void audioDataTxCb(void)
 
 static void audioDataRxCb(void)
 {
-    uint32 head = audio_rx_head; /* load volatile variable */
-
-    uint32 ep_rx_size = usb_get_ep_rx_count(AUDIO_ISO_EP_ADDRESS);
-    /* This copy won't overwrite unread bytes as long as there is
-     * enough room in the USB Rx buffer for next packet */
-    uint32 *src = usb_pma_ptr(AUDIO_ISO_BUF0_PMA_ADDRESS);
-
     usbAudioReceiving = 1;
-
-    uint16 tmp = 0;
-    uint8 val;
-    uint32 i;
-    for (i = 0; i < ep_rx_size; i++) {
-        if (i & 1) {
-            val = tmp >> 8;
-        } else {
-            tmp = *src++;
-            val = tmp & 0xFF;
-        }
-        audioBufferRx[head] = val;
-        head = (head + 1) & IO_BUFFER_SIZE_MASK;
-    }
-
-    audio_rx_head = head; /* store volatile variable */
-
+    uint32 ep_rx_size = usb_generic_read_to_circular_buffer(usbAUDIOPart.endpoints+0, audioBufferRx, 
+                        IO_BUFFER_SIZE, &audio_rx_head);
     usbAudioReceiving = 0;
 
     if (packet_callback)
@@ -659,85 +606,50 @@ static void audioUSBReset(void) {
     audio_tx_tail = 0;
     audio_rx_head = 0;
     audio_rx_tail = 0;
+    usbAudioReceiving = 0;
+    transmitting = -1;
 
     if (usbAUDIOPart.endpoints == audioEndpointIN) {
         /* Setup IN endpoint */
-        usb_set_ep_kind(AUDIO_ISO_EP_ADDRESS, USB_EP_EP_KIND_DBL_BUF);
-        usb_set_ep_tx_buf0_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF0_PMA_ADDRESS);
-        usb_set_ep_tx_buf1_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF1_PMA_ADDRESS);
-        usb_set_ep_tx_buf0_count(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_PMA_BUFFER_SIZE);
-        usb_set_ep_tx_buf1_count(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_PMA_BUFFER_SIZE);
-        usb_clear_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
-        usb_clear_ep_dtog_rx(AUDIO_ISO_EP_ADDRESS);
-        usb_set_ep_tx_stat(AUDIO_ISO_EP_ADDRESS, USB_EP_STAT_TX_VALID);
+        usb_generic_enable_tx(AUDIO_ISO_EP_ENDPOINT_INFO);
     } else if (usbAUDIOPart.endpoints == audioEndpointOUT) {
         /* Setup OUT endpoint */
-        usb_set_ep_rx_addr(AUDIO_ISO_EP_ADDRESS, AUDIO_ISO_BUF0_PMA_ADDRESS);
-        usb_clear_ep_dtog_tx(AUDIO_ISO_EP_ADDRESS);
-        usb_clear_ep_dtog_rx(AUDIO_ISO_EP_ADDRESS);
-        usb_set_ep_rx_stat(AUDIO_ISO_EP_ADDRESS, USB_EP_STAT_RX_VALID);
+        usb_generic_enable_rx(AUDIO_ISO_EP_ENDPOINT_INFO);
     }
-}
-
-uint8_t *audio_set(uint16_t Length) {
-    if (!Length) {
-        pInformation->Ctrl_Info.Usb_wLength = pInformation->USBwLengths.w;
-        return NULL;
-    }
-
-    return NULL;
-}
-
-uint8_t *audio_get(uint16_t Length) {
-    if (!Length) {
-        pInformation->Ctrl_Info.Usb_wLength = pInformation->USBwLengths.w;
-        return NULL;
-    }
-
-    if (((pInformation->USBwIndex >> 8) & 0xFF) != CLOCK_SOURCE_ID) {
-        return NULL;
-    }
-
-    switch (pInformation->USBbRequest) {
-        case CUR:
-            switch (Length) {
-                case 1:
-                    return (uint8_t *)(&clock_valid);
-                case 2:
-                    return (uint8_t *)(&sample_rate);
-                case 4:
-                    return (uint8_t *)(&sample_rate_range.min);
-                default:
-                    break;
-            }
-            break;
-        case RANGE:
-                return (uint8_t *)(&sample_rate_range);
-        default:
-            break;
-    }
-
-    return NULL;
 }
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static RESULT audioUSBDataSetup(uint8 request, uint8 interface, uint8 requestType, uint8 wValue0, uint8 wValue1, uint16 wIndex, uint16 wLength) {
-	uint8_t *(*CopyRoutine)(uint16_t) = NULL;
 	switch (requestType) {
-		case 0x21:
-			CopyRoutine = audio_set;
-			break;
-		case 0xA1:
-			CopyRoutine = audio_get;
-			break;
-		default:
-			return USB_UNSUPPORT;
+        case 0x21:
+            usb_generic_control_rx_setup(NULL, wLength, NULL);
+            return USB_SUCCESS;
+
+        case 0xA1:
+            if ((wIndex >> 8) == CLOCK_SOURCE_ID) {
+                switch(request) {
+                    case CUR:
+                        switch(wLength) {
+                            case 1:
+                                usb_generic_control_tx_setup(&clock_valid, 1, NULL);
+                                return USB_SUCCESS;
+                            case 2:
+                                usb_generic_control_tx_setup(&sample_rate, 2, NULL);
+                                return USB_SUCCESS;
+                            case 4:
+                                usb_generic_control_tx_setup(&sample_rate_range.min, 4, NULL);
+                                return USB_SUCCESS;
+                        }
+                        break;
+                    case RANGE:
+                        usb_generic_control_tx_setup(&sample_rate_range, sizeof(sample_rate_range), NULL);
+                        return USB_SUCCESS;
+                }
+            }
+            usb_generic_control_tx_setup(NULL, wLength, NULL);
+            return USB_SUCCESS;
 	}
 
-	pInformation->Ctrl_Info.CopyData = CopyRoutine;
-	pInformation->Ctrl_Info.Usb_wOffset = 0;
-	(*CopyRoutine)(0);
-
-	return USB_SUCCESS;
+	return USB_UNSUPPORT;
 }
 

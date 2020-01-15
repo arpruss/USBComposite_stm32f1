@@ -108,20 +108,36 @@ to inject keyboard data, you should do:
 USBHID HID; // create instance of USBHID plugin
 HIDKeyboard Keyboard(HID); // create a profile
 
-HID.begin(HID_KEYBOARD);
+HID.begin();
 ```
 
 and then call `Keyboard.print("TextToInject")` to inject keyboard data. Some plugin configurations
 may require further initialization code or further code that needs to be called inside the Arduino
 `loop()` function.
 
-See the `BootKeyboard`, `midiout` and `x360` example code for this procedure.
+See the `BootKeyboard`, `midiout` and `x360` example code for variants on this procedure.
 
 (Additionally, the `USBHID` plugin has a convenience `begin()` method that lets you include an
 instance of a `USBCompositeSerial` plugin class, and that creates a composite HID-Serial device.)
 
 However, if you want a USB device using more than one plugin, then you will NOT call the plugin's
 `begin()` method.
+
+Note that a single HID plugin can support a device with multiple report profiles including a keyboard, several joysticks,
+a mouse, etc.:
+```
+USBHID HID; // create instance of USBHID plugin
+HIDKeyboard Keyboard(HID); // create a profile
+HIDJoystick Joystick1(HID); // create a profile
+HIDJoystick Joystick2(HID); // create a profile
+HIDMouse Mouse(HID); // create a profile
+
+HID.begin();
+```
+
+Each of the profiles (e.g., Joystick1) contributes a part of the HID report descriptor to USBHID which automatically stitches
+them together and assigns report IDs. However, you can also make a single overarching custom HID report descriptor and include 
+it in the HID.begin() call. The `softjoystick` example does this.
 
 ## Memory limitations
 
@@ -157,15 +173,21 @@ MIDI.setTXPacketSize(size);
 ```
 The maximum and default packet size is 64. Smaller packet sizes have not been thoroughly tested and may slow things down. In 
 particular, for HID you should make sure your packet size is sufficient for your largest HID report. The CompositeSerial 
-device also has a control channel whose 16 byte packet size is not adjustable.
+device also has a control channel whose 16 byte packet size is not adjustable. Note that for reasons that I do not currently
+understand, CompositeSerial RX packets must be a power of two in size.
 
-Note that in the above, RX and TX are from the point of view of the MCU, not the host (i.e., RX corresponds to USB Out and TX
+Note also that in the above, RX and TX are from the point of view of the MCU, not the host (i.e., RX corresponds to USB Out and TX
 to USB In).
 
 ## Endpoint limitations
 
-There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more in each direction. 
-Each plugin contributes the following count towards the maximum of seven:
+There is one bidirectional endpoint 0 that all endpoints share, and the hardware allows for seven more in each direction,
+but there are some complications in that the same endpoint number when used in different directions must have some
+of the same parameters. The USBComposite library takes care of these complications when allocating endpoints, but if you
+have too many plugins, you USBComposite.begin() will return `false` to indicate that you've used up too many.
+
+This is pretty complicated, but a rule of thumb for having enough endpoints is to make sure that when you add up the 
+following contributions for the plugins you use, your total is at most seven.
 
 * USB Serial: 2 (= 2 TX, 1 RX)
 
@@ -177,10 +199,6 @@ Each plugin contributes the following count towards the maximum of seven:
 
 * XBox360 Controller: 1 per controller (= 1 TX, 1 RX)
 
-* XBox360 Wireless Controller: 1 per controller (= 1 TX, 1 RX)
-
 * USB Audio: 1 (= 1 TX or 1 RX depending on mode)
 
 * USB Multi Serial: 2 per port (= 2 TX, 1 RX)
-
-When combining plugins, make sure the contribution does not exceed 7.
