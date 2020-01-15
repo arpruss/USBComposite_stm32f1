@@ -322,9 +322,9 @@ private:
     uint32 txPacketSize = 64;
     struct usb_chunk* chunkList;
     // baseChunk holds any explicitly specified report descriptor that
-    // overrides any report descriptors from the chain of registered reports
+    // overrides any report descriptors from the chain of registered profiles
     struct usb_chunk baseChunk = { 0, 0, 0 };
-    HIDReporter* reports;
+    HIDReporter* profiles;
 public:
 	static bool init(USBHID* me);
     // add a report to the list ; if always is false, then it only works if autoRegister is true
@@ -390,7 +390,7 @@ class HIDReporter {
         uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
         void setFeature(uint8_t* feature);
-        void registerReport(bool always=true);
+        void registerProfile(bool always=true);
 };
 
 //================================================================================
@@ -578,7 +578,7 @@ public:
 	inline void send(void) {
         sendReport();
     }
-    void setManualReportMode(bool manualReport); // in manual report mode, reports only sent when send() is called
+    void setManualReportMode(bool manualReport); // in manual report mode, report only sent when send() is called
     bool getManualReportMode();
 	void begin(void);
 	void end(void);

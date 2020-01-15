@@ -34,7 +34,7 @@
 bool USBHID::init(USBHID* me) {
     usb_hid_setTXEPSize(me->txPacketSize);
     
-    HIDReporter* r = me->reports;
+    HIDReporter* r = me->profiles;
     
     if (me->baseChunk.data != NULL) {
         /* user set an explicit report for USBHID */
@@ -82,7 +82,7 @@ void USBHID::clear() {
     baseChunk.dataLength = 0;
     baseChunk.next = NULL;
     chunkList = NULL;
-    reports = NULL;
+    profiles = NULL;
 }
 
 void USBHID::addReport(HIDReporter* r, bool always) {
@@ -90,11 +90,11 @@ void USBHID::addReport(HIDReporter* r, bool always) {
         return;
     
     r->next = NULL;
-    if (reports == NULL) {
-        reports = r;
+    if (profiles == NULL) {
+        profiles = r;
     }
     else {
-        HIDReporter* tail = reports;
+        HIDReporter* tail = profiles;
         while (tail != r && tail->next != NULL) {
             tail = tail->next;
         }
@@ -210,7 +210,7 @@ void HIDReporter::sendReport() {
     usb_hid_tx(NULL, 0);
 }
 
-void HIDReporter::registerReport(bool always) {
+void HIDReporter::registerProfile(bool always) {
     for (uint32 i=0; i<3; i++) {
         reportChunks[i].data = NULL;
         reportChunks[i].dataLength = 0;
@@ -282,7 +282,7 @@ HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _b
         forceUserSuppliedReportID = true;
     }
     
-    registerReport(false);
+    registerProfile(false);
 }
 
 HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size) : HID(_HID) {
@@ -300,7 +300,7 @@ HIDReporter::HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _b
     userSuppliedReportID = 0;
     forceUserSuppliedReportID = true;
 
-    registerReport(false);
+    registerProfile(false);
 }
 
 void HIDReporter::setFeature(uint8_t* in) {
