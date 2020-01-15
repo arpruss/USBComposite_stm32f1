@@ -393,7 +393,8 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
             break;
         }
     }
-	if((requestType & (REQUEST_TYPE | RECIPIENT)) == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
+
+  if((requestType & (REQUEST_TYPE | RECIPIENT)) == (STANDARD_REQUEST | INTERFACE_RECIPIENT)){
     	switch (request){
     		case GET_DESCRIPTOR:
 				if (wValue1 == REPORT_DESCRIPTOR) {
