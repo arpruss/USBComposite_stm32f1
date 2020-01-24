@@ -18,19 +18,18 @@
 
 class USBAUDIO {
 private:
-    uint32 txPacketSize = AUDIO_MAX_EP_BUFFER_SIZE; /* double buffered, PMA shared between buf0 and buf1 */
     uint16 samplePeriod;
+    uint16 sampleRate = 24000;
+    uint16 type = MIC_STEREO;
 public:
     static bool init(USBAUDIO* me);
     bool registerComponent();
     void begin(uint16 type = MIC_STEREO, uint16 sampleRate = 24000);
     void begin(USBCompositeSerial serial, uint16 type = MIC_STEREO, uint16 sampleRate = 24000);
+    void setParameters(uint16 type = MIC_STEREO, uint16 sampleRate = 24000);
     void end(void);
-    void setTXPacketSize(uint32 size=AUDIO_MAX_EP_BUFFER_SIZE) {
-        txPacketSize = size;
-    }
     void setPacketCallback(void (*callback)(uint8 size));
     uint32 write(const uint8* buffer, uint32 length);
     uint32 read(uint8* buffer, uint32 length);
-    uint8 getSamplePeriod(void);
+    uint16 getSamplePeriod(void);
 };
