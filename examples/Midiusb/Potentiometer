@@ -1,11 +1,11 @@
 #include <USBComposite.h>
 
 USBMIDI midi;
-const uint8 pot_pin = 5;
+const uint8 pot_pin = 6;
 const uint8 threshold = 1;
 
 const unsigned int midi_channel =
-    5; // this might show up as channel 6 depending on start index
+    1; // this might show up as channel 1 depending on start index
 const unsigned int cc_command = 0; // bank select command
 
 unsigned int old_value = 0;
