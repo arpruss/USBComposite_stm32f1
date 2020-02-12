@@ -172,8 +172,8 @@ public:
     void sendReset(void);
 
     // Overload these in a subclass to get MIDI messages when they come in
-    virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity);
-    virtual void handleNoteOn(unsigned int channel, unsigned int note, unsigned int velocity);
+    virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity = 0);
+    virtual void handleNoteOn(unsigned int channel, unsigned int note, unsigned int velocity = 127);
     virtual void handleVelocityChange(unsigned int channel, unsigned int note, unsigned int velocity);
     virtual void handleControlChange(unsigned int channel, unsigned int controller, unsigned int value);
     virtual void handleProgramChange(unsigned int channel, unsigned int program);
