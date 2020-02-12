@@ -154,8 +154,8 @@ public:
     void poll();
 
     // Call these to send MIDI messages of the given types
-    void sendNoteOff(unsigned int channel, unsigned int note, unsigned int velocity);
-    void sendNoteOn(unsigned int channel, unsigned int note, unsigned int velocity);
+    void sendNoteOff(unsigned int channel, unsigned int note, unsigned int velocity = 0);
+    void sendNoteOn(unsigned int channel, unsigned int note, unsigned int velocity = 127);
     void sendVelocityChange(unsigned int channel, unsigned int note, unsigned int velocity);
     void sendControlChange(unsigned int channel, unsigned int controller, unsigned int value);
     void sendProgramChange(unsigned int channel, unsigned int program);
@@ -172,8 +172,8 @@ public:
     void sendReset(void);
 
     // Overload these in a subclass to get MIDI messages when they come in
-    virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity = 0);
-    virtual void handleNoteOn(unsigned int channel, unsigned int note, unsigned int velocity = 127);
+    virtual void handleNoteOff(unsigned int channel, unsigned int note, unsigned int velocity);
+    virtual void handleNoteOn(unsigned int channel, unsigned int note, unsigned int velocity);
     virtual void handleVelocityChange(unsigned int channel, unsigned int note, unsigned int velocity);
     virtual void handleControlChange(unsigned int channel, unsigned int controller, unsigned int value);
     virtual void handleProgramChange(unsigned int channel, unsigned int program);
