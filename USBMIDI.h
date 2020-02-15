@@ -32,6 +32,8 @@
 #ifndef _USBMIDI_H_
 #define _USBMIDI_H_
 
+#define MAX_SYSEX_SIZE 1024
+
 //#include <Print.h>
 #include <boards.h>
 #include <USBComposite.h>
@@ -192,7 +194,7 @@ public:
     // sysex experimental
     void appendSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2);
     virtual void handleSysex(uint8_t *sysexBuffer, uint32 len);
-    uint8_t sysexstring[256]; // sysex buffer - default MAX_SYSEX_SIZE is 256 but it's .c so can't refence. NEED FIX
+    uint8_t sysexstring[MAX_SYSEX_SIZE]; 
     uint32_t sysexpos;
     void sendSysex(uint8_t *sysexBuffer, uint32 len);
 };

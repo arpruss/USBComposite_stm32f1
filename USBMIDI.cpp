@@ -472,10 +472,6 @@ void USBMIDI::handleContinue(void) {}
 void USBMIDI::handleStop(void) {}
 void USBMIDI::handleActiveSense(void) {}
 void USBMIDI::handleReset(void) {}
-#pragma GCC diagnostic pop
-
-uint8_t sysexstring[256];
-uint32_t sysexpos = 0;
 
 void USBMIDI::appendSysex(uint8_t cin, uint8_t midi0, uint8_t midi1, uint8_t midi2) {
 	if (cin == CIN_SYSEX && midi0 == MIDIv1_SYSEX_START) // new sysex string
@@ -544,7 +540,7 @@ void USBMIDI::sendSysex(uint8_t *sysexBuffer, uint32 len) //Header&Ending exclud
 		writePacket(outPacket.i);
 		if(len > 2) //Edge case
 		{
-			for(uint8_t i = 2; i < len - 2; i +=3)
+			for(uint16_t i = 2; i < len - 2; i +=3)
 			{
 				outPacket.p.midi0= sysexBuffer[i];
 				outPacket.p.midi1= sysexBuffer[i+1];
@@ -580,3 +576,4 @@ void USBMIDI::sendSysex(uint8_t *sysexBuffer, uint32 len) //Header&Ending exclud
 }
 
 #pragma GCC diagnostic pop
+
