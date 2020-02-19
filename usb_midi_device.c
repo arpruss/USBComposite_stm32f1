@@ -286,7 +286,7 @@ static void getMIDIPartDescriptor(uint8* out) {
     OUT_BYTE(usbMIDIDescriptor_Config, DataOutEndpoint.bEndpointAddress) += USB_MIDI_RX_ENDP;
     OUT_BYTE(usbMIDIDescriptor_Config, DataInEndpoint.bEndpointAddress) += USB_MIDI_TX_ENDP;
     OUT_16(usbMIDIDescriptor_Config, DataInEndpoint.wMaxPacketSize) = usb_midi_txEPSize;
-    OUT_16(usbMIDIDescriptor_Config, DataOutEndpoint.wMaxPacketSize) = usb_midi_rxEPSize;
+    OUT_16(usbMIDIDescriptor_Config, DataOutEndpoint.wMaxPacketSize) = rxEPSize;
 }
 
 USBCompositePart usbMIDIPart = {
