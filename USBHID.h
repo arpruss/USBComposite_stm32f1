@@ -384,8 +384,10 @@ class HIDReporter {
         // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
         // reportID byte
         HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size, uint8_t _reportID, bool forceReportID=false);
-        // if you use this init function, the buffer has no reportID byte in it
+        HIDReporter(USBHID& _HID, uint8_t* _buffer, unsigned _size, uint8_t _reportID, bool forceReportID=false) : HIDReporter(_HID, NULL, _buffer, _size, _reportID, forceReportID) {}
+        // if you use these init functions, the buffer has no reportID byte in it
         HIDReporter(USBHID& _HID, const HIDReportDescriptor* r, uint8_t* _buffer, unsigned _size);
+        HIDReporter(USBHID& _HID, uint8_t* _buffer, unsigned _size) : HIDReporter(_HID, NULL, _buffer, _size) {}
         uint16_t getFeature(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getOutput(uint8_t* out=NULL, uint8_t poll=1);
         uint16_t getData(uint8_t type, uint8_t* out, uint8_t poll=1); // type = HID_REPORT_TYPE_FEATURE or HID_REPORT_TYPE_OUTPUT
