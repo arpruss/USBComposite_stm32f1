@@ -22,10 +22,6 @@
 #include "Stream.h"
 #include "usb_hid.h"
 
-#define USB_HID_MAX_PRODUCT_LENGTH 32
-#define USB_HID_MAX_MANUFACTURER_LENGTH 32
-#define USB_HID_MAX_SERIAL_NUMBER_LENGTH  20
-
 #define HID_MAX_REPORT_CHUNKS 24
 
 #define HID_REPORT_ID_NONE -1
