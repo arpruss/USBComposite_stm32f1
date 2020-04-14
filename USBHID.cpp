@@ -129,8 +129,7 @@ void USBHID::setReportDescriptor(const HIDReportDescriptor* report) {
         setReportDescriptor(report->descriptor, report->length);
 }
 
-void USBHID::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {
-            
+void USBHID::begin(const uint8_t* report_descriptor, uint16_t report_descriptor_length) {            
 	if (enabledHID)
 		return;
 	
@@ -176,6 +175,9 @@ void USBHID::end(void){
 }
 
 void USBHID::begin(USBCompositeSerial serial, const uint8_t* report_descriptor, uint16_t report_descriptor_length) {	
+	if (enabledHID)
+		return;
+	
 	USBComposite.clear();
 
 	setReportDescriptor(report_descriptor, report_descriptor_length);
@@ -187,7 +189,10 @@ void USBHID::begin(USBCompositeSerial serial, const uint8_t* report_descriptor, 
 }
 		
 void USBHID::begin(USBCompositeSerial serial, const HIDReportDescriptor* report) {
-    begin(serial, report->descriptor, report->length);
+    if (report == NULL)
+        begin(serial, NULL, 0);
+    else
+        begin(serial, report->descriptor, report->length);
 }
 
 void HIDReporter::sendReport() {
