@@ -196,9 +196,6 @@ void USBHID::begin(USBCompositeSerial serial, const HIDReportDescriptor* report)
 }
 
 void HIDReporter::sendReport() {
-//    while (usb_is_transmitting() != 0) {
-//    }
-
     unsigned toSend = bufferSize;
     uint8* b = reportBuffer;
     
@@ -208,10 +205,8 @@ void HIDReporter::sendReport() {
         b += delta;
     }
     
-//    while (usb_is_transmitting() != 0) {
-//    }
-
     /* flush out to avoid having the pc wait for more data */
+    /* TODO: remove? this does nothing right now! */
     usb_hid_tx(NULL, 0);
 }
 
