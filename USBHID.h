@@ -30,6 +30,7 @@
 #define HID_MOUSE_REPORT_ID 1
 #define HID_KEYBOARD_REPORT_ID 2
 #define HID_CONSUMER_REPORT_ID 3
+#define HID_DIGITIZER_REPORT_ID 4
 #define HID_JOYSTICK_REPORT_ID 20
 
 #define HID_KEYBOARD_ROLLOVER 6
@@ -146,7 +147,7 @@
     /*0x09, 0x02, */                   /* USAGE (Pen) */ \
 	0x09, 0x04,                    /* USAGE (Touch Screen) */ \
     0xa1, 0x01,                    /* COLLECTION (Application) */ \
-    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_MOUSE_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_DIGITIZER_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
     /* declare a finger collection */ \
     0x09, 0x20,                    /*   Usage (Stylus) */ \
     0xA1, 0x00,                    /*   Collection (Physical) */ \
@@ -156,26 +157,21 @@
     0x15, 0x00,                    /*     LOGICAL_MINIMUM (0) */ \
     0x25, 0x01,                    /*     LOGICAL_MAXIMUM (1) */ \
     0x75, 0x01,                    /*     REPORT_SIZE (1) */ \
-    0x95, 0x02,                    /*     REPORT_COUNT (2) */ \
+    0x95, 0x08,                    /*     REPORT_COUNT (8) */ \
     0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */ \
-    /* Declare the remaining 6 bits of the first data byte as constant -> the driver will ignore them */ \
-    0x75, 0x01,                    /*     REPORT_SIZE (1) */ \
-    0x95, 0x06,                    /*     REPORT_COUNT (6) */ \
-    0x81, 0x01,                    /*     INPUT (Cnst,Ary,Abs) */ \
-    /* Define absolute X and Y coordinates of 16 bit each (percent values multiplied with 100) */ \
+    /* Define absolute X and Y coordinates of 12 bits each */ \
     /* http://www.usb.org/developers/hidpage/Hut1_12v2.pdf */ \
-    /* Chapter 16.2 says: "In the Stylus collection a Pointer physical collection will contain the axes reported by the stylus." */ \
     0x05, 0x01,                    /*     Usage Page (Generic Desktop) */ \
     0x09, 0x01,                    /*     Usage (Pointer) */ \
     0xA1, 0x00,                    /*     Collection (Physical) */ \
     0x09, 0x30,                    /*        Usage (X) */ \
     0x09, 0x31,                    /*        Usage (Y) */ \
     0x16, 0x00, 0x00,              /*        Logical Minimum (0) */ \
-    0x26, 0x10, 0x27,              /*        Logical Maximum (10000) */ \
+    0x26, 0xFF, 0x3F,              /*        Logical Maximum (16383) */ \
     0x36, 0x00, 0x00,              /*        Physical Minimum (0) */ \
-    0x46, 0x10, 0x27,              /*        Physical Maximum (10000) */ \
+    0x46, 0xFF, 0x3F,              /*        Physical Maximum (16383) */ \
     0x66, 0x00, 0x00,              /*        UNIT (None) */ \
-    0x75, 0x10,                    /*        Report Size (16), */ \
+    0x75, 0x0C,                    /*        Report Size (12), */ \
     0x95, 0x02,                    /*        Report Count (2), */ \
     0x81, 0x02,                    /*        Input (Data,Var,Abs) */ \
     0xc0,                          /*     END_COLLECTION */ \
@@ -183,9 +179,9 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xc0                           /* END_COLLECTION */
 // With this declaration a data packet must be sent as:
-// byte 1   -> "touch" state          (bit 0 = pen up/down, bit 1 = In Range)
-// byte 2,3 -> absolute X coordinate  (0...10000)
-// byte 4,5 -> absolute Y coordinate  (0...10000)
+// bits 0-7  -> "touch" state          (bit 0 = pen up/down, bit 1 = In Range)
+// bits 8-19 -> absolute X coordinate (0...16383)
+// bits 20-31-> absolute Y coordinate (0...16383)
 
 #define HID_KEYBOARD_REPORT_DESCRIPTOR(...) \
     0x05, 0x01,						/*  USAGE_PAGE (Generic Desktop)	// 47 */ \
@@ -494,13 +490,13 @@ public:
 
 #define DIGITIZER_TOUCH 1 // for touch to be processed it could be required to be "in range" first
 #define DIGITIZER_IN_RANGE 2
-#define DIGITIZER_ALL (DIGITIZER_TOUCH | DIGITIZER_IN_RANGE)
+#define DIGITIZER_TOUCH_IN_RANGE (DIGITIZER_TOUCH | DIGITIZER_IN_RANGE)
 
 typedef struct {
     uint8_t reportID;
     uint8_t buttons;
-    int16_t x;
-    int16_t y;
+    uint16_t x:12;
+    uint16_t y:12;
 } __packed DigitizerReport_t;
 
 class HIDDigitizer : public HIDReporter {
@@ -508,17 +504,18 @@ protected:
 	void buttons(uint8_t b);
     DigitizerReport_t report;
 public:
-	HIDDigitizer(USBHID& HID, uint8_t reportID=HID_MOUSE_REPORT_ID) : HIDReporter(HID, hidReportDigitizer, (uint8_t*)&report, sizeof(report), reportID) {
+	HIDDigitizer(USBHID& HID, uint8_t reportID=HID_DIGITIZER_REPORT_ID) : HIDReporter(HID, hidReportDigitizer, (uint8_t*)&report, sizeof(report), reportID) {
         report.buttons = 0;
         report.x = 0;
         report.y = 0;
     }
 	void begin(void);
 	void end(void);
-	void move(int16_t x, int16_t y); // coordinates are 0 to 10000
-	void press(uint8_t b = DIGITIZER_ALL);
-	void release(uint8_t b = DIGITIZER_ALL);
-	bool isPressed(uint8_t b = DIGITIZER_ALL);
+	void move(uint16_t x, uint16_t y); // coordinates are 0 to 16383
+	void click(uint8_t b = DIGITIZER_TOUCH_IN_RANGE);
+	void press(uint8_t b = DIGITIZER_TOUCH_IN_RANGE);
+	void release(uint8_t b = DIGITIZER_TOUCH_IN_RANGE);
+	bool isPressed(uint8_t b = DIGITIZER_TOUCH_IN_RANGE);
 };
 
 typedef struct {

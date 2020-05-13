@@ -10,7 +10,7 @@ void HIDDigitizer::begin(void){
 void HIDDigitizer::end(void){
 }
 
-void HIDDigitizer::move(int16 x, int16 y)
+void HIDDigitizer::move(uint16 x, uint16 y)
 {
     report.x = x;
     report.y = y;
@@ -27,6 +27,12 @@ void HIDDigitizer::buttons(uint8_t b)
 	}
 }
 
+void HIDDigitizer::click(uint8_t b)
+{
+    press(b);
+    release(b);
+}
+
 void HIDDigitizer::press(uint8_t b)
 {
 	buttons(report.buttons | b);
@@ -39,7 +45,7 @@ void HIDDigitizer::release(uint8_t b)
 
 bool HIDDigitizer::isPressed(uint8_t b)
 {
-	if ((b & report.buttons) != 0)
+	if ((b & report.buttons) == b)
 		return true;
 	return false;
 }
