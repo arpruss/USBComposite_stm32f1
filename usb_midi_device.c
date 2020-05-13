@@ -267,13 +267,15 @@ static USBEndpointInfo midiEndpoints[2] = {
         .callback = midiDataRxCb,
         .pmaSize = 64, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
-        .tx = 0
+        .tx = 0,
+        .align = 1,
     },
     {
         .callback = midiDataTxCb,
         .pmaSize = 64, // patch
         .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
         .tx = 1,
+        .exclusive = 0,
     }
 };
 

@@ -43,6 +43,7 @@ typedef struct USBEndpointInfo {
     uint8 doubleBuffer:1;
     uint8 tx:1; // 1 if TX, 0 if RX
     uint8 exclusive:1; // 1 if cannot use the same endpoint number for both rx and tx
+    uint8 align:1; // 1 if next endpoint of the opposite type shares the same endpoint number as this
 } USBEndpointInfo;
 
 typedef struct USBCompositePart {

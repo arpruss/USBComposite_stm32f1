@@ -261,6 +261,8 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
 		}
         USBEndpointInfo* ep = part->endpoints;
         for (unsigned j = 0 ; j < part->numEndpoints ; j++) {
+            if (ep[j].align) 
+                minimum_address = maxAddress + 1;
             int8 address = allocate_endpoint_address(i, j);
             if (address < 0)
                 return 0;
