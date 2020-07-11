@@ -195,7 +195,7 @@ public:
     virtual void handleActiveSense(void);
     virtual void handleReset(void);
     virtual void handleSysExData(unsigned char data);
-    virtual void handleSysExEnd(unsigned char data);
+    virtual void handleSysExEnd(void);
 
 };
 

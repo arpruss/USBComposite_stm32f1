@@ -186,16 +186,19 @@ void USBMIDI::dispatchPacket(uint32 p)
             handleSysExData(e.p.midi2);
             break;
         case CIN_SYSEX_ENDS_IN_1:
-            handleSysExEnd(e.p.midi0);
+            handleSysExData(e.p.midi0);
+            handleSysExEnd();
             break;
         case CIN_SYSEX_ENDS_IN_2:
             handleSysExData(e.p.midi0);
-            handleSysExEnd(e.p.midi1);
+            handleSysExData(e.p.midi1);
+            handleSysExEnd();
             break;
         case CIN_SYSEX_ENDS_IN_3:
             handleSysExData(e.p.midi0);
             handleSysExData(e.p.midi1);
-            handleSysExEnd(e.p.midi2);
+            handleSysExData(e.p.midi2);
+            handleSysExEnd();
             break;
         case CIN_3BYTE_SYS_COMMON:
             if (e.p.midi0 == MIDIv1_SONG_POSITION_PTR) {
