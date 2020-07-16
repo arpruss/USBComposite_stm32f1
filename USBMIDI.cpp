@@ -559,4 +559,6 @@ void USBMIDI::handleContinue(void) {}
 void USBMIDI::handleStop(void) {}
 void USBMIDI::handleActiveSense(void) {}
 void USBMIDI::handleReset(void) {}
+void USBMIDI::handleSysExData(unsigned char) {}
+void USBMIDI::handleSysExEnd(void) {}
 #pragma GCC diagnostic pop
