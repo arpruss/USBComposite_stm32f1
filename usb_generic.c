@@ -508,8 +508,6 @@ void usb_generic_disable(void) {
             parts[i]->clear();
 }
 
-uint8 buff=2;
-
 static uint8* control_data_tx(uint16 length) {
     unsigned wOffset = pInformation->Ctrl_Info.Usb_wOffset;
     
@@ -519,7 +517,7 @@ static uint8* control_data_tx(uint16 length) {
     }
 
     if (control_tx_done && pInformation->USBwLengths.w <= wOffset + pInformation->Ctrl_Info.PacketSize) {
-        //*control_tx_done = USB_CONTROL_DONE; // this may be a bit premature, but it's our best try
+        *control_tx_done = USB_CONTROL_DONE; // this may be a bit premature, but it's our best try
     }
 
     if (control_tx_buffer == NULL)
