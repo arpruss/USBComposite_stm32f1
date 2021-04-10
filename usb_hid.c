@@ -373,9 +373,8 @@ static RESULT hidUSBDataSetup(uint8 request, uint8 interface, uint8 requestType,
 				} 
 				else 
 				{
-//                    buffer->state = HID_BUFFER_EMPTY;
+                    buffer->state = HID_BUFFER_EMPTY;
                     usb_generic_control_rx_setup(buffer->buffer, buffer->bufferSize, &(buffer->state));
-                    buffer->state = HID_BUFFER_UNREAD;
 				}
                 return USB_SUCCESS;
 			}
