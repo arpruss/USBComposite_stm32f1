@@ -204,11 +204,11 @@
 	0x95, HID_KEYBOARD_ROLLOVER,						/*    REPORT_COUNT (6) */ \
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
-    0x25, 0x65,						/*    LOGICAL_MAXIMUM (101) */ \
+    0x26, 0xDD, 0x00,				/*    LOGICAL_MAXIMUM (261) */ \
     0x05, 0x07,						/*    USAGE_PAGE (Keyboard) */ \
 \
 	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
-    0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
+    0x29, 0xDD,						/*    USAGE_MAXIMUM (Keypad Hexadecimal) */ \
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
 \
 	0x05, 0x08,						 /*   USAGE_PAGE (LEDs) */ \
