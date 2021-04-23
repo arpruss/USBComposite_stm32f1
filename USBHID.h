@@ -528,12 +528,14 @@ protected:
     ConsumerReport_t report;
 public:
     enum { 
-           BRIGHTNESS_UP = 0x6F, 
-           BRIGHTNESS_DOWN = 0x70, 
-           VOLUME_UP = 0xE9, 
+           BRIGHTNESS_UP = 0x6F,
+           BRIGHTNESS_DOWN = 0x70,
+           NEXT_TRACK = 0xB5,
+           PREVIOUS_TRACK = 0xB6,
+           PLAY_OR_PAUSE = 0xCD,
+           VOLUME_UP = 0xE9,
            VOLUME_DOWN = 0xEA,
-           MUTE = 0xE2,
-           PLAY_OR_PAUSE = 0xCD
+           MUTE = 0xE2
            // see pages 117 of https://www.usb.org/sites/default/files/hut1_22.pdf
            };
 	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
