@@ -204,11 +204,11 @@
 	0x95, HID_KEYBOARD_ROLLOVER,						/*    REPORT_COUNT (6) */ \
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
-    0x25, 0x65,						/*    LOGICAL_MAXIMUM (101) */ \
+    0x26, 0xDD, 0x00,				/*    LOGICAL_MAXIMUM (261) */ \
     0x05, 0x07,						/*    USAGE_PAGE (Keyboard) */ \
 \
 	0x19, 0x00,						/*    USAGE_MINIMUM (Reserved (no event indicated)) */ \
-    0x29, 0x65,						/*    USAGE_MAXIMUM (Keyboard Application) */ \
+    0x29, 0xDD,						/*    USAGE_MAXIMUM (Keypad Hexadecimal) */ \
     0x81, 0x00,						/*    INPUT (Data,Ary,Abs) */ \
 \
 	0x05, 0x08,						 /*   USAGE_PAGE (LEDs) */ \
@@ -528,13 +528,15 @@ protected:
     ConsumerReport_t report;
 public:
     enum { 
-           BRIGHTNESS_UP = 0x6F, 
-           BRIGHTNESS_DOWN = 0x70, 
-           VOLUME_UP = 0xE9, 
+           BRIGHTNESS_UP = 0x6F,
+           BRIGHTNESS_DOWN = 0x70,
+           NEXT_TRACK = 0xB5,
+           PREVIOUS_TRACK = 0xB6,
+           PLAY_OR_PAUSE = 0xCD,
+           VOLUME_UP = 0xE9,
            VOLUME_DOWN = 0xEA,
-           MUTE = 0xE2, 
-           PLAY_OR_PAUSE = 0xCD
-           // see pages 75ff of http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+           MUTE = 0xE2
+           // see pages 117 of https://www.usb.org/sites/default/files/hut1_22.pdf
            };
 	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
         report.button = 0;
@@ -554,6 +556,8 @@ public:
 #define KEY_RIGHT_ALT		0x86
 #define KEY_RIGHT_GUI		0x87
 
+// The following definitions takes their value from the document at https://www.usb.org/sites/default/files/hut1_22.pdf, starting p82
+// However, their value are augmented by 0x88 (for example, KEY_F12 real value is 0x45)
 #define KEY_UP_ARROW		0xDA
 #define KEY_DOWN_ARROW		0xD9
 #define KEY_LEFT_ARROW		0xD8
