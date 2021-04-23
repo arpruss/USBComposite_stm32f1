@@ -532,9 +532,9 @@ public:
            BRIGHTNESS_DOWN = 0x70, 
            VOLUME_UP = 0xE9, 
            VOLUME_DOWN = 0xEA,
-           MUTE = 0xE2, 
+           MUTE = 0xE2,
            PLAY_OR_PAUSE = 0xCD
-           // see pages 75ff of http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+           // see pages 117 of https://www.usb.org/sites/default/files/hut1_22.pdf
            };
 	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
         report.button = 0;
@@ -554,6 +554,8 @@ public:
 #define KEY_RIGHT_ALT		0x86
 #define KEY_RIGHT_GUI		0x87
 
+// The following definitions takes their value from the document at https://www.usb.org/sites/default/files/hut1_22.pdf, starting p82
+// However, their value are augmented by 0x88 (for example, KEY_F12 real value is 0x45)
 #define KEY_UP_ARROW		0xDA
 #define KEY_DOWN_ARROW		0xD9
 #define KEY_LEFT_ARROW		0xD8
