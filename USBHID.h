@@ -364,7 +364,7 @@ private:
     // baseChunk holds any explicitly specified report descriptor that
     // overrides any report descriptors from the chain of registered profiles
     struct usb_chunk baseChunk = { 0, 0, 0 };
-    HIDReporter* profiles;
+    HIDReporter* profiles = nullptr;
 public:
 	static bool init(USBHID* me);
     // add a report to the list ; if always is false, then it only works if autoRegister is true
