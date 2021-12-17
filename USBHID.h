@@ -535,7 +535,16 @@ public:
            PLAY_OR_PAUSE = 0xCD,
            VOLUME_UP = 0xE9,
            VOLUME_DOWN = 0xEA,
-           MUTE = 0xE2
+           REWIND = 0xB4,
+           FAST_FORWARD = 0xB3,
+           MUTE = 0xE2,
+           MENU = 0x40,
+           MENU_PICK = 0x41,
+           MENU_UP = 0x42,
+           MENU_DOWN = 0x43,
+           MENU_LEFT = 0x44,
+           MENU_RIGHT = 0x45,
+           MENU_ESCAPE = 0x46,
            // see pages 117 of https://www.usb.org/sites/default/files/hut1_22.pdf
            };
 	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
@@ -556,8 +565,10 @@ public:
 #define KEY_RIGHT_ALT		0x86
 #define KEY_RIGHT_GUI		0x87
 
+#define KEY_HID_OFFSET      0x88
+
 // The following definitions takes their value from the document at https://www.usb.org/sites/default/files/hut1_22.pdf, starting p82
-// However, their value are augmented by 0x88 (for example, KEY_F12 real value is 0x45)
+// However, their value are augmented by KEY_HID_OFFSET (for example, KEY_F12 real value is 0x45)
 #define KEY_UP_ARROW		0xDA
 #define KEY_DOWN_ARROW		0xD9
 #define KEY_LEFT_ARROW		0xD8
@@ -601,7 +612,7 @@ protected:
     uint8_t leds[HID_BUFFER_ALLOCATE_SIZE(1,1)];
     HIDBuffer_t ledData;
     uint8_t reportID;
-    uint8_t getKeyCode(uint8_t k, uint8_t* modifiersP);
+    uint8_t getKeyCode(uint16_t k, uint8_t* modifiersP);
     bool adjustForHostCapsLock = true;
 
 public:
@@ -619,8 +630,8 @@ public:
         return leds[reportID != 0 ? 1 : 0];
     }
 	virtual size_t write(uint8_t k);
-	virtual size_t press(uint8_t k);
-	virtual size_t release(uint8_t k);
+	virtual size_t press(uint16_t k);
+	virtual size_t release(uint16_t k);
 	virtual void releaseAll(void);
 };
 
