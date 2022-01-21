@@ -836,12 +836,12 @@ public:
     safeSendReport();
   }
   
-  void rightX(uint8_t v) {
+  void RightX(uint8_t v) {
     report.rightX = v;
     safeSendReport();
   }
   
-  void rightY(uint8_t v) {
+  void RightY(uint8_t v) {
     report.rightY = v;
     safeSendReport();
   }
@@ -851,14 +851,15 @@ public:
       USBComposite.setProductId(0x00c1);
       USBComposite.setProductString("HORIPAD S");
       USBComposite.setManufacturerString("Omega Centauri Software");
-      HID.begin();
+      HID.begin(hidReportSwitchController);
   }
   
   void end() {
+      HID.end();
   }
 
   HIDSwitchController(USBHID& HID) 
-            : HIDReporter(HID, hidReportSwitchController, (uint8_t*)&report, sizeof(report)) {
+            : HIDReporter(HID, (uint8_t*)&report, sizeof(report)) {
         report.buttons = 0;
         report.dpad = DPAD_NEUTRAL;
         report.leftX = AXIS_NEUTRAL;
