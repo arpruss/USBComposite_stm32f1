@@ -740,7 +740,6 @@ public:
 };
 
 typedef struct {
-  uint8_t reportID;
   uint16_t buttons;
   uint8_t dpad; 
   uint8_t leftX;
@@ -859,8 +858,7 @@ public:
   }
 
   HIDSwitchController(USBHID& HID) 
-            : HIDReporter(HID, hidReportSwitchController, (uint8_t*)&report, sizeof(report), 0) {
-        report.reportID = 0; 
+            : HIDReporter(HID, hidReportSwitchController, (uint8_t*)&report, sizeof(report)) {
         report.buttons = 0;
         report.dpad = DPAD_NEUTRAL;
         report.leftX = AXIS_NEUTRAL;
