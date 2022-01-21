@@ -250,7 +250,7 @@ public:
         }
     };    
     
-    USBXBox360(uint16 _vendorId=0x045e, uint16 _productId=0x028e) : vendorId(_vendorId), productId(_productId), USBXBox360Controller(0) {
+    USBXBox360(uint16 _vendorId=0x045e, uint16 _productId=0x028e) : USBXBox360Controller(0), vendorId(_vendorId), productId(_productId) {
     }
 };
 
