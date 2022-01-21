@@ -836,12 +836,12 @@ public:
     safeSendReport();
   }
   
-  void RightX(uint8_t v) {
+  void XRight(uint8_t v) {
     report.rightX = v;
     safeSendReport();
   }
   
-  void RightY(uint8_t v) {
+  void YRight(uint8_t v) {
     report.rightY = v;
     safeSendReport();
   }
