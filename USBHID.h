@@ -717,6 +717,9 @@ public:
 	void begin(void);
 	void end(void);
 	void button(uint8_t button, bool val);
+    void buttons(uint32_t b) {
+        joyReport.buttons = b;
+    }
 	void X(uint16_t val);
 	void Y(uint16_t val);
 	void position(uint16_t x, uint16_t y);
