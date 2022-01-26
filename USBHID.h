@@ -302,7 +302,7 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xC0
 
-#define HID_SWITCH_CONTROLLER_REPORT_DESCRIPTOR() \
+#define HID_SWITCH_CONTROLLER_REPORT_DESCRIPTOR(...) \
   0x05, 0x01,           /*  Usage Page (Generic Desktop) */ \
   0x09, 0x05,           /*  Usage (Joystick) */ \
   0xA1, 0x01,           /*  Collection (Application) */ \
@@ -345,6 +345,7 @@
   0x75, 0x08,           /*  Report Size (8) */ \
   0x95, 0x01,           /*  Report Count (1) */ \
   0x81, 0x01,           /*  Input (1) */ \
+  __VA_ARGS__ \
   0xC0,                 /*  End Collection */
     
 
