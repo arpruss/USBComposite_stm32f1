@@ -26,7 +26,7 @@ uint16_t USBXBox360Controller::getReportSize(void){
 }
 
 uint8_t* USBXBox360Controller::getReport(void){
-    return report;
+    return (uint8_t*)report;
 }
 
 void USBXBox360Controller::setRumbleCallback(void (*callback)(uint8 left, uint8 right)) {

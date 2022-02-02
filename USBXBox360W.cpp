@@ -32,7 +32,7 @@ uint16_t USBXBox360WController::getReportSize(void){
 }
 
 uint8_t* USBXBox360WController::getReport(void){
-    return report;
+    return (uint8_t*)report;
 }
 
 
