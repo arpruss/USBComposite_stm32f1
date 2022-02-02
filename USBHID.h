@@ -468,6 +468,12 @@ class HIDReporter {
         
     public:
         void sendReport(); 
+        uint8_t* getReport() {
+            return reportBuffer;
+        }
+        uint16_t getReportSize() {
+            return bufferSize;
+        }
         // if you use this init function, the buffer starts with a reportID, even if the reportID is zero,
         // and bufferSize includes the reportID; if reportID is zero, sendReport() will skip the initial
         // reportID byte

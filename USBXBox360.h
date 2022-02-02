@@ -70,6 +70,8 @@ public:
         return connected; 
     }
 	void send(void);
+    uint8* getReport(void);
+    uint16_t getReportSize(void);
 	void stop(void);
 	void button(uint8_t button, bool val);
     void buttons(uint16_t b);
@@ -153,6 +155,8 @@ private:
 	void safeSendReport(void);
 public:
 	void send(void);
+    uint8* getReport(void);
+    uint16_t getReportSize(void);
 	void stop(void);
 	void button(uint8_t button, bool val);
     void buttons(uint16_t b);
