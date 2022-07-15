@@ -408,7 +408,7 @@ private:
     bool autoRegister = true;
 	bool enabledHID = false;
     uint32 txPacketSize = 64;
-    struct usb_chunk* chunkList;
+    struct usb_chunk* chunkList = nullptr;
     // baseChunk holds any explicitly specified report descriptor that
     // overrides any report descriptors from the chain of registered profiles
     struct usb_chunk baseChunk = { 0, 0, 0 };
