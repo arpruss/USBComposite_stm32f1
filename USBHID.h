@@ -660,7 +660,7 @@ public:
 #define KEY_KP_SLASH        (KEY_HID_OFFSET+0x54)
 #define KEY_KP_ENTER        (KEY_HID_OFFSET+0x58)
 #define KEY_KP_MINUS        (KEY_HID_OFFSET+0x56)
-#define KEY_KP_EQUAL        (KEY_HID_OFFSET+0x67)
+#define KEY_KP_EQUAL        (KEY_HID_OFFSET+0x86)
 #define KEY_KP_0            (KEY_HID_OFFSET+0x62)
 #define KEY_KP_1            (KEY_HID_OFFSET+0x59)
 #define KEY_KP_2            (KEY_HID_OFFSET+0x5a)
@@ -677,7 +677,9 @@ public:
 #define KEY_HELP            (KEY_HID_OFFSET+0x75)
 #define KEY_POWER           (KEY_HID_OFFSET+0x66)
 #define KEY_102ND           (KEY_HID_OFFSET+0x64)
-
+#define KEY_PRINT_SCREEN    (KEY_HID_OFFSET+0x46)    
+#define KEY_SCROLL_LOCK     (KEY_HID_OFFSET+0x47)
+#define KEY_PAUSE           (KEY_HID_OFFSET+0x48)       
 
 
 
