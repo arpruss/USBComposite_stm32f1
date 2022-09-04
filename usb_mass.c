@@ -144,7 +144,10 @@ USBCompositePart usbMassPart = {
 };
 
 static void usb_mass_reset(void) {
-  usb_mass_mal_init(0);
+  uint32_t i;
+  for (i = 0; i < USB_MASS_MAX_DRIVES; i += 1) {
+    usb_mass_mal_init(i);
+  }
 
   pInformation->Current_Configuration = 0; // TODO: remove?
 
@@ -435,4 +438,10 @@ uint32_t usb_mass_sil_write(uint8_t* pBufferPointer, uint32_t wBufferSize) {
 
 uint32_t usb_mass_sil_read(uint8_t* pBufferPointer) {
     return usb_generic_read_to_buffer(USB_MASS_RX_ENDPOINT_INFO, pBufferPointer, USB_GENERIC_UNLIMITED_BUFFER);
+}
+
+void usb_mass_update_max_lun(uint32_t new_max_lun) {
+  if (new_max_lun > maxLun && new_max_lun < USB_MASS_MAX_DRIVES) {
+    maxLun = new_max_lun;
+  }
 }
