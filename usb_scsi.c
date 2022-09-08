@@ -82,6 +82,21 @@ void scsi_request_sense_cmd(uint8_t lun) {
   usb_mass_transfer_data_request(SCSI_senseData, requestSenseDataLength);
 }
 
+void scsi_allow_medium_removal(uint8_t lun) {
+  (void)lun;
+  //Return error for allow media removal comand.  This is necessary for proper eject behavior on
+  //Mac OS, and may prevent write caching from being enabled on Windows, providing better performance
+  if (usb_mass_CBW.CB[4] & 0x03 == 0x00) { //PREVENT = false, succeeds
+    usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
+  } else { //PREVENT = true, fails
+    //Stalling the endpoint here causes classic Mac OS to fail to mount the drive.
+    //Not stalling here does not seem to adversely affect other platforms.
+    //usb_mass_bot_abort(BOT_DIR_IN);
+    scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_COMMAND);
+    usb_mass_bot_set_csw(BOT_CSW_CMD_FAILED, BOT_SEND_CSW_ENABLE);
+  }
+}
+
 void scsi_start_stop_unit_cmd(uint8_t lun) {
   (void)lun;
   usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
@@ -122,7 +137,7 @@ void scsi_read_capacity10_cmd(uint8_t lun) {
     usb_mass_bot_abort(BOT_DIR_IN);
     return;
   }
-  
+
   SCSI_readFormatCapacity10Data[0] = (uint8_t) ((usb_mass_drives[lun].blockCount - 1) >> 24);
   SCSI_readFormatCapacity10Data[1] = (uint8_t) ((usb_mass_drives[lun].blockCount - 1) >> 16);
   SCSI_readFormatCapacity10Data[2] = (uint8_t) ((usb_mass_drives[lun].blockCount - 1) >> 8);
@@ -163,7 +178,7 @@ void scsi_write10_cmd(uint8_t lun, uint32_t lba, uint32_t blockNbr) {
 
     if ((usb_mass_CBW.bmFlags & 0x80) == 0) {
       usb_mass_botState = BOT_STATE_DATA_OUT;
-      usb_generic_enable_rx(USB_MASS_RX_ENDPOINT_INFO); 
+      usb_generic_enable_rx(USB_MASS_RX_ENDPOINT_INFO);
     } else {
       usb_mass_bot_abort(BOT_DIR_IN);
       scsi_set_sense_data(usb_mass_CBW.bLUN, SCSI_ILLEGAL_REQUEST, SCSI_INVALID_FIELED_IN_COMMAND);

@@ -106,13 +106,13 @@ USBEndpointInfo usbMassEndpoints[2] = {
     {
         .callback = usb_mass_in,
         .pmaSize = MAX_BULK_PACKET_SIZE,
-        .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 1,
     },
     {
         .callback = usb_mass_out,
         .pmaSize = MAX_BULK_PACKET_SIZE,
-        .type = USB_GENERIC_ENDPOINT_TYPE_BULK, 
+        .type = USB_GENERIC_ENDPOINT_TYPE_BULK,
         .tx = 0,
     },
 };
@@ -331,7 +331,7 @@ static void usb_mass_bot_cbw_decode() {
           scsi_start_stop_unit_cmd(usb_mass_CBW.bLUN);
           break;
         case SCSI_ALLOW_MEDIUM_REMOVAL:
-          scsi_start_stop_unit_cmd(usb_mass_CBW.bLUN);
+          scsi_allow_medium_removal(usb_mass_CBW.bLUN);
           break;
         case SCSI_MODE_SENSE6:
           scsi_mode_sense6_cmd(usb_mass_CBW.bLUN);
