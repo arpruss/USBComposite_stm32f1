@@ -91,9 +91,10 @@ uint16 epTypes[4] = {
 
 #define LEAFLABS_ID_VENDOR                0x1EAF
 #define MAPLE_ID_PRODUCT                  0x0024 // was 0x0024
-#define USB_DEVICE_CLASS              	  0x00
-#define USB_DEVICE_SUBCLASS	           	  0x00
-#define DEVICE_PROTOCOL					  0x01
+#define DEFAULT_VERSION                   0x0200
+#define USB_DEVICE_CLASS                  0x00
+#define USB_DEVICE_SUBCLASS	              0x00
+#define DEVICE_PROTOCOL                   0x01
 //#define REQUEST_TYPE                      0b01100000u
 #define REQUEST_RECIPIENT                 0b00011111u
 
@@ -102,13 +103,13 @@ static usb_descriptor_device usbGenericDescriptor_Device =
       .bLength            = sizeof(usb_descriptor_device),              
       .bDescriptorType    = USB_DESCRIPTOR_TYPE_DEVICE,                 
       .bcdUSB             = 0x0200,                                     
-      .bDeviceClass       = USB_DEVICE_CLASS,                       	
-      .bDeviceSubClass    = USB_DEVICE_SUBCLASS,                    	
+      .bDeviceClass       = USB_DEVICE_CLASS,                           
+      .bDeviceSubClass    = USB_DEVICE_SUBCLASS,                        
       .bDeviceProtocol    = DEVICE_PROTOCOL,                            
       .bMaxPacketSize0    = 0x40,                                       
       .idVendor           = LEAFLABS_ID_VENDOR,                         
       .idProduct          = MAPLE_ID_PRODUCT,                           
-      .bcdDevice          = 0x0200,                                     
+      .bcdDevice          = DEFAULT_VERSION,                            
       .iManufacturer      = 0x01,                                       
       .iProduct           = 0x02,                                       
       .iSerialNumber      = 0x00,                                       
@@ -318,7 +319,7 @@ uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts) {
     return 1;
 }
 
-void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber) {
+void usb_generic_set_info(uint16 idVendor, uint16 idProduct, uint16 deviceVersion, const char* iManufacturer, const char* iProduct, const char* iSerialNumber) {
     if (idVendor != 0)
         usbGenericDescriptor_Device.idVendor = idVendor;
     else
@@ -329,10 +330,15 @@ void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufa
     else
         usbGenericDescriptor_Device.idProduct = MAPLE_ID_PRODUCT;
     
+    if (deviceVersion != 0)
+        usbGenericDescriptor_Device.bcdDevice = deviceVersion;
+    else
+        usbGenericDescriptor_Device.bcdDevice = DEFAULT_VERSION;
+    
     if (iManufacturer == NULL) {
         iManufacturer = DEFAULT_MANUFACTURER;
     }
-           
+    
     String_Descriptor[1].Descriptor = (uint8*)iManufacturer;
     String_Descriptor[1].Descriptor_Size = 0;
      

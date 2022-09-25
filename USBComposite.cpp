@@ -5,6 +5,7 @@
 
 #define DEFAULT_VENDOR_ID  0x1EAF
 #define DEFAULT_PRODUCT_ID 0x0024
+#define DEFAULT_PRODUCT_VERSION 0x0200
 
 static char* putSerialNumber(char* out, int nibbles, uint32 id) {
     for (int i=0; i<nibbles; i++, id >>= 4) {
@@ -58,6 +59,13 @@ void USBCompositeDevice::setProductId(uint16 _productId) {
         productId = DEFAULT_PRODUCT_ID;
 }
 
+void USBCompositeDevice::setProductVersion(uint16 _version) {
+    if (_version != 0)
+        productVersion = _version;
+    else
+        productVersion = DEFAULT_PRODUCT_VERSION;
+}
+
 void USBCompositeDevice::setManufacturerString(const char* s) {
     iManufacturer = s;
 }
@@ -77,7 +85,7 @@ bool USBCompositeDevice::begin() {
 		if (init[i] != NULL && !init[i](plugin[i]))
 			return false;
 	}
-	usb_generic_set_info(vendorId, productId, iManufacturer, iProduct, iSerialNumber);
+	usb_generic_set_info(vendorId, productId, productVersion, iManufacturer, iProduct, iSerialNumber);
     if (! usb_generic_set_parts(parts, numParts))
         return false;
     usb_generic_enable();
