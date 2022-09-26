@@ -13,6 +13,8 @@ extern "C" {
 //USB_MASS_MAX_DRIVES can be overridden using compiler flags if necessary (e.g. -D USB_MASS_MAX_DRIVES=4)
 #ifndef USB_MASS_MAX_DRIVES
 #define USB_MASS_MAX_DRIVES  2
+#elif USB_MASS_MAX_DRIVES > 16
+#error USB_MASS_MAX_DRIVES is limited to 16
 #endif
 
 typedef bool (*MassStorageWriter)(const uint8_t *writebuff, uint32_t startSector, uint16_t numSectors);
