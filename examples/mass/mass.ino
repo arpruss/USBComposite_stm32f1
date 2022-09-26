@@ -54,6 +54,9 @@ void dumpDrive() {
 }
 
 void setup() {
+  /* Setting a serial number string is optional for a single drive, but
+   * is required for Windows to see multiple drives */
+  USBComposite.setSerialString()
   USBComposite.setProductId(PRODUCT_ID);
   MassStorage.setDriveData(0, sizeof(image)/SCSI_BLOCK_SIZE, read, write);
   MassStorage.registerComponent();
