@@ -86,7 +86,7 @@ void scsi_allow_medium_removal(uint8_t lun) {
   (void)lun;
   //Return error for allow media removal comand.  This is necessary for proper eject behavior on
   //Mac OS, and may prevent write caching from being enabled on Windows, providing better performance
-  if (usb_mass_CBW.CB[4] & 0x03 == 0x00) { //PREVENT = false, succeeds
+  if ((usb_mass_CBW.CB[4] & 0x03) == 0x00) { //PREVENT = false, succeeds
     usb_mass_bot_set_csw(BOT_CSW_CMD_PASSED, BOT_SEND_CSW_ENABLE);
   } else { //PREVENT = true, fails
     //Stalling the endpoint here causes classic Mac OS to fail to mount the drive.
