@@ -34,6 +34,9 @@ void setup() {
 void initReader() {
   digitalWrite(LED_PIN,0);
   cardSize = sd.card()->cardSize();  
+  /* Setting a serial number string is optional for a single drive, but
+   * is required for Windows to see multiple drives */
+  USBComposite.setSerialString()
   MassStorage.setDriveData(0, cardSize, read, write);
   MassStorage.registerComponent();
   CompositeSerial.registerComponent();

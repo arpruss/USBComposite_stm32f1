@@ -8,9 +8,14 @@
 extern "C" {
 #endif
 
-#define SCSI_BLOCK_SIZE							     512
+#define SCSI_BLOCK_SIZE				512
 
+//USB_MASS_MAX_DRIVES can be overridden using compiler flags if necessary (e.g. -D USB_MASS_MAX_DRIVES=4)
+#ifndef USB_MASS_MAX_DRIVES
 #define USB_MASS_MAX_DRIVES  2
+#elif USB_MASS_MAX_DRIVES > 16
+#error USB_MASS_MAX_DRIVES is limited to 16
+#endif
 
 typedef bool (*MassStorageWriter)(const uint8_t *writebuff, uint32_t startSector, uint16_t numSectors);
 typedef bool (*MassStorageReader)(uint8_t *readbuff, uint32_t startSector, uint16_t numSectors);
@@ -19,7 +24,7 @@ typedef bool (*MassStorageInitializer)(void);
 typedef bool (*MassStorageFormatter)(void);
 
 typedef struct {
-    uint32_t blockCount;
+	uint32_t blockCount;
 	MassStorageReader read;
 	MassStorageWriter write;
 	MassStorageStatuser status;

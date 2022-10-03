@@ -103,7 +103,9 @@ extern "C" {
   void usb_mass_bot_set_csw(uint8_t cswStatus, uint8_t sendPermission);
   void usb_mass_transfer_data_request(uint8_t* dataPointer, uint16_t dataLen);
   void usb_mass_bot_abort(uint8_t direction);
-  
+
+  void usb_mass_update_max_lun(uint32_t new_max_lun);
+
   extern USBCompositePart usbMassPart;
 
 extern uint8_t usb_mass_botState;

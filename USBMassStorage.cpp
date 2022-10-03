@@ -36,6 +36,7 @@ void USBMassStorage::setDriveData(uint32 driveNumber, uint32 numSectors, MassSto
 	usb_mass_drives[driveNumber].status = statuser;
 	usb_mass_drives[driveNumber].init = initializer;
 	usb_mass_drives[driveNumber].format = initializer;
+	usb_mass_update_max_lun(driveNumber);
 }
 
 void USBMassStorage::clearDrives() {

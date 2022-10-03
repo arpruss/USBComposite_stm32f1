@@ -75,6 +75,7 @@ extern "C" {
   void scsi_inquiry_cmd(uint8_t lun);
   void scsi_request_sense_cmd(uint8_t lun);
   void scsi_start_stop_unit_cmd(uint8_t lun);
+  void scsi_allow_medium_removal(uint8_t lun);
   void scsi_mode_sense6_cmd(uint8_t lun);
   void scsi_mode_sense10_cmd(uint8_t lun);
   void scsi_read_format_capacity_cmd(uint8_t lun);
