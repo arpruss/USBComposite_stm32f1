@@ -449,6 +449,12 @@ public:
     USBHID(bool _autoRegister=true) {
         autoRegister = _autoRegister;
     }
+    void setTXInterval(uint8 t) {
+        usb_hid_setTXInterval(t);
+    }
+    void setRXInterval(uint8 t) {
+        usb_hid_setRXInterval(t);
+    }
 };
 
 class HIDReporter {
