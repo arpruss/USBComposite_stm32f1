@@ -6,7 +6,7 @@
 
 - MIDI over USB
 
-- XBox360 wired/wireless controllers
+- XBox360 wired and wireless controllers
 
 - Mass storage
 
