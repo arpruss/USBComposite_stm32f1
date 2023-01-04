@@ -10,7 +10,7 @@ def sample_handler(data):
     count += 1
     if count % 200 == 0:
         t = time()
-        print(count,t,count/(t-start))
+        print(count,(t-start)/count*1000,count/(t-start))
         print("Raw data: {0}".format(data))
     
 device = hid.HidDeviceFilter(vendor_id = 0x1EAF).get_devices()[0]
