@@ -195,12 +195,12 @@ size_t HIDKeyboard::press(uint16_t k) {
         }
     }
     else {
-        for (unsigned i = 0; i<HID_KEYBOARD_ROLLOVER; i++) {
+        for (unsigned i = 0; i<rollover; i++) {
             if (keyReport.keys[i] == k) {
                 goto SEND;
             }
         }
-        for (unsigned i = 0; i<HID_KEYBOARD_ROLLOVER; i++) {
+        for (unsigned i = 0; i<rollover; i++) {
             if (keyReport.keys[i] == 0) {
                 keyReport.keys[i] = k;
                 goto SEND;
@@ -224,7 +224,7 @@ size_t HIDKeyboard::release(uint16_t k)
     k = getKeyCode(k, &modifiers);
     
     if (k != 0) {
-        for (unsigned i=0; i<HID_KEYBOARD_ROLLOVER; i++) {
+        for (unsigned i=0; i<rollover; i++) {
              if (keyReport.keys[i] == k) {
                  keyReport.keys[i] = 0;
                  break;
@@ -244,7 +244,7 @@ size_t HIDKeyboard::release(uint16_t k)
 
 void HIDKeyboard::releaseAll(void)
 {
-    memset(keyReport.keys, 0, HID_KEYBOARD_ROLLOVER);
+    memset(keyReport.keys, 0, rollover);
 	keyReport.modifiers = 0;
 	
 	sendReport();

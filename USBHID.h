@@ -34,12 +34,16 @@
 #define HID_JOYSTICK_REPORT_ID 20
 
 #define HID_KEYBOARD_ROLLOVER 6
+#define HID_KEYBOARD_MAX_ROLLOVER 32
 
 #define HID_AUTO_REPORT_ID_START 0x80
 
 #define MACRO_GET_ARGUMENT_2(x, y, ...) y
+#define MACRO_GET_ARGUMENT_3(x, y, z, ...) z
 #define MACRO_GET_ARGUMENT_1_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_2(placeholder, ## __VA_ARGS__, default)
+#define MACRO_GET_ARGUMENT_2_WITH_DEFAULT(default, ...) MACRO_GET_ARGUMENT_3(placeholder, ## __VA_ARGS__, default, default)
 #define MACRO_ARGUMENT_2_TO_END(skip, ...) __VA_ARGS__
+#define MACRO_ARGUMENT_3_TO_END(skip, ...) MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)
 
 // HIDBuffer_t data buffers must have even memory length because of how PMA transfers work
 #define HID_DATA_BUFFER_SIZE(n) (((n)+1)/2*2)
@@ -201,7 +205,7 @@
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x81, 0x03,						/*    INPUT (Cnst,Var,Abs) */ \
 \
-	0x95, HID_KEYBOARD_ROLLOVER,						/*    REPORT_COUNT (6) */ \
+	0x95, MACRO_GET_ARGUMENT_2_WITH_DEFAULT(HID_KEYBOARD_ROLLOVER, ## __VA_ARGS__),  /*    REPORT_COUNT (rollover) */ \
     0x75, 0x08,						/*    REPORT_SIZE (8) */ \
     0x15, 0x00,						/*    LOGICAL_MINIMUM (0) */ \
     0x26, 0xDD, 0x00,				/*    LOGICAL_MAXIMUM (261) */ \
@@ -217,7 +221,7 @@
 	0x95, 0x08,						 /*   REPORT_COUNT (8) */ \
 	0x75, 0x01,						 /*   REPORT_SIZE (1) */ \
 	0x91, 0x02,						 /*   OUTPUT (Data,Var,Abs) */    \
-    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
+    MACRO_ARGUMENT_3_TO_END(__VA_ARGS__)  \
     0xc0      						/*  END_COLLECTION */
     
 #define HID_BOOT_KEYBOARD_REPORT_DESCRIPTOR(...) \
@@ -693,7 +697,7 @@ typedef struct{
     uint8_t reportID;
 	uint8_t modifiers;
 	uint8_t reserved;
-	uint8_t keys[HID_KEYBOARD_ROLLOVER];
+	uint8_t keys[HID_KEYBOARD_MAX_ROLLOVER];
 } __packed KeyReport_t;
 
 class HIDKeyboard : public Print, public HIDReporter {
@@ -704,14 +708,16 @@ protected:
     uint8_t leds[HID_BUFFER_ALLOCATE_SIZE(1,1)];
     HIDBuffer_t ledData;
     uint8_t reportID;
+    uint8_t rollover;
     uint8_t getKeyCode(uint16_t k, uint8_t* modifiersP);
     bool adjustForHostCapsLock = true;
 
 public:
-	HIDKeyboard(USBHID& HID, uint8_t _reportID=HID_KEYBOARD_REPORT_ID) : 
-        HIDReporter(HID, hidReportKeyboard, (uint8*)&keyReport, sizeof(KeyReport_t), _reportID),
+	HIDKeyboard(USBHID& HID, uint8_t _reportID=HID_KEYBOARD_REPORT_ID, uint8_t _rollover=HID_KEYBOARD_ROLLOVER) : 
+        HIDReporter(HID, hidReportKeyboard, (uint8*)&keyReport, sizeof(KeyReport_t)+_rollover-HID_KEYBOARD_MAX_ROLLOVER, _reportID),
         ledData(leds, HID_BUFFER_SIZE(1,_reportID), _reportID, HID_BUFFER_MODE_NO_WAIT),
-        reportID(_reportID)
+        reportID(_reportID),
+        rollover(_rollover)
         {}
 	void begin(void);
 	void end(void);
