@@ -609,6 +609,8 @@ public:
            MENU_LEFT = 0x44,
            MENU_RIGHT = 0x45,
            MENU_ESCAPE = 0x46,
+		   VOICE_COMMAND = 0xCF,
+		   HOMEPAGE = 0x0223,
            // see pages 117 of https://www.usb.org/sites/default/files/hut1_22.pdf
            };
 	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
