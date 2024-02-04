@@ -31,6 +31,7 @@
 #define HID_KEYBOARD_REPORT_ID 2
 #define HID_CONSUMER_REPORT_ID 3
 #define HID_DIGITIZER_REPORT_ID 4
+#define HID_DESKTOP_REPORT_ID 5
 #define HID_JOYSTICK_REPORT_ID 20
 
 #define HID_KEYBOARD_ROLLOVER 6
@@ -74,6 +75,21 @@
 	0x09, 0x01, 								/* usage -- consumer control */ \
 	0xA1, 0x01, 								/* collection (application) */ \
     0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_CONSUMER_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
+	0x15, 0x00, 								/* logical minimum */ \
+	0x26, 0xFF, 0x03, 							/* logical maximum (3ff) */ \
+	0x19, 0x00, 								/* usage minimum (0) */ \
+	0x2A, 0xFF, 0x03, 							/* usage maximum (3ff) */ \
+	0x75, 0x10, 								/* report size (16) */ \
+	0x95, 0x01, 								/* report count (1) */ \
+	0x81, 0x00, 								/* input */ \
+    MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
+	0xC0 /* end collection */    
+    
+#define HID_DESKTOP_REPORT_DESCRIPTOR(...) \
+    0x05, 0x01,									/* usage page (desktop device) */ \
+	0x09, 0x06, 								/* usage -- keyboard */ \
+	0xA1, 0x01, 								/* collection (application) */ \
+    0x85, MACRO_GET_ARGUMENT_1_WITH_DEFAULT(HID_DESKTOP_REPORT_ID, ## __VA_ARGS__),  /*    REPORT_ID */ \
 	0x15, 0x00, 								/* logical minimum */ \
 	0x26, 0xFF, 0x03, 							/* logical maximum (3ff) */ \
 	0x19, 0x00, 								/* usage minimum (0) */ \
@@ -395,6 +411,7 @@ extern const HIDReportDescriptor* hidReportBootKeyboard;
 extern const HIDReportDescriptor* hidReportAbsMouse;
 extern const HIDReportDescriptor* hidReportDigitizer;
 extern const HIDReportDescriptor* hidReportConsumer;
+extern const HIDReportDescriptor* hidReportDesktop;
 extern const HIDReportDescriptor* hidReportSwitchController;
 
 #define HID_MOUSE                   hidReportMouse
@@ -592,6 +609,7 @@ protected:
     ConsumerReport_t report;
 public:
     enum { 
+		   SLEEP = 0x34,
            BRIGHTNESS_UP = 0x6F,
            BRIGHTNESS_DOWN = 0x70,
            NEXT_TRACK = 0xB5,
@@ -614,6 +632,24 @@ public:
            // see pages 117 of https://www.usb.org/sites/default/files/hut1_22.pdf
            };
 	HIDConsumer(USBHID& HID, uint8_t reportID=HID_CONSUMER_REPORT_ID) : HIDReporter(HID, hidReportConsumer, (uint8_t*)&report, sizeof(report), reportID) {
+        report.button = 0;
+    }
+	void begin(void);
+	void end(void);
+    void press(uint16_t button);
+    void release();
+};
+
+class HIDDesktop : public HIDReporter {
+protected:
+    ConsumerReport_t report;
+public:
+    enum { 
+		WAKEUP = 0x83,
+		SLEEP = 0x82,
+           // see pages 31ff of https://www.usb.org/sites/default/files/hut1_22.pdf
+           };
+	HIDDesktop(USBHID& HID, uint8_t reportID=HID_DESKTOP_REPORT_ID) : HIDReporter(HID, hidReportDesktop, (uint8_t*)&report, sizeof(report), reportID) {
         report.button = 0;
     }
 	void begin(void);

@@ -16,6 +16,8 @@ USBMassStorage	KEYWORD1
 USBCompositeSerial	KEYWORD1
 HIDMouse	KEYWORD1
 HIDKeyboard	KEYWORD1
+HIDConsumer	KEYWORD1
+HIDDesktop	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -90,4 +92,3 @@ MOUSE_LEFT	LITERAL1
 MOUSE_MIDDLE	LITERAL1
 MOUSE_RIGHT	LITERAL1
 MOUSE_ALL	LITERAL1
-HIDConsumer	LITERAL1
