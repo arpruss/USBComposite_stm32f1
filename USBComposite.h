@@ -26,6 +26,7 @@ private:
     const char* iSerialNumber = NULL;
     uint16 vendorId;
     uint16 productId;
+    uint16 productVersion;
     USBCompositePart* parts[USB_COMPOSITE_MAX_PARTS];
     USBPartInitializer init[USB_COMPOSITE_MAX_PARTS];
     USBPartStopper stop[USB_COMPOSITE_MAX_PARTS];
@@ -36,6 +37,7 @@ public:
     USBCompositeDevice(void); 
     void setVendorId(uint16 vendor=0);
     void setProductId(uint16 product=0);
+    void setProductVersion(uint16 version=0);
     void setManufacturerString(const char* manufacturer=NULL);
     void setProductString(const char* product=NULL);
     void setSerialString(const char* serialNumber=DEFAULT_SERIAL_STRING);
@@ -64,4 +66,4 @@ extern USBCompositeDevice USBComposite;
 #include <USBMultiSerial.h>
 #include <USBXBox360.h>
 #endif
-        
+
