@@ -258,10 +258,6 @@ public:
     }
 };
 
-#define XBOX_A 13
-#define XBOX_B 14
-#define XBOX_X 15
-#define XBOX_Y 16
 #define XBOX_DUP 1
 #define XBOX_DDOWN 2
 #define XBOX_DLEFT 3
@@ -273,5 +269,9 @@ public:
 #define XBOX_LSHOULDER 9
 #define XBOX_RSHOULDER 10
 #define XBOX_GUIDE  11
+#define XBOX_A 13
+#define XBOX_B 14
+#define XBOX_X 15
+#define XBOX_Y 16
 
 #endif
