@@ -322,6 +322,87 @@
     MACRO_ARGUMENT_2_TO_END(__VA_ARGS__)  \
     0xC0
 
+#define HID_PS3_CONTROLLER_REPORT_DESCRIPTOR(...) \
+0x05, 0x01,        /* Usage Page (Generic Desktop Ctrls) */ \
+0x09, 0x04,        /* Usage (Joystick) */ \
+0xA1, 0x01,        /* Collection (Physical) */ \
+0xA1, 0x02,        /*   Collection (Application) */ \
+0x85, 0x01,        /*     Report ID (1) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x01,        /*     Report Count (1) */ \
+0x15, 0x00,        /*     Logical Minimum (0) */ \
+0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */ \
+0x81, 0x03,        /*     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position) */ \
+                   /*     NOTE: reserved byte */ \
+0x75, 0x01,        /*     Report Size (1) */ \
+0x95, 0x13,        /*     Report Count (19) */ \
+0x15, 0x00,        /*     Logical Minimum (0) */ \
+0x25, 0x01,        /*     Logical Maximum (1) */ \
+0x35, 0x00,        /*     Physical Minimum (0) */ \
+0x45, 0x01,        /*     Physical Maximum (1) */ \
+0x05, 0x09,        /*     Usage Page (Button) */ \
+0x19, 0x01,        /*     Usage Minimum (0x01) */ \
+0x29, 0x13,        /*     Usage Maximum (0x13) */ \
+0x81, 0x02,        /*     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position) */ \
+0x75, 0x01,        /*     Report Size (1) */ \
+0x95, 0x0D,        /*     Report Count (13) */ \
+0x06, 0x00, 0xFF,  /*     Usage Page (Vendor Defined 0xFF00) */ \
+0x81, 0x03,        /*     Input (Const,Var,Abs,No Wrap,Linear,Preferred State,No Null Position) */ \
+                   /*     NOTE: 32 bit integer, where 0:18 are buttons and 19:31 are reserved */ \
+0x15, 0x00,        /*     Logical Minimum (0) */ \
+0x26, 0xFF, 0x00,  /*     Logical Maximum (255) */ \
+0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0xA1, 0x00,        /*     Collection (Undefined) */ \
+0x75, 0x08,        /*       Report Size (8) */ \
+0x95, 0x04,        /*       Report Count (4) */ \
+0x35, 0x00,        /*       Physical Minimum (0) */ \
+0x46, 0xFF, 0x00,  /*       Physical Maximum (255) */ \
+0x09, 0x30,        /*       Usage (X) */ \
+0x09, 0x31,        /*       Usage (Y) */ \
+0x09, 0x32,        /*       Usage (Z) */ \
+0x09, 0x35,        /*       Usage (Rz) */ \
+0x81, 0x02,        /*       Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position) */ \
+                   /*       NOTE: four joysticks */ \
+0xC0,              /*     End Collection */ \
+0x05, 0x01,        /*     Usage Page (Generic Desktop Ctrls) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x27,        /*     Report Count (39) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0x81, 0x02,        /*     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x30,        /*     Report Count (48) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0x91, 0x02,        /*     Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x30,        /*     Report Count (48) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0xB1, 0x02,        /*     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile) */ \
+0xC0,              /*   End Collection */ \
+0xA1, 0x02,        /*   Collection (Application) */ \
+0x85, 0x02,        /*     Report ID (2) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x30,        /*     Report Count (48) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0xB1, 0x02,        /*     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile) */ \
+0xC0,              /*   End Collection */ \
+0xA1, 0x02,        /*   Collection (Application) */ \
+0x85, 0xEE,        /*     Report ID (238) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x30,        /*     Report Count (48) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0xB1, 0x02,        /*     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile) */ \
+0xC0,              /*   End Collection */ \
+0xA1, 0x02,        /*   Collection (Application) */ \
+0x85, 0xEF,        /*     Report ID (239) */ \
+0x75, 0x08,        /*     Report Size (8) */ \
+0x95, 0x30,        /*     Report Count (48) */ \
+0x09, 0x01,        /*     Usage (Pointer) */ \
+0xB1, 0x02,        /*     Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile) */ \
+0xC0,              /*   End Collection */ \
+  __VA_ARGS__ \
+  0xC0,                 /*  End Collection */
+
 #define HID_SWITCH_CONTROLLER_REPORT_DESCRIPTOR(...) \
   0x05, 0x01,           /*  Usage Page (Generic Desktop) */ \
   0x09, 0x05,           /*  Usage (Joystick) */ \
@@ -413,6 +494,7 @@ extern const HIDReportDescriptor* hidReportDigitizer;
 extern const HIDReportDescriptor* hidReportConsumer;
 extern const HIDReportDescriptor* hidReportDesktop;
 extern const HIDReportDescriptor* hidReportSwitchController;
+extern const HIDReportDescriptor* hidReportPS3Controller;
 
 #define HID_MOUSE                   hidReportMouse
 #define HID_KEYBOARD                hidReportKeyboard
@@ -830,6 +912,151 @@ public:
         joyReport.sliderRight = 0;
     }
 };
+
+typedef struct {
+    uint8_t  reportID;      // 0x01
+    uint8_t  reserved0;
+    uint32_t buttons;       // select, L3, R3, start, d-pad up/right/down/left
+                               // L2, R2, L1, R1, triangle, circle, cross, square
+                               // PS button
+    uint8_t  leftX;
+    uint8_t  leftY;
+    uint8_t  rightX;
+    uint8_t  rightY; // sticks, 0x80 centered
+    uint8_t  reserved1[3];
+    uint8_t  pressure[12];   // up, right, down, left, L2, R2, L1, R1, tri, cir, cross, sq
+    uint8_t  status[16];     // charging, battery, connection, etc. (verify)
+    uint8_t  motion[8];
+} __packed PS3ControllerReport_t;
+
+_Static_assert(sizeof(PS3ControllerReport_t) == 49, "report must be 49 bytes");
+
+class HIDPS3Controller : public HIDReporter {
+protected:
+  PS3ControllerReport_t report; 
+  bool manualReport = false;
+  volatile uint8_t dataF2[HID_BUFFER_SIZE(64, 0xF2)];
+  volatile uint8_t dataF5[HID_BUFFER_SIZE(8, 0xF5)];
+  volatile uint8_t dataF4[HID_BUFFER_SIZE(5, 0xF4)];
+  volatile uint8_t dataF7[HID_BUFFER_SIZE(64, 0xF7)];
+  volatile uint8_t dataF8[HID_BUFFER_SIZE(64, 0xF8)];
+  const uint8_t _dataF2[64] = {
+    0xF2, 0xFF, 0xFF, 0x00, 0x00, 0x06, 0xF5, 0x48, 0xE2, 0x49, 0x00, 0x03, 0x50, 0x81, 0xD8, 0x01,
+    0x8A, 0x13, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x02, 0x02, 0x02, 0x02, 0x00, 0x00, 0x00, 0x04,
+    0x04, 0x04, 0x04, 0x00, 0x00, 0x04, 0x00, 0x01, 0x02, 0x07, 0x00, 0x17, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  };
+  const uint8_t _dataF7[64] = {
+    0x02, 0x01, 0xD4, 0x02, 0xE6, 0x01, 0xF1, 0xFF,
+    0x14, 0x33, 0x02, 0x02, 0xD3, 0x01, 0xE5, 0x00,
+    0x00, 0x02, 0x02, 0x02, 0x00, 0x03, 0x00, 0x00,
+    0x02, 0x00, 0x00, 0x02, 0x62, 0x01, 0x02, 0x01,
+    0x5E, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+  };
+  volatile HIDBuffer_t reportF2;
+  volatile HIDBuffer_t reportF5;
+  volatile HIDBuffer_t reportF4;
+  volatile HIDBuffer_t reportF7;
+  volatile HIDBuffer_t reportF8;
+ 
+public:
+  const int32_t AXIS_MAX = 255;
+  const int32_t AXIS_NEUTRAL = 128;
+  const int32_t AXIS_MIN = 0;
+  
+  void setManualReportMode(bool m) {
+      manualReport = m;
+  }
+  bool getManualReportMode() {
+      return manualReport;
+  }
+  void safeSendReport() {
+      if (!manualReport)
+          sendReport();
+  }
+  void send() {
+      sendReport();
+  }
+  
+  void button(uint8_t b, bool val) {
+    uint16_t mask = ((uint16_t)1 << b);
+
+    if (val) {
+          report.buttons |= mask;
+    } else {
+          report.buttons &= ~mask;
+    }
+    safeSendReport();
+  }
+
+  void buttons(uint32_t b) {
+    report.buttons = b;
+    safeSendReport();
+  }
+
+  void X(uint8_t v) {
+    report.leftX = v;
+    safeSendReport();
+  }
+  
+  void Y(uint8_t v) {
+    report.leftY = v;
+    safeSendReport();
+  }
+  
+  void XRight(uint8_t v) {
+    report.rightX = v;
+    safeSendReport();
+  }
+  
+  void YRight(uint8_t v) {
+    report.rightY = v;
+    safeSendReport();
+  }
+  
+  void pressure(uint8_t b, uint8_t v) {
+    report.pressure[b] = v;
+    safeSendReport();
+  }
+  
+  void begin() {
+      USBComposite.setVendorId(0x054C);
+      USBComposite.setProductId(0x0268);
+      USBComposite.setProductString("PLAYSTATION(R)3 Controller");
+      USBComposite.setManufacturerString("Omega Centauri Software");
+      HID.addFeatureBuffer(&reportF2);
+      HID.addFeatureBuffer(&reportF5);
+      HID.addFeatureBuffer(&reportF4);
+      HID.addFeatureBuffer(&reportF7);
+      HID.addFeatureBuffer(&reportF8);
+      usb_hid_set_feature_raw(0xF2, _dataF2);
+      usb_hid_set_feature_raw(0xF7, _dataF7);
+      HID.begin(hidReportPS3Controller);
+  }
+  
+  void end() {
+      HID.end();
+  }
+  
+  HIDPS3Controller(USBHID& HID) 
+            : HIDReporter(HID, (uint8_t*)&report, sizeof(report), true),
+              reportF2(dataF2, sizeof(dataF2), 0xF2, HID_BUFFER_MODE_NO_WAIT),
+              reportF5(dataF5, sizeof(dataF5), 0xF5, HID_BUFFER_MODE_NO_WAIT),
+              reportF4(dataF5, sizeof(dataF4), 0xF4, HID_BUFFER_MODE_NO_WAIT),
+              reportF7(dataF7, sizeof(dataF7), 0xF7, HID_BUFFER_MODE_NO_WAIT),
+              reportF8(dataF8, sizeof(dataF8), 0xF8, HID_BUFFER_MODE_NO_WAIT)
+            {
+        memset((void*)&report, 0, sizeof(report));
+        report.leftX = AXIS_NEUTRAL;
+        report.leftY = AXIS_NEUTRAL;
+        report.rightX = AXIS_NEUTRAL;
+        report.rightY = AXIS_NEUTRAL;
+    }
+};
+
 
 typedef struct {
   uint16_t buttons;

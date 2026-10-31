@@ -78,7 +78,8 @@ void usb_hid_clear_buffers(uint8_t type);
 uint8_t usb_hid_add_buffer(uint8_t type, volatile HIDBuffer_t* buf);
 void usb_hid_set_buffers(uint8_t type, volatile HIDBuffer_t* featureBuffers, int count);    
 uint16_t usb_hid_get_data(uint8_t type, uint8_t reportID, uint8_t* out, uint8_t poll);
-void usb_hid_set_feature(uint8_t reportID, uint8_t* data);
+void usb_hid_set_feature_raw(uint8_t reportID, const uint8_t* data); // do not prepend reportID
+void usb_hid_set_feature(uint8_t reportID, const uint8_t* data);
 void usb_hid_setTXEPSize(uint32_t size); 
 uint32 usb_hid_get_pending(void);
 void usb_hid_setDedicatedRXEndpoint(void* buffer, uint16_t size, USBHIDOutputEndpointReceiver receiver, void* extra);

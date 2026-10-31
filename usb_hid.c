@@ -255,7 +255,7 @@ static volatile HIDBuffer_t* usb_hid_find_buffer(uint8 type, uint8 reportID) {
     return NULL;
 }
 
-void usb_hid_set_feature(uint8 reportID, uint8* data) {
+void usb_hid_set_feature(uint8 reportID, const uint8* data) {
     volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, reportID);
     if (buffer != NULL) {
         usb_generic_pause_rx_ep0();
@@ -263,6 +263,18 @@ void usb_hid_set_feature(uint8 reportID, uint8* data) {
         memcpy((uint8*)buffer->buffer+delta, data, buffer->bufferSize-delta);
         if (reportID)
             buffer->buffer[0] = reportID;
+        buffer->state = HID_BUFFER_READ;
+        usb_generic_enable_rx_ep0();
+        return;
+    }
+}
+
+// do not prepend reportID
+void usb_hid_set_feature_raw(uint8 reportID, const uint8* data) {
+    volatile HIDBuffer_t* buffer = usb_hid_find_buffer(HID_REPORT_TYPE_FEATURE, reportID);
+    if (buffer != NULL) {
+        usb_generic_pause_rx_ep0();
+        memcpy((uint8*)buffer->buffer, data, buffer->bufferSize);
         buffer->state = HID_BUFFER_READ;
         usb_generic_enable_rx_ep0();
         return;
