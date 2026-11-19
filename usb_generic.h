@@ -129,7 +129,7 @@ static inline void usb_generic_set_tx(USBEndpointInfo* ep, uint32 length) {
 
 uint32 usb_generic_send_from_circular_buffer_double_buffered(USBEndpointInfo* ep, volatile uint8* buf, uint32 circularBufferSize, uint32 amount, volatile uint32* tailP);
 void usb_generic_set_disconnect_delay(uint32 delay);
-void usb_generic_set_info(uint16 idVendor, uint16 idProduct, const char* iManufacturer, const char* iProduct, const char* iSerialNumber);
+void usb_generic_set_info(uint16 idVendor, uint16 idProduct, uint16 deviceVersion, const char* iManufacturer, const char* iProduct, const char* iSerialNumber);
 uint8 usb_generic_set_parts(USBCompositePart** _parts, unsigned _numParts);
 void usb_generic_control_rx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
 void usb_generic_control_tx_setup(volatile void* buffer, uint16 length, volatile uint8* done);
